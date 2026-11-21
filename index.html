@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Divya Kirana Store - Online Order, Udhari Khata & PDF Bill</title>
+  <style>
+    :root {
+      --primary: #15803d;
+      --primary-dark: #166534;
+      --accent: #f59e0b;
+      --danger: #dc2626;
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+
+    /* Dark Mode Variables */
+    body.dark-mode {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding-bottom: 90px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 14px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .header-top {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand h1 { font-size: 1.35rem; font-weight: 700; }
+    .brand p { font-size: 0.82rem; opacity: 0.95; margin-top: 2px; }
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .timing-pill {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.78rem;
+    }
+
+    .theme-toggle-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .nav-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: white;
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .nav-btn.active {
+      background: white;
+      color: var(--primary-dark);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 16px auto;
+      padding: 0 14px;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      outline: none;
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .search-box:focus { border-color: var(--primary); }
+
+    .categories {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+    }
+
+    .cat-btn {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .cat-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+      gap: 12px;
+    }
+
+    .product-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .product-emoji {
+      font-size: 2.2rem;
+      text-align: center;
+      background: rgba(21, 128, 61, 0.08);
+      border-radius: 8px;
+      padding: 10px 0;
+      margin-bottom: 8px;
+    }
+
+    .product-cat {
+      font-size: 0.7rem;
+      color: var(--primary);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .product-name { font-size: 0.95rem; font-weight: 600; margin: 4px 0; }
+    .product-unit { font-size: 0.8rem; color: var(--muted); }
+
+    .product-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+
+    .price { font-size: 1.05rem; font-weight: 700; }
+
+    .add-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .qty-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(21, 128, 61, 0.15);
+      border-radius: 6px;
+      padding: 3px 6px;
+    }
+
+    .qty-control button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .cart-bar {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 28px);
+      max-width: 1070px;
+      background: var(--primary-dark);
+      color: white;
+      padding: 14px 18px;
+      border-radius: 12px;
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      z-index: 99;
+      cursor: pointer;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      z-index: 200;
+    }
+
+    .modal {
+      background: var(--card);
+      color: var(--text);
+      width: 100%;
+      max-width: 520px;
+      max-height: 92vh;
+      overflow-y: auto;
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .close-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--muted); }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: 0.92rem;
+    }
+
+    .form-group { margin-top: 10px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .hisab-box {
+      background: rgba(0, 0, 0, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .hisab-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 0.92rem;
+    }
+
+    .hisab-row.total {
+      border-top: 1px solid var(--border);
+      padding-top: 6px;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .upi-box {
+      background: rgba(21, 128, 61, 0.08);
+      border: 1px dashed var(--primary);
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      text-align: center;
+      display: none;
+    }
+
+    .primary-btn {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 14px;
+      cursor: pointer;
+    }
+
+    .whatsapp-btn {
+      width: 100%;
+      background: #25d366;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .print-btn {
+      width: 100%;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+
+    .card-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-ready { background: #dcfce7; color: #166534; }
+    .badge-udhar { background: #fee2e2; color: #b91c1c; }
+
+    .manage-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    @media (max-width: 600px) {
+      .manage-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .manage-item {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .rate-input {
+      width: 85px;
+      padding: 6px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      font-weight: 700;
+      background: var(--card);
+      color: var(--text);
+    }
+    .del-btn {
+      background: #fee2e2;
+      color: var(--danger);
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* Print Styles (PDF / Bill Slip) */
+    @media print {
+      body * { visibility: hidden; }
+      #printReceiptArea, #printReceiptArea * { visibility: visible; }
+      #printReceiptArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white;
+        color: black;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body id="pageBody">
+
+  <header>
+    <div class="header-top">
+      <div class="brand">
+        <h1>🛒 Divya Kirana Store</h1>
+        <p>Online Order Karein • Dukaan se Saman Le Jayein</p>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+          <span class="timing-pill">⏰ 5:00 AM - 8:00 PM</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+      </div>
+    </div>
+    <div style="max-width:1100px; margin:0 auto;">
+      <div class="nav-btns">
+        <button class="nav-btn active" onclick="switchTab('shop', this)">Store</button>
+        <button class="nav-btn" onclick="switchTab('orders', this)">📋 Orders</button>
+        <button class="nav-btn" onclick="switchTab('khata', this)">📒 Udhari Khata</button>
+        <button class="nav-btn" onclick="switchTab('manage', this)">📦 Rate & Items</button>
+        <button class="nav-btn" onclick="switchTab('settings', this)">⚙️ Settings</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 1. STORE VIEW -->
+  <div id="shopView" class="container view-section active">
+    <input type="text" id="searchInput" class="search-box" placeholder="🔍 Saman search karein (Atta, Dal, Cheeni, Oil, Sabun, Dove, Lux...)" oninput="renderProducts()" />
+    <div class="categories" id="categoryBar"></div>
+    <div class="product-grid" id="productGrid"></div>
+  </div>
+
+  <!-- 2. SHOPKEEPER ORDERS VIEW -->
+  <div id="ordersView" class="container view-section">
+    <h2 style="margin-bottom: 12px;">📋 Dukaan ke Orders (Packing & Payment Hisab)</h2>
+    <div id="ordersList"></div>
+  </div>
+
+  <!-- 3. UDHARI KHATA VIEW -->
+  <div id="khataView" class="container view-section">
+    <div class="card-box">
+      <h2>📒 Customer Udhari Khata (Baki Hisab)</h2>
+      <p style="color:var(--muted); font-size:0.88rem; margin-bottom:12px;">
+        Yahan har customer ka pahle ka baki udhar aur jama kiye gaye paise ka poora record rehta hai.
+      </p>
+      <div class="manage-grid" style="grid-template-columns: 1.5fr 1.5fr 1fr;">
+        <div class="form-group">
+          <label>Customer ka Naam</label>
+          <input type="text" id="khataName" placeholder="e.g. Ramesh Kumar" />
+        </div>
+        <div class="form-group">
+          <label>Mobile Number</label>
+          <input type="tel" id="khataPhone" placeholder="10 digit mobile" />
+        </div>
+        <div class="form-group">
+          <label>Purana Udhar (₹)</label>
+          <input type="number" id="khataAmount" placeholder="e.g. 250" />
+        </div>
+      </div>
+      <button class="primary-btn" onclick="addManualKhata()">+ Naya Udhari Record Jodein / Update Karein</button>
+    </div>
+
+    <div class="card-box">
+      <h3 style="margin-bottom:10px;">Sabhi Customers ka Baki Hisab</h3>
+      <div id="khataList"></div>
+    </div>
+  </div>
+
+  <!-- 4. MANAGE PRODUCTS VIEW -->
+  <div id="manageView" class="container view-section">
+    <div class="card-box">
+      <h2>➕ Naya Product / Soap Add Karein</h2>
+      <div class="manage-grid">
+        <div class="form-group">
+          <label>Product ka Naam</label>
+          <input type="text" id="newProdName" placeholder="e.g. Dove Cream Soap" />
+        </div>
+        <div class="form-group">
+          <label>Weight / Pack</label>
+          <input type="text" id="newProdUnit" placeholder="e.g. 100g" />
+        </div>
+        <div class="form-group">
+          <label>Price (₹)</label>
+          <input type="number" id="newProdPrice" placeholder="e.g. 55" />
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="newProdCat">
+            <option value="Soap & Bath">Soap & Bath</option>
+            <option value="Atta & Chawal">Atta & Chawal</option>
+            <option value="Dal & Masale">Dal & Masale</option>
+            <option value="Tel & Ghee">Tel & Ghee</option>
+            <option value="Cheeni & Chai">Cheeni & Chai</option>
+            <option value="Safai & Detergent">Safai & Detergent</option>
+            <option value="Snacks & Biscuits">Snacks & Biscuits</option>
+          </select>
+        </div>
+      </div>
+      <button class="primary-btn" onclick="addNewProduct()">+ List mein Saman Jodein</button>
+    </div>
+
+    <div class="card-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+        <h2>✏️ Sabhi Products ke Rate Badlein</h2>
+        <button onclick="resetDefaultProducts()" style="background:var(--border); color:var(--text); border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;">Reset Default List</button>
+      </div>
+      <input type="text" id="manageSearch" class="search-box" placeholder="🔍 Rate badalne ke liye product search karein..." oninput="renderManageList()" />
+      <div id="manageProductList"></div>
+    </div>
+  </div>
+
+  <!-- 5. SETTINGS VIEW -->
+  <div id="settingsView" class="container view-section">
+    <div class="card-box">
+      <h2>⚙️ Dukaan ki Settings</h2>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 12px;">
+        Dukaan khulne ka samay: <strong>Subah 5:00 AM se Raat 8:00 PM</strong>. Apna WhatsApp aur UPI ID yahan save karein.
+      </p>
+      <div class="form-group">
+        <label>Shopkeeper WhatsApp Number (91 ke sath, bina + ke)</label>
+        <input type="text" id="shopWhatsappInput" placeholder="e.g. 919876543210" />
+      </div>
+      <div class="form-group">
+        <label>Shop UPI ID (Online Payment ke liye)</label>
+        <input type="text" id="shopUpiInput" placeholder="e.g. divyakirana@upi" />
+      </div>
+      <button class="primary-btn" onclick="saveSettings()">Settings Save Karein</button>
+    </div>
+  </div>
+
+  <!-- FLOATING CART BAR -->
+  <div class="cart-bar" id="cartBar" onclick="openCheckout()">
+    <div>
+      <strong id="cartCount">0 Items</strong> • <span id="cartTotal">₹0</span>
+    </div>
+    <div><strong>Order & Hisab Karein →</strong></div>
+  </div>
+
+  <!-- CHECKOUT MODAL -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🛍️ Order & Payment Hisab</h3>
+        <button class="close-btn" onclick="closeCheckout()">&times;</button>
+      </div>
+
+      <div id="cartItemsList"></div>
+
+      <div id="checkoutForm">
+        <div class="form-group">
+          <label>Mobile Number * (Purana udhar check karne ke liye)</label>
+          <input type="tel" id="custPhone" placeholder="10 digit mobile number" oninput="checkCustomerOldUdhar()" required />
+        </div>
+
+        <div class="form-group">
+          <label>Customer ka Naam *</label>
+          <input type="text" id="custName" placeholder="Apna naam likhein" required />
+        </div>
+
+        <div class="form-group">
+          <label>Saman Lene ka Samay (5:00 AM - 8:00 PM)</label>
+          <select id="pickupTime">
+            <option value="Subah 5:00 AM - 7:00 AM">Subah 5:00 AM - 7:00 AM</option>
+            <option value="Subah 7:00 AM - 10:00 AM">Subah 7:00 AM - 10:00 AM</option>
+            <option value="Dopahar 10:00 AM - 2:00 PM">Dopahar 10:00 AM - 2:00 PM</option>
+            <option value="Sham 2:00 PM - 5:00 PM">Sham 2:00 PM - 5:00 PM</option>
+            <option value="Raat 5:00 PM - 8:00 PM">Raat 5:00 PM - 8:00 PM</option>
+            <option value="Abhi 20 Minute mein">Abhi 20 Minute mein</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Payment Mode (Online ya Cash)</label>
+          <select id="paymentMethod" onchange="toggleUpiBox()">
+            <option value="Cash Payment">Cash Payment (Dukaan par Nagad)</option>
+            <option value="Online UPI Payment">Online UPI Payment</option>
+            <option value="Udhar / Baad mein Denge">Abhi Udhar Rakhein (Baad mein Denge)</option>
+          </select>
+        </div>
+
+        <div class="upi-box" id="upiBox">
+          <p style="font-size:0.85rem; margin-bottom:4px;">Online Payment UPI ID:</p>
+          <div style="font-size:1.05rem; font-weight:700; color:var(--primary);" id="displayUpiId">divyakirana@upi</div>
+          <a id="upiPayLink" href="#" style="display:inline-block; margin-top:6px; background:var(--accent); color:black; padding:5px 12px; border-radius:6px; text-decoration:none; font-weight:700; font-size:0.82rem;">
+            📱 UPI App se Pay Karein
+          </a>
+        </div>
+
+        <div class="hisab-box">
+          <div class="hisab-row">
+            <span>Aaj ka Saman Bill:</span>
+            <strong id="hisabTodayBill">₹0</strong>
+          </div>
+          <div class="hisab-row" style="color:#b91c1c;">
+            <span>Pahle ka Baki Udhar:</span>
+            <strong id="hisabOldUdhar">₹0</strong>
+          </div>
+          <div class="hisab-row total">
+            <span>Kul Total Dena Hai:</span>
+            <span id="hisabGrandTotal">₹0</span>
+          </div>
+
+          <div class="form-group" style="margin-top:8px;">
+            <label>Abhi Kitna Rupaya Diya (Paid Amount ₹):</label>
+            <input type="number" id="paidAmountInput" placeholder="Jitna paisa diya woh likhein" oninput="calculateRemaining()" />
+          </div>
+
+          <div class="hisab-row total" style="color:var(--primary); margin-top:8px;">
+            <span>Ab Kitna Bacha Hai (Remaining Udhar):</span>
+            <span id="hisabRemaining">₹0</span>
+          </div>
+        </div>
+
+        <button class="primary-btn" onclick="placeOrder()">✅ Order & Hisab Confirm Karein</button>
+      </div>
+
+      <!-- ORDER SUCCESS & PRINT RECEIPT -->
+      <div id="orderSuccessBox" style="display:none; text-align:center; margin-top:14px;">
+        <div style="background:#dcfce7; color:#166534; padding:12px; border-radius:8px; margin-bottom:10px;">
+          <strong>🎉 Order aur Hisab Save Ho Gaya!</strong>
+          <p style="font-size:0.85rem; margin-top:4px;">Neeche button dabakar WhatsApp par message bhejein ya digital bill print/download karein.</p>
+        </div>
+        <button class="whatsapp-btn" onclick="sendWhatsAppMessage()">
+          📲 Shop ko WhatsApp Message Bhejein
+        </button>
+        <button class="print-btn" onclick="printReceipt()">
+          🖨️ Bill Print / PDF Download Karein
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HIDDEN PRINT RECEIPT AREA FOR PDF -->
+  <div id="printReceiptArea" style="display:none;">
+    <div style="text-align:center; margin-bottom:15px;">
+      <h2>🛒 DIVYA KIRANA STORE</h2>
+      <p style="font-size:0.85rem;">Online Order & Pickup • Timing: 5:00 AM - 8:00 PM</p>
+      <hr style="margin:8px 0; border:1px dashed #000;">
+    </div>
+    <div id="receiptContent" style="font-size:0.9rem; line-height:1.5;"></div>
+  </div>
+
+  <script>
+    const defaultProducts = [
+      { id: 1, name: "Aashirvaad Shudh Chakki Atta", unit: "5 kg", price: 245, category: "Atta & Chawal", emoji: "🌾" },
+      { id: 2, name: "Aashirvaad Atta", unit: "10 kg", price: 470, category: "Atta & Chawal", emoji: "🌾" },
+      { id: 3, name: "India Gate Basmati Rice", unit: "1 kg", price: 110, category: "Atta & Chawal", emoji: "🍚" },
+      { id: 4, name: "Normal Chawal (Daily Rice)", unit: "1 kg", price: 48, category: "Atta & Chawal", emoji: "🍚" },
+      { id: 5, name: "Suji / Rava", unit: "500 g", price: 32, category: "Atta & Chawal", emoji: "🥣" },
+      { id: 6, name: "Besan (Chana Besan)", unit: "1 kg", price: 88, category: "Atta & Chawal", emoji: "🟡" },
+      { id: 7, name: "Arhar / Toor Dal", unit: "1 kg", price: 165, category: "Dal & Masale", emoji: "🥣" },
+      { id: 8, name: "Moong Dal (Yellow)", unit: "1 kg", price: 130, category: "Dal & Masale", emoji: "🫘" },
+      { id: 9, name: "Chana Dal", unit: "1 kg", price: 95, category: "Dal & Masale", emoji: "🟡" },
+      { id: 10, name: "Masoor Dal", unit: "1 kg", price: 105, category: "Dal & Masale", emoji: "🟠" },
+      { id: 11, name: "Tata Salt (Namak)", unit: "1 kg", price: 28, category: "Dal & Masale", emoji: "🧂" },
+      { id: 12, name: "MDH Haldi Powder", unit: "200 g", price: 65, category: "Dal & Masale", emoji: "🧡" },
+      { id: 13, name: "MDH Lal Mirch Powder", unit: "200 g", price: 85, category: "Dal & Masale", emoji: "🌶️" },
+      { id: 14, name: "MDH Dhaniya Powder", unit: "200 g", price: 58, category: "Dal & Masale", emoji: "🌿" },
+      { id: 15, name: "Jeera (Cumin Seeds)", unit: "100 g", price: 45, category: "Dal & Masale", emoji: "🌱" },
+      { id: 16, name: "Fortune Sunlite Refined Oil", unit: "1 Litre", price: 135, category: "Tel & Ghee", emoji: "🌻" },
+      { id: 17, name: "Kachi Ghani Sarson Oil", unit: "1 Litre", price: 155, category: "Tel & Ghee", emoji: "🫗" },
+      { id: 18, name: "Amul Pure Desi Ghee", unit: "500 ml", price: 310, category: "Tel & Ghee", emoji: "🧈" },
+      { id: 19, name: "Cheeni (Sugar)", unit: "1 kg", price: 46, category: "Cheeni & Chai", emoji: "🧊" },
+      { id: 20, name: "Tata Tea Premium", unit: "250 g", price: 140, category: "Cheeni & Chai", emoji: "🍵" },
+      { id: 21, name: "Nescafe Classic Coffee", unit: "50 g", price: 155, category: "Cheeni & Chai", emoji: "☕" },
+      { id: 22, name: "Dettol Original Soap", unit: "125 g", price: 42, category: "Soap & Bath", emoji: "🧼" },
+      { id: 23, name: "Dettol Soap (4 Pack)", unit: "4 x 75g", price: 148, category: "Soap & Bath", emoji: "🧼" },
+      { id: 24, name: "Lifebuoy Total Soap", unit: "125 g", price: 34, category: "Soap & Bath", emoji: "🧼" },
+      { id: 25, name: "Lux Soft Glow Soap", unit: "100 g", price: 38, category: "Soap & Bath", emoji: "🫧" },
+      { id: 26, name: "Dove Cream Beauty Soap", unit: "100 g", price: 58, category: "Soap & Bath", emoji: "🕊️" },
+      { id: 27, name: "Santoor Sandal Soap", unit: "100 g", price: 35, category: "Soap & Bath", emoji: "🧼" },
+      { id: 28, name: "Clinic Plus Shampoo", unit: "175 ml", price: 115, category: "Soap & Bath", emoji: "🧴" },
+      { id: 29, name: "Colgate Strong Teeth", unit: "200 g", price: 115, category: "Soap & Bath", emoji: "🪥" },
+      { id: 30, name: "Surf Excel Easy Wash", unit: "1 kg", price: 142, category: "Safai & Detergent", emoji: "🧺" },
+      { id: 31, name: "Rin Detergent Bar (Sabun)", unit: "250 g", price: 25, category: "Safai & Detergent", emoji: "🧽" },
+      { id: 32, name: "Vim Dishwash Bar", unit: "200 g", price: 20, category: "Safai & Detergent", emoji: "🍽️" },
+      { id: 33, name: "Harpic Toilet Cleaner", unit: "500 ml", price: 98, category: "Safai & Detergent", emoji: "🧴" },
+      { id: 34, name: "Parle-G Gold Biscuits", unit: "1 Pack", price: 20, category: "Snacks & Biscuits", emoji: "🍪" },
+      { id: 35, name: "Britannia Good Day", unit: "1 Pack", price: 30, category: "Snacks & Biscuits", emoji: "🍪" },
+      { id: 36, name: "Maggi Masala Noodles", unit: "4 Pack", price: 56, category: "Snacks & Biscuits", emoji: "🍜" }
+    ];
+
+    let products = JSON.parse(localStorage.getItem("divya_shop_products")) || [...defaultProducts];
+    let cart = {};
+    let selectedCategory = "All";
+    let lastOrderText = "";
+    let currentCartTotal = 0;
+    let lastReceiptHtml = "";
+
+    let shopSettings = JSON.parse(localStorage.getItem("divya_shop_settings")) || {
+      whatsapp: "919876543210",
+      upi: "divyakirana@upi"
+    };
+
+    let savedOrders = JSON.parse(localStorage.getItem("divya_shop_orders")) || [];
+    let customerKhata = JSON.parse(localStorage.getItem("divya_customer_khata")) || {};
+
+    function init() {
+      document.getElementById("shopWhatsappInput").value = shopSettings.whatsapp;
+      document.getElementById("shopUpiInput").value = shopSettings.upi;
+      
+      // Load Theme preference
+      if (localStorage.getItem("divya_dark_mode") === "true") {
+        document.getElementById("pageBody").classList.add("dark-mode");
+        document.getElementById("themeBtn").innerText = "☀️ Light";
+      }
+
+      renderCategories();
+      renderProducts();
+      renderOrders();
+      renderManageList();
+      renderKhataList();
+    }
+
+    function toggleTheme() {
+      const body = document.getElementById("pageBody");
+      body.classList.toggle("dark-mode");
+      const isDark = body.classList.contains("dark-mode");
+      localStorage.setItem("divya_dark_mode", isDark);
+      document.getElementById("themeBtn").innerText = isDark ? "☀️ Light" : "🌙 Dark";
+    }
+
+    function switchTab(tab, btn) {
+      document.querySelectorAll(".view-section").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
+      document.getElementById(tab + "View").classList.add("active");
+      btn.classList.add("active");
+      if (tab === "orders") renderOrders();
+      if (tab === "manage") renderManageList();
+      if (tab === "khata") renderKhataList();
+      if (tab === "shop") { renderCategories(); renderProducts(); }
+    }
+
+    function renderCategories() {
+      const cats = ["All", ...new Set(products.map(p => p.category))];
+      const bar = document.getElementById("categoryBar");
+      bar.innerHTML = cats.map(c => `
+        <button class="cat-btn ${c === selectedCategory ? 'active' : ''}" onclick="selectCategory('${c}')">
+          ${c}
+        </button>
+      `).join("");
+    }
+
+    function selectCategory(cat) {
+      selectedCategory = cat;
+      renderCategories();
+      renderProducts();
+    }
+
+    function renderProducts() {
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      const grid = document.getElementById("productGrid");
+
+      const filtered = products.filter(p => {
+        const matchCat = selectedCategory === "All" || p.category === selectedCategory;
+        const matchSearch = p.name.toLowerCase().includes(search) || p.category.toLowerCase().includes(search);
+        return matchCat && matchSearch;
+      });
+
+      grid.innerHTML = filtered.map(p => {
+        const qty = cart[p.id] || 0;
+        return `
+          <div class="product-card">
+            <div>
+              <div class="product-emoji">${p.emoji || '🛒'}</div>
+              <div class="product-cat">${p.category}</div>
+              <div class="product-name">${p.name}</div>
+              <div class="product-unit">${p.unit}</div>
+            </div>
+            <div class="product-footer">
+              <div class="price">₹${p.price}</div>
+              ${qty === 0
+                ? `<button class="add-btn" onclick="updateQty(${p.id}, 1)">+ Add</button>`
+                : `<div class="qty-control">
+                    <button onclick="updateQty(${p.id}, -1)">-</button>
+                    <span><strong>${qty}</strong></span>
+                    <button onclick="updateQty(${p.id}, 1)">+</button>
+                   </div>`
+              }
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderManageList() {
+      const query = (document.getElementById("manageSearch")?.value || "").toLowerCase();
+      const container = document.getElementById("manageProductList");
+      const filtered = products.filter(p => p.name.toLowerCase().includes(query) || p.category.toLowerCase().includes(query));
+
+      container.innerHTML = filtered.map(p => `
+        <div class="manage-item">
+          <div>
+            <strong>${p.emoji || '🛒'} ${p.name}</strong> <small style="color:var(--muted);">(${p.unit})</small><br>
+            <span style="font-size:0.75rem; color:var(--primary);">${p.category}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span>₹</span>
+            <input type="number" class="rate-input" value="${p.price}" onchange="changeProductPrice(${p.id}, this.value)" />
+            <button class="del-btn" onclick="deleteProduct(${p.id})">Delete</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function changeProductPrice(id, newPrice) {
+      const val = parseFloat(newPrice);
+      if (isNaN(val) || val < 0) return;
+      const item = products.find(p => p.id === id);
+      if (item) {
+        item.price = val;
+        localStorage.setItem("divya_shop_products", JSON.stringify(products));
+        updateCartBar();
+      }
+    }
+
+    function addNewProduct() {
+      const name = document.getElementById("newProdName").value.trim();
+      const unit = document.getElementById("newProdUnit").value.trim() || "1 Pack";
+      const price = parseFloat(document.getElementById("newProdPrice").value);
+      const category = document.getElementById("newProdCat").value;
+
+      if (!name || isNaN(price) || price <= 0) {
+        alert("Kripya Product ka naam aur sahi price dalein.");
+        return;
+      }
+
+      const emojiMap = {
+        "Soap & Bath": "🧼", "Atta & Chawal": "🌾", "Dal & Masale": "🥣",
+        "Tel & Ghee": "🫗", "Cheeni & Chai": "🍵", "Safai & Detergent": "🧺", "Snacks & Biscuits": "🍪"
+      };
+
+      products.unshift({
+        id: Date.now(), name, unit, price, category,
+        emoji: emojiMap[category] || "🛒"
+      });
+
+      localStorage.setItem("divya_shop_products", JSON.stringify(products));
+      document.getElementById("newProdName").value = "";
+      document.getElementById("newProdUnit").value = "";
+      document.getElementById("newProdPrice").value = "";
+      renderManageList();
+      alert(`"${name}" list mein jud gaya hai!`);
+    }
+
+    function deleteProduct(id) {
+      if (!confirm("Kya aap is item ko list se hatana chahte hain?")) return;
+      products = products.filter(p => p.id !== id);
+      delete cart[id];
+      localStorage.setItem("divya_shop_products", JSON.stringify(products));
+      renderManageList();
+      updateCartBar();
+    }
+
+    function resetDefaultProducts() {
+      if (!confirm("Kya aap sabhi rates aur list ko wapas default karna chahte hain?")) return;
+      products = [...defaultProducts];
+      localStorage.setItem("divya_shop_products", JSON.stringify(products));
+      renderManageList();
+    }
+
+    function updateQty(id, change) {
+      cart[id] = (cart[id] || 0) + change;
+      if (cart[id] <= 0) delete cart[id];
+      renderProducts();
+      updateCartBar();
+    }
+
+    function updateCartBar() {
+      let count = 0;
+      let total = 0;
+      for (const [id, qty] of Object.entries(cart)) {
+        const prod = products.find(p => p.id == id);
+        if (prod) {
+          count += qty;
+          total += prod.price * qty;
+        }
+      }
+      currentCartTotal = total;
+      const bar = document.getElementById("cartBar");
+      if (count > 0) {
+        bar.style.display = "flex";
+        document.getElementById("cartCount").innerText = `${count} Item${count > 1 ? 's' : ''}`;
+        document.getElementById("cartTotal").innerText = `₹${total}`;
+      } else {
+        bar.style.display = "none";
+      }
+    }
+
+    function openCheckout() {
+      const list = document.getElementById("cartItemsList");
+      let total = 0;
+      let html = "";
+
+      for (const [id, qty] of Object.entries(cart)) {
+        const prod = products.find(p => p.id == id);
+        if (prod) {
+          const sub = prod.price * qty;
+          total += sub;
+          html += `
+            <div class="cart-item">
+              <div>
+                <strong>${prod.name}</strong> (${prod.unit})<br>
+                <small style="color:var(--muted);">₹${prod.price} x ${qty}</small>
+              </div>
+              <div><strong>₹${sub}</strong></div>
+            </div>
+          `;
+        }
+      }
+
+      currentCartTotal = total;
+      list.innerHTML = html;
+      document.getElementById("displayUpiId").innerText = shopSettings.upi;
+      document.getElementById("paidAmountInput").value = total;
+      checkCustomerOldUdhar();
+
+      document.getElementById("checkoutForm").style.display = "block";
+      document.getElementById("orderSuccessBox").style.display = "none";
+      document.getElementById("checkoutModal").style.display = "flex";
+    }
+
+    function checkCustomerOldUdhar() {
+      const phone = document.getElementById("custPhone").value.trim();
+      let oldUdhar = 0;
+      if (phone && customerKhata[phone]) {
+        oldUdhar = customerKhata[phone].balance || 0;
+        if (!document.getElementById("custName").value) {
+          document.getElementById("custName").value = customerKhata[phone].name;
+        }
+      }
+
+      const grandTotal = currentCartTotal + oldUdhar;
+      document.getElementById("hisabTodayBill").innerText = `₹${currentCartTotal}`;
+      document.getElementById("hisabOldUdhar").innerText = `₹${oldUdhar}`;
+      document.getElementById("hisabGrandTotal").innerText = `₹${grandTotal}`;
+      document.getElementById("upiPayLink").href = `upi://pay?pa=${shopSettings.upi}&pn=Divya%20Kirana%20Store&am=${grandTotal}&cu=INR`;
+
+      calculateRemaining();
+    }
+
+    function calculateRemaining() {
+      const phone = document.getElementById("custPhone").value.trim();
+      const oldUdhar = (phone && customerKhata[phone]) ? (customerKhata[phone].balance || 0) : 0;
+      const grandTotal = currentCartTotal + oldUdhar;
+      const paid = parseFloat(document.getElementById("paidAmountInput").value) || 0;
+      const remaining = Math.max(0, grandTotal - paid);
+
+      document.getElementById("hisabRemaining").innerText = `₹${remaining}`;
+    }
+
+    function closeCheckout() {
+      document.getElementById("checkoutModal").style.display = "none";
+    }
+
+    function toggleUpiBox() {
+      const method = document.getElementById("paymentMethod").value;
+      document.getElementById("upiBox").style.display = method === "Online UPI Payment" ? "block" : "none";
+      if (method === "Udhar / Baad mein Denge") {
+        document.getElementById("paidAmountInput").value = 0;
+        calculateRemaining();
+      }
+    }
+
+    function placeOrder() {
+      const name = document.getElementById("custName").value.trim();
+      const phone = document.getElementById("custPhone").value.trim();
+      const pickup = document.getElementById("pickupTime").value;
+      const payment = document.getElementById("paymentMethod").value;
+      const paid = parseFloat(document.getElementById("paidAmountInput").value) || 0;
+
+      if (!name || !phone) {
+        alert("Kripya apna Mobile Number aur Naam bharein.");
+        return;
+      }
+
+      let itemsText = "";
+      let receiptItemsHtml = "";
+      let itemsArray = [];
+      let todayTotal = 0;
+
+      for (const [id, qty] of Object.entries(cart)) {
+        const prod = products.find(p => p.id == id);
+        if (prod) {
+          const sub = prod.price * qty;
+          todayTotal += sub;
+          itemsText += `• ${prod.name} (${prod.unit}) x ${qty} = ₹${sub}\n`;
+          itemsArray.push(`${prod.name} (${qty})`);
+          receiptItemsHtml += `<tr><td>${prod.name} (${prod.unit})</td><td>${qty}</td><td>₹${sub}</td></tr>`;
+        }
+      }
+
+      const oldUdhar = customerKhata[phone] ? (customerKhata[phone].balance || 0) : 0;
+      const grandTotal = todayTotal + oldUdhar;
+      const remainingUdhar = Math.max(0, grandTotal - paid);
+
+      customerKhata[phone] = {
+        name: name,
+        balance: remainingUdhar,
+        lastUpdated: new Date().toLocaleDateString()
+      };
+      localStorage.setItem("divya_customer_khata", JSON.stringify(customerKhata));
+
+      const orderId = "ORD" + Math.floor(1000 + Math.random() * 9000);
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dateStr = new Date().toLocaleDateString();
+
+      savedOrders.unshift({
+        id: orderId, name, phone, pickup, payment,
+        items: itemsArray.join(", "), todayTotal, oldUdhar,
+        grandTotal, paid, remainingUdhar, status: "Packing Pending", time: timeStr
+      });
+      localStorage.setItem("divya_shop_orders", JSON.stringify(savedOrders));
+
+      lastOrderText =
+        `🛒 *NAYA ORDER - DIVYA KIRANA STORE*\n` +
+        `Order ID: *${orderId}*\n` +
+        `Customer: *${name}* (${phone})\n` +
+        `Pickup Time: *${pickup}*\n` +
+        `Payment Mode: *${payment}*\n\n` +
+        `*Saman ki List:*\n${itemsText}\n` +
+        `----------------------\n` +
+        `Aaj ka Bill: ₹${todayTotal}\n` +
+        `Pahle ka Udhar: ₹${oldUdhar}\n` +
+        `*Kul Total: ₹${grandTotal}*\n` +
+        `✅ *Diya (Paid): ₹${paid}*\n` +
+        `❗ *Bacha (Udhar): ₹${remainingUdhar}*\n` +
+        `----------------------\n` +
+        `Kripya saman pack karke rakhein.`;
+
+      // Build Digital Receipt HTML for Printing
+      lastReceiptHtml = `
+        <p><strong>Order ID:</strong> ${orderId} | <strong>Date:</strong> ${dateStr} ${timeStr}</p>
+        <p><strong>Customer:</strong> ${name} (${phone})</p>
+        <p><strong>Pickup Time:</strong> ${pickup}</p>
+        <hr style="margin:6px 0; border:0.5px solid #ccc;">
+        <table width="100%" style="border-collapse:collapse; font-size:0.88rem;">
+          <tr style="border-bottom:1px solid #000; text-align:left;"><th>Item</th><th>Qty</th><th>Amt</th></tr>
+          ${receiptItemsHtml}
+        </table>
+        <hr style="margin:6px 0; border:0.5px solid #ccc;">
+        <p>Aaj ka Bill: <strong>₹${todayTotal}</strong></p>
+        <p>Pahle ka Udhar: <strong>₹${oldUdhar}</strong></p>
+        <p><strong>Kul Total: ₹${grandTotal}</strong></p>
+        <p>Diya Gaya (Paid): <strong>₹${paid}</strong> (${payment})</p>
+        <p style="color:red;"><strong>Bacha Hua Udhar: ₹${remainingUdhar}</strong></p>
+        <hr style="margin:6px 0; border:0.5px dashed #000;">
+        <p style="text-align:center; font-size:0.8rem; margin-top:10px;">Dhanyawad! Divya Kirana Store mein fir aayein.</p>
+      `;
+
+      document.getElementById("checkoutForm").style.display = "none";
+      document.getElementById("orderSuccessBox").style.display = "block";
+
+      cart = {};
+      renderProducts();
+      updateCartBar();
+    }
+
+    function sendWhatsAppMessage() {
+      const url = `https://wa.me/${shopSettings.whatsapp}?text=${encodeURIComponent(lastOrderText)}`;
+      window.open(url, "_blank");
+    }
+
+    function printReceipt() {
+      document.getElementById("receiptContent").innerHTML = lastReceiptHtml;
+      window.print();
+    }
+
+    function renderOrders() {
+      const container = document.getElementById("ordersList");
+      if (savedOrders.length === 0) {
+        container.innerHTML = `<div class="card-box">Abhi koi order nahi aaya hai.</div>`;
+        return;
+      }
+
+      container.innerHTML = savedOrders.map((ord, index) => `
+        <div class="card-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+            <strong>${ord.id} • ${ord.name} (${ord.phone})</strong>
+            <div>
+              ${ord.remainingUdhar > 0 ? `<span class="badge badge-udhar">Baki Udhar: ₹${ord.remainingUdhar}</span>` : ''}
+              <span class="badge ${ord.status === 'Ready for Pickup' ? 'badge-ready' : 'badge-pending'}">
+                ${ord.status}
+              </span>
+            </div>
+          </div>
+          <p style="font-size:0.9rem; margin-bottom:6px;"><strong>Saman:</strong> ${ord.items}</p>
+          <div style="background:rgba(0,0,0,0.03); padding:8px; border-radius:6px; font-size:0.85rem; margin-bottom:6px;">
+            Aaj Bill: <strong>₹${ord.todayTotal}</strong> | Purana Udhar: <strong>₹${ord.oldUdhar}</strong> | 
+            Kul: <strong>₹${ord.grandTotal}</strong> | 
+            Diya: <strong>₹${ord.paid}</strong> | 
+            <span style="color:#b91c1c;">Bacha: <strong>₹${ord.remainingUdhar}</strong></span>
+          </div>
+          <p style="font-size:0.82rem; color:var(--muted);">
+            Mode: ${ord.payment} | Pickup: ${ord.pickup} (${ord.time})
+          </p>
+          ${ord.status !== 'Ready for Pickup'
+            ? `<button onclick="markReady(${index})" style="margin-top:8px; background:var(--primary); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">✅ Saman Pack Ho Gaya (Mark Ready)</button>`
+            : ``}
+        </div>
+      `).join("");
+    }
+
+    function markReady(index) {
+      savedOrders[index].status = "Ready for Pickup";
+      localStorage.setItem("divya_shop_orders", JSON.stringify(savedOrders));
+      renderOrders();
+    }
+
+    function addManualKhata() {
+      const name = document.getElementById("khataName").value.trim();
+      const phone = document.getElementById("khataPhone").value.trim();
+      const amt = parseFloat(document.getElementById("khataAmount").value);
+
+      if (!name || !phone || isNaN(amt)) {
+        alert("Kripya Customer ka naam, mobile number aur baki udhar amount dalein.");
+        return;
+      }
+
+      const old = customerKhata[phone] ? customerKhata[phone].balance : 0;
+      customerKhata[phone] = {
+        name, balance: old + amt,
+        lastUpdated: new Date().toLocaleDateString()
+      };
+      localStorage.setItem("divya_customer_khata", JSON.stringify(customerKhata));
+      document.getElementById("khataName").value = "";
+      document.getElementById("khataPhone").value = "";
+      document.getElementById("khataAmount").value = "";
+      renderKhataList();
+      alert("Udhari record update ho gaya!");
+    }
+
+    function jamaUdhar(phone) {
+      const jama = parseFloat(prompt(`${customerKhata[phone].name} ne kitna rupaya jama kiya (₹)?`));
+      if (isNaN(jama) || jama <= 0) return;
+      customerKhata[phone].balance = Math.max(0, customerKhata[phone].balance - jama);
+      customerKhata[phone].lastUpdated = new Date().toLocaleDateString();
+      localStorage.setItem("divya_customer_khata", JSON.stringify(customerKhata));
+      renderKhataList();
+    }
+
+    function renderKhataList() {
+      const container = document.getElementById("khataList");
+      const phones = Object.keys(customerKhata);
+      if (phones.length === 0) {
+        container.innerHTML = `<p style="color:var(--muted);">Abhi kisi customer ka udhar record nahi hai.</p>`;
+        return;
+      }
+
+      container.innerHTML = phones.map(phone => {
+        const c = customerKhata[phone];
+        return `
+          <div class="manage-item">
+            <div>
+              <strong>${c.name}</strong> (${phone})<br>
+              <small style="color:var(--muted);">Last Update: ${c.lastUpdated || 'Today'}</small>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <strong style="color:${c.balance > 0 ? '#b91c1c' : '#15803d'}; font-size:1.05rem;">
+                Baki: ₹${c.balance}
+              </strong>
+              ${c.balance > 0
+                ? `<button onclick="jamaUdhar('${phone}')" style="background:var(--primary); color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:0.82rem;">+ Paisa Jama Karein</button>`
+                : `<span class="badge badge-ready">Clear</span>`
+              }
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function saveSettings() {
+      const wa = document.getElementById("shopWhatsappInput").value.trim();
+      const upi = document.getElementById("shopUpiInput").value.trim();
+      if (wa) shopSettings.whatsapp = wa;
+      if (upi) shopSettings.upi = upi;
+      localStorage.setItem("divya_shop_settings", JSON.stringify(shopSettings));
+      alert("Dukaan ki settings save ho gayi hain!");
+    }
+
+    init();
+  </script>
+</body>
+</html>
