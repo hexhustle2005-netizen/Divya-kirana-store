@@ -32,7 +32,7 @@
                         const enteredPin = prompt("🔒 Admin PIN Dalein:");
                         if (enteredPin === ADMIN_PIN) {
                             setIsAdminAuthenticated(true);
-                            alert("✅ Admin Access Successful! Ab aap Orders, Udhari, Rate aur Settings dekh sakte hain.");
+                            alert("✅ Admin Access Successful!");
                         } else if (enteredPin !== null) {
                             alert("❌ Galat PIN!");
                         }
@@ -46,23 +46,28 @@
             const [shopOpenTime, setShopOpenTime] = React.useState("08:00");
             const [shopCloseTime, setShopCloseTime] = React.useState("20:00");
 
-            // Items list with images
+            // Items list with Categories and Images (Blinkit style)
             const [items, setItems] = React.useState([
-                { id: 1, name: "Aashirvaad Atta (10kg)", price: 420, image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80" },
-                { id: 2, name: "Fortune Sunflower Oil (1L)", price: 135, image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80" },
-                { id: 3, name: "Tata Salt (1kg)", price: 28, image: "https://images.unsplash.com/photo-1518110991417-010777ea462f?auto=format&fit=crop&w=300&q=80" },
-                { id: 4, name: "Surf Excel Detergent (1kg)", price: 140, image: "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?auto=format&fit=crop&w=300&q=80" },
-                { id: 5, name: "Colgate Toothpaste", price: 95, image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=300&q=80" }
+                { id: 1, name: "Aashirvaad Atta (10kg)", price: 420, category: "Groceries", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80" },
+                { id: 2, name: "Fortune Sunflower Oil (1L)", price: 135, category: "Groceries", image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80" },
+                { id: 3, name: "Tata Salt (1kg)", price: 28, category: "Groceries", image: "https://images.unsplash.com/photo-1518110991417-010777ea462f?auto=format&fit=crop&w=300&q=80" },
+                { id: 4, name: "Surf Excel Detergent (1kg)", price: 140, category: "Household", image: "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?auto=format&fit=crop&w=300&q=80" },
+                { id: 5, name: "Colgate Toothpaste", price: 95, category: "Personal Care", image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=300&q=80" }
             ]);
+
+            const [searchTerm, setSearchTerm] = React.useState("");
+            const [selectedCategory, setSelectedCategory] = React.useState("All");
 
             const [cart, setCart] = React.useState({});
             const [customerTime, setCustomerTime] = React.useState("10:00");
             const [customerName, setCustomerName] = React.useState("");
             const [customerPhone, setCustomerPhone] = React.useState("");
-            const [paymentMode, setPaymentMode] = React.useState("Cash"); // Cash, UPI, ya Udhari
+            const [paymentMode, setPaymentMode] = React.useState("Cash"); 
             
-            // Orders Data for Owner
+            // Orders Data for Owner & Customer History
             const [ordersList, setOrdersList] = React.useState([]);
+            const [customerSearchPhone, setCustomerSearchPhone] = React.useState("");
+            const [myOldOrders, setMyOldOrders] = React.useState([]);
             const [lastBill, setLastBill] = React.useState(null);
 
             // Udhari Khata Data
@@ -78,6 +83,7 @@
             // Rate management inputs
             const [newItemName, setNewItemName] = React.useState("");
             const [newItemPrice, setNewItemPrice] = React.useState("");
+            const [newItemCat, setNewItemCat] = React.useState("Groceries");
             const [newItemImg, setNewItemImg] = React.useState("");
 
             const addToCart = (id) => {
@@ -135,10 +141,10 @@
                     }
                 });
 
-                // Save to Owner Orders Data
+                // Save to Orders List
                 setOrdersList([billDetails, ...ordersList]);
 
-                // Agar customer ne Udhari select kiya hai, toh automatic Udhari Khate mein jud jaye
+                // Automatic Udhari entry if selected
                 if (paymentMode === "Udhari") {
                     setUdhariList([
                         { 
@@ -153,6 +159,7 @@
                 }
 
                 setLastBill(billDetails);
+                setCart({}); // clear cart
 
                 // Send WhatsApp to Owner
                 let message = `🛒 *Naya Order - Divya Kirana Store*\n\n`;
@@ -169,76 +176,132 @@
                 alert("✅ Order submit ho gaya! Bill niche PDF ke liye taiyar hai.");
             };
 
+            const checkMyOrders = () => {
+                if (!customerSearchPhone) {
+                    alert("Kripya apna mobile number dalein.");
+                    return;
+                }
+                const found = ordersList.filter(o => o.customerPhone === customerSearchPhone);
+                setMyOldOrders(found);
+                if (found.length === 0) {
+                    alert("Is number se koi purana order nahi mila.");
+                }
+            };
+
+            const filteredItems = items.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
+                return matchesSearch && matchesCat;
+            });
+
             return (
-                <div className="max-w-md mx-auto bg-white min-h-screen shadow-lg flex flex-col">
-                    {/* Header - Triple click here for Secret Admin Access */}
-                    <header onClick={handleTitleClick} className="bg-green-700 text-white p-4 shadow-md cursor-pointer select-none">
-                        <h1 className="text-xl font-bold">🛒 Divya Kirana Store</h1>
-                        <p className="text-xs text-green-200">Dukaan Samay: {shopOpenTime} se {shopCloseTime} (Order Karein)</p>
+                <div className="max-w-md mx-auto bg-white min-h-screen shadow-2xl flex flex-col font-sans">
+                    {/* Header - Triple click for Admin */}
+                    <header onClick={handleTitleClick} className="bg-gradient-to-r from-green-700 to-green-600 text-white p-4 shadow-md cursor-pointer select-none">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h1 className="text-xl font-extrabold tracking-wide">🛒 Divya Kirana Store</h1>
+                                <p className="text-xs text-green-100">Samay: {shopOpenTime} se {shopCloseTime} (Fast Delivery)</p>
+                            </div>
+                            <span className="text-[10px] bg-green-800 px-2 py-1 rounded text-green-200">Quick Store</span>
+                        </div>
                     </header>
 
-                    {/* Clean Navigation for Customers */}
-                    <nav className="flex bg-green-800 text-white p-2 justify-around text-sm font-semibold">
-                        <button onClick={() => setActiveTab('store')} className={`px-4 py-1 rounded ${activeTab === 'store' ? 'bg-green-600' : ''}`}>Store</button>
+                    {/* Navigation bar */}
+                    <nav className="flex bg-green-900 text-white p-2 justify-around text-xs font-semibold shadow-inner">
+                        <button onClick={() => setActiveTab('store')} className={`px-3 py-1 rounded transition ${activeTab === 'store' ? 'bg-green-600 shadow' : 'text-green-200'}`}>Store</button>
+                        <button onClick={() => setActiveTab('myorders')} className={`px-3 py-1 rounded transition ${activeTab === 'myorders' ? 'bg-green-600 shadow' : 'text-green-200'}`}>My Orders</button>
                         
-                        {/* Admin tabs appear only after successful PIN entry */}
                         {isAdminAuthenticated && (
                             <>
-                                <button onClick={() => setActiveTab('orders')} className={`px-2 py-1 rounded text-xs ${activeTab === 'orders' ? 'bg-green-600 font-bold' : ''}`}>Orders</button>
-                                <button onClick={() => setActiveTab('udhari')} className={`px-2 py-1 rounded text-xs ${activeTab === 'udhari' ? 'bg-green-600 font-bold' : ''}`}>Udhari</button>
-                                <button onClick={() => setActiveTab('rate')} className={`px-2 py-1 rounded text-xs ${activeTab === 'rate' ? 'bg-green-600 font-bold' : ''}`}>Rate</button>
-                                <button onClick={() => setActiveTab('settings')} className={`px-2 py-1 rounded text-xs ${activeTab === 'settings' ? 'bg-green-600 font-bold' : ''}`}>Settings</button>
+                                <button onClick={() => setActiveTab('orders')} className={`px-2 py-1 rounded bg-yellow-600 text-white font-bold`}>Owner Orders</button>
+                                <button onClick={() => setActiveTab('udhari')} className={`px-2 py-1 rounded bg-yellow-600 text-white font-bold`}>Udhari</button>
+                                <button onClick={() => setActiveTab('rate')} className={`px-2 py-1 rounded bg-yellow-600 text-white font-bold`}>Rate</button>
+                                <button onClick={() => setActiveTab('settings')} className={`px-2 py-1 rounded bg-yellow-600 text-white font-bold`}>Settings</button>
                             </>
                         )}
                     </nav>
 
-                    <main className="p-4 flex-grow mb-16">
-                        {/* STORE TAB */}
+                    <main className="p-4 flex-grow mb-16 bg-gray-50">
+                        {/* STORE TAB (Blinkit Style Search & Categories) */}
                         {activeTab === 'store' && (
                             <div>
-                                <h2 className="text-lg font-bold mb-3 text-gray-800">Saman ki Soochi</h2>
-                                <div className="space-y-3">
-                                    {items.map(item => (
-                                        <div key={item.id} className="flex justify-between items-center p-3 border rounded-lg shadow-sm bg-gray-50">
-                                            <div className="flex items-center space-x-3">
-                                                <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-md border" />
-                                                <div>
-                                                    <h3 className="font-semibold text-gray-800 text-sm">{item.name}</h3>
-                                                    <p className="text-green-600 font-bold text-sm">₹{item.price}</p>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                {cart[item.id] ? (
-                                                    <div className="flex items-center space-x-2">
-                                                        <button onClick={() => removeFromCart(item.id)} className="bg-red-500 text-white px-2 py-0.5 rounded font-bold">-</button>
-                                                        <span className="text-sm">{cart[item.id]}</span>
-                                                        <button onClick={() => addToCart(item.id)} className="bg-green-600 text-white px-2 py-0.5 rounded font-bold">+</button>
-                                                    </div>
-                                                ) : (
-                                                    <button onClick={() => addToCart(item.id)} className="bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold">Add</button>
-                                                )}
-                                            </div>
-                                        </div>
+                                {/* Search Bar */}
+                                <div className="mb-3">
+                                    <input 
+                                        type="text" 
+                                        placeholder="🔍 Saman khojein (Atta, Dal, Oil...)" 
+                                        value={searchTerm} 
+                                        onChange={(e) => setSearchTerm(e.target.value)} 
+                                        className="w-full p-2.5 border rounded-lg text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600"
+                                    />
+                                </div>
+
+                                {/* Category Filters */}
+                                <div className="flex space-x-2 overflow-x-auto pb-2 mb-3 text-xs">
+                                    {['All', 'Groceries', 'Household', 'Personal Care'].map(cat => (
+                                        <button 
+                                            key={cat} 
+                                            onClick={() => setSelectedCategory(cat)}
+                                            className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap shadow-sm transition ${selectedCategory === cat ? 'bg-green-700 text-white' : 'bg-white text-gray-700 border'}`}
+                                        >
+                                            {cat}
+                                        </button>
                                     ))}
                                 </div>
 
+                                {/* Items List */}
+                                <div className="space-y-3">
+                                    {filteredItems.length === 0 ? (
+                                        <p className="text-center text-gray-500 py-6 text-sm">Koi saman nahi mila.</p>
+                                    ) : (
+                                        filteredItems.map(item => (
+                                            <div key={item.id} className="flex justify-between items-center p-3 border rounded-xl shadow-sm bg-white hover:shadow-md transition">
+                                                <div className="flex items-center space-x-3">
+                                                    <img src={item.image} alt={item.name} className="w-14 h-14 object-cover rounded-lg border bg-gray-100" />
+                                                    <div>
+                                                        <span className="text-[10px] text-green-700 bg-green-50 px-1.5 py-0.5 rounded font-bold">{item.category}</span>
+                                                        <h3 className="font-bold text-gray-800 text-sm mt-0.5">{item.name}</h3>
+                                                        <p className="text-green-600 font-extrabold text-sm">₹{item.price}</p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    {cart[item.id] ? (
+                                                        <div className="flex items-center space-x-2 bg-green-50 p-1 rounded-lg border border-green-200">
+                                                            <button onClick={() => removeFromCart(item.id)} className="bg-red-500 text-white w-6 h-6 rounded flex items-center justify-center font-bold text-xs">-</button>
+                                                            <span className="text-sm font-bold text-green-800">{cart[item.id]}</span>
+                                                            <button onClick={() => addToCart(item.id)} className="bg-green-600 text-white w-6 h-6 rounded flex items-center justify-center font-bold text-xs">+</button>
+                                                        </div>
+                                                    ) : (
+                                                        <button onClick={() => addToCart(item.id)} className="bg-green-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow hover:bg-green-800">ADD</button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {/* Cart Checkout Section */}
                                 {Object.keys(cart).length > 0 && (
-                                    <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
-                                        <h3 className="font-bold text-green-800">Total: ₹{getTotalAmount()}</h3>
+                                    <div className="mt-6 p-4 bg-white border border-green-300 rounded-xl shadow-lg space-y-3">
+                                        <div className="flex justify-between items-center border-b pb-2">
+                                            <h3 className="font-extrabold text-green-800">Aapka Cart</h3>
+                                            <span className="font-bold text-green-700">Total: ₹{getTotalAmount()}</span>
+                                        </div>
                                         
                                         <div className="space-y-2 text-xs">
-                                            <input type="text" placeholder="Aapka Naam" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full p-2 border rounded bg-white"/>
-                                            <input type="text" placeholder="Mobile Number" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full p-2 border rounded bg-white"/>
+                                            <input type="text" placeholder="Aapka Naam" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
+                                            <input type="text" placeholder="Mobile Number (Order track karne ke liye)" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
                                             
                                             <div>
-                                                <label className="font-semibold text-gray-600">Kis Samay Saman Chahiye?</label>
-                                                <input type="time" value={customerTime} onChange={(e) => setCustomerTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
+                                                <label className="font-semibold text-gray-600">Kis Samay Saman Lena Hai?</label>
+                                                <input type="time" value={customerTime} onChange={(e) => setCustomerTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-gray-50"/>
                                             </div>
 
                                             <div>
-                                                <label className="font-semibold text-gray-600">Payment Ka Tarika (Payment Mode)</label>
-                                                <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white font-semibold text-green-700">
-                                                    <option value="Cash">Cash (Nagad Dukan par denge)</option>
+                                                <label className="font-semibold text-gray-600">Payment Ka Tarika</label>
+                                                <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} className="w-full p-2 border rounded mt-1 bg-gray-50 font-bold text-green-700">
+                                                    <option value="Cash">Cash (Nagad dukan par)</option>
                                                     <option value="UPI">Online UPI Payment</option>
                                                     <option value="Udhari">Udhari Khata (Baad mein denge)</option>
                                                 </select>
@@ -246,21 +309,21 @@
                                         </div>
 
                                         {paymentMode === "UPI" && (
-                                            <div className="text-xs bg-white p-3 rounded border text-center space-y-1">
-                                                <p className="font-semibold text-gray-700">💳 Scan & Pay via UPI:</p>
+                                            <div className="text-xs bg-green-50 p-3 rounded-lg border border-green-200 text-center space-y-1">
+                                                <p className="font-bold text-gray-700">💳 Scan & Pay via UPI:</p>
                                                 <p className="text-green-700 font-mono font-bold text-sm">{upiId}</p>
-                                                <div className="bg-gray-100 p-2 rounded text-[11px] text-gray-500">QR Code / UPI ID par payment karke WhatsApp order bhejein</div>
                                             </div>
                                         )}
 
-                                        <button onClick={placeOrder} className="w-full bg-green-600 text-white py-2 rounded-lg font-bold shadow text-sm hover:bg-green-700">
+                                        <button onClick={placeOrder} className="w-full bg-green-600 text-white py-2.5 rounded-xl font-extrabold shadow-md text-sm hover:bg-green-700 transition">
                                             WhatsApp par Order Bhejein & Bill Banayein 📲
                                         </button>
                                     </div>
                                 )}
 
+                                {/* Bill PDF Display */}
                                 {lastBill && (
-                                    <div className="mt-6 bg-white p-4 border rounded-lg shadow-sm space-y-3">
+                                    <div className="mt-6 bg-white p-4 border rounded-xl shadow-md space-y-3">
                                         <div className="text-center border-b pb-2">
                                             <h3 className="font-bold text-base text-green-700">Divya Kirana Store - Bill</h3>
                                             <p className="text-xs text-gray-500">Grahak: {lastBill.customerName} | Samay: {lastBill.pickupTime}</p>
@@ -278,7 +341,7 @@
                                             <span>Kul Yog (Total):</span>
                                             <span className="text-green-700">₹{lastBill.total}</span>
                                         </div>
-                                        <button onClick={() => window.print()} className="w-full bg-gray-800 text-white py-2 rounded font-bold text-xs">
+                                        <button onClick={() => window.print()} className="w-full bg-gray-800 text-white py-2 rounded-lg font-bold text-xs hover:bg-black transition">
                                             🖨️ Bill Print / Download PDF
                                         </button>
                                     </div>
@@ -286,7 +349,52 @@
                             </div>
                         )}
 
-                        {/* ORDERS / OWNER DATA TAB (Protected) */}
+                        {/* CUSTOMER ORDER HISTORY TAB ("My Orders") */}
+                        {activeTab === 'myorders' && (
+                            <div className="space-y-4">
+                                <h2 className="text-base font-extrabold text-gray-800">Mere Purane Orders (My Orders)</h2>
+                                <p className="text-xs text-gray-500">Apna mobile number daal kar apne saare purane orders aur bills dekhein:</p>
+                                
+                                <div className="flex space-x-2">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Apna Mobile Number Dalein" 
+                                        value={customerSearchPhone} 
+                                        onChange={(e) => setCustomerSearchPhone(e.target.value)} 
+                                        className="flex-grow p-2 border rounded-lg text-xs bg-white"
+                                    />
+                                    <button onClick={checkMyOrders} className="bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow">
+                                        Khojein
+                                    </button>
+                                </div>
+
+                                <div className="space-y-3 mt-4">
+                                    {myOldOrders.length === 0 ? (
+                                        <p className="text-xs text-gray-500 text-center py-6">Koi order history nahi mili. Pehle upar diye box mein number search karein.</p>
+                                    ) : (
+                                        myOldOrders.map(ord => (
+                                            <div key={ord.id} className="bg-white p-3 border rounded-xl shadow-sm text-xs space-y-2">
+                                                <div className="flex justify-between font-bold text-green-700 border-b pb-1">
+                                                    <span>Tarikh: {ord.date} ({ord.time})</span>
+                                                    <span>₹{ord.total}</span>
+                                                </div>
+                                                <p className="text-gray-600">Lena tha samay: <span className="font-semibold">{ord.pickupTime}</span> | Mode: <span className="font-bold text-blue-600">{ord.paymentMode}</span></p>
+                                                <div className="bg-gray-50 p-2 rounded border space-y-1">
+                                                    {ord.items.map((it, idx) => (
+                                                        <div key={idx} className="flex justify-between text-gray-700">
+                                                            <span>{it.name} (x{it.qty})</span>
+                                                            <span>₹{it.subtotal}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* OWNER ORDERS DATA */}
                         {activeTab === 'orders' && isAdminAuthenticated && (
                             <div>
                                 <h2 className="text-lg font-bold mb-2 text-gray-800">Owner Data: Saare Orders</h2>
@@ -295,7 +403,7 @@
                                 ) : (
                                     <div className="space-y-3">
                                         {ordersList.map(ord => (
-                                            <div key={ord.id} className="bg-gray-50 p-3 border rounded-lg text-xs space-y-1 shadow-sm">
+                                            <div key={ord.id} className="bg-white p-3 border rounded-xl text-xs space-y-1 shadow-sm">
                                                 <div className="flex justify-between font-bold text-gray-800">
                                                     <span>{ord.customerName} ({ord.customerPhone})</span>
                                                     <span className="text-green-700">₹{ord.total}</span>
@@ -313,16 +421,16 @@
                             </div>
                         )}
 
-                        {/* UDHARI KHATA TAB (Protected) */}
+                        {/* UDHARI KHATA */}
                         {activeTab === 'udhari' && isAdminAuthenticated && (
                             <div>
-                                <h2 className="text-lg font-bold mb-2 text-gray-800">Udhari Khata (Hisab-Kitab)</h2>
-                                <div className="bg-gray-50 p-3 border rounded-lg space-y-2 mb-4 text-xs">
+                                <h2 className="text-lg font-bold mb-2 text-gray-800">Udhari Khata</h2>
+                                <div className="bg-white p-3 border rounded-xl space-y-2 mb-4 text-xs shadow-sm">
                                     <h3 className="font-bold text-gray-700">Naya Udhari Jodein</h3>
-                                    <input type="text" placeholder="Grahak ka Naam" value={newUdhariName} onChange={(e) => setNewUdhariName(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
-                                    <input type="text" placeholder="Mobile Number" value={newUdhariPhone} onChange={(e) => setNewUdhariPhone(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
-                                    <input type="number" placeholder="Kitna Amount Baaki hai? (₹)" value={newUdhariAmount} onChange={(e) => setNewUdhariAmount(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
-                                    <input type="text" placeholder="Vivarann" value={newUdhariNote} onChange={(e) => setNewUdhariNote(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
+                                    <input type="text" placeholder="Grahak ka Naam" value={newUdhariName} onChange={(e) => setNewUdhariName(e.target.value)} className="w-full p-1.5 border rounded bg-gray-50"/>
+                                    <input type="text" placeholder="Mobile Number" value={newUdhariPhone} onChange={(e) => setNewUdhariPhone(e.target.value)} className="w-full p-1.5 border rounded bg-gray-50"/>
+                                    <input type="number" placeholder="Amount (₹)" value={newUdhariAmount} onChange={(e) => setNewUdhariAmount(e.target.value)} className="w-full p-1.5 border rounded bg-gray-50"/>
+                                    <input type="text" placeholder="Vivarann" value={newUdhariNote} onChange={(e) => setNewUdhariNote(e.target.value)} className="w-full p-1.5 border rounded bg-gray-50"/>
                                     <button onClick={() => {
                                         if(newUdhariName && newUdhariAmount) {
                                             setUdhariList([...udhariList, { id: Date.now(), name: newUdhariName, phone: newUdhariPhone, amount: parseFloat(newUdhariAmount), note: newUdhariNote }]);
@@ -334,7 +442,7 @@
 
                                 <div className="space-y-2">
                                     {udhariList.map(udh => (
-                                        <div key={udh.id} className="bg-white p-3 border rounded-lg shadow-sm flex justify-between items-center text-xs">
+                                        <div key={udh.id} className="bg-white p-3 border rounded-xl shadow-sm flex justify-between items-center text-xs">
                                             <div>
                                                 <h3 className="font-bold text-gray-800">{udh.name} ({udh.phone})</h3>
                                                 <p className="text-gray-500">{udh.note}</p>
@@ -351,18 +459,23 @@
                             </div>
                         )}
 
-                        {/* RATE MANAGEMENT TAB (Protected) */}
+                        {/* RATE MANAGEMENT */}
                         {activeTab === 'rate' && isAdminAuthenticated && (
                             <div>
                                 <h2 className="text-lg font-bold mb-2 text-gray-800">Rate & Items Management</h2>
-                                <div className="space-y-3 bg-gray-50 p-4 rounded-lg border text-xs">
-                                    <input type="text" placeholder="Item ka Naam" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-2 border rounded bg-white"/>
-                                    <input type="number" placeholder="Rate (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-2 border rounded bg-white"/>
-                                    <input type="text" placeholder="Image URL (Photo Link)" value={newItemImg} onChange={(e) => setNewItemImg(e.target.value)} className="w-full p-2 border rounded bg-white"/>
+                                <div className="space-y-3 bg-white p-4 rounded-xl border text-xs shadow-sm">
+                                    <input type="text" placeholder="Item ka Naam" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
+                                    <input type="number" placeholder="Rate (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
+                                    <select value={newItemCat} onChange={(e) => setNewItemCat(e.target.value)} className="w-full p-2 border rounded bg-gray-50">
+                                        <option value="Groceries">Groceries</option>
+                                        <option value="Household">Household</option>
+                                        <option value="Personal Care">Personal Care</option>
+                                    </select>
+                                    <input type="text" placeholder="Image URL" value={newItemImg} onChange={(e) => setNewItemImg(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
                                     <button onClick={() => {
                                         if(newItemName && newItemPrice) {
                                             const imgUrl = newItemImg || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=80";
-                                            setItems([...items, { id: items.length + 1, name: newItemName, price: parseFloat(newItemPrice), image: imgUrl }]);
+                                            setItems([...items, { id: items.length + 1, name: newItemName, price: parseFloat(newItemPrice), category: newItemCat, image: imgUrl }]);
                                             setNewItemName(""); setNewItemPrice(""); setNewItemImg("");
                                             alert("Naya item jud gaya!");
                                         } else { alert("Naam aur price bharein."); }
@@ -371,26 +484,26 @@
                             </div>
                         )}
 
-                        {/* SETTINGS TAB (Protected) */}
+                        {/* SETTINGS */}
                         {activeTab === 'settings' && isAdminAuthenticated && (
                             <div>
                                 <h2 className="text-lg font-bold mb-2 text-gray-800">Dukaan ki Settings</h2>
-                                <div className="space-y-3 bg-gray-50 p-4 rounded-lg border text-xs">
+                                <div className="space-y-3 bg-white p-4 rounded-xl border text-xs shadow-sm">
                                     <div>
                                         <label className="font-semibold text-gray-600">Dukaan Khulne ka Samay</label>
-                                        <input type="time" value={shopOpenTime} onChange={(e) => setShopOpenTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
+                                        <input type="time" value={shopOpenTime} onChange={(e) => setShopOpenTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-gray-50"/>
                                     </div>
                                     <div>
                                         <label className="font-semibold text-gray-600">Dukaan Band Hone ka Samay</label>
-                                        <input type="time" value={shopCloseTime} onChange={(e) => setShopCloseTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
+                                        <input type="time" value={shopCloseTime} onChange={(e) => setShopCloseTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-gray-50"/>
                                     </div>
                                     <div>
                                         <label className="font-semibold text-gray-600">Owner WhatsApp Number</label>
-                                        <input type="text" value={whatsappNo} onChange={(e) => setWhatsappNo(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
+                                        <input type="text" value={whatsappNo} onChange={(e) => setWhatsappNo(e.target.value)} className="w-full p-2 border rounded mt-1 bg-gray-50"/>
                                     </div>
                                     <div>
                                         <label className="font-semibold text-gray-600">UPI ID</label>
-                                        <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
+                                        <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} className="w-full p-2 border rounded mt-1 bg-gray-50"/>
                                     </div>
                                     <button onClick={() => alert("Settings Save Ho Gayi!")} className="w-full bg-green-700 text-white py-2 rounded font-bold">Save Settings</button>
                                 </div>
