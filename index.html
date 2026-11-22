@@ -476,6 +476,38 @@
                 alert(`✅ Payment Mode Saved as '${paymentText}'! Order status updated to Completed.`);
             };
 
+            // Customer pays pending Udhari online directly from My Orders
+            const payUdhariOnline = (phone, custName) => {
+                const custUdhari = udhariList.find(u => u.phone === phone);
+                if (!custUdhari || custUdhari.amount <= 0) {
+                    alert("Aapka koi udhar baki nahi hai!");
+                    return;
+                }
+                let amt = custUdhari.amount;
+                // Open UPI payment app
+                openUpiApp('gpay', amt);
+
+                // After payment intent, prompt to clear udhar in ledger
+                setTimeout(() => {
+                    if (confirm(`Kya aapka ₹${amt} ka online payment ho gaya? Ok dabane par aapka udhar clear ho jayega.`)) {
+                        const currentDate = new Date().toLocaleDateString('en-IN');
+                        const updatedUdh = udhariList.map(u => {
+                            if (u.phone === phone) {
+                                return {
+                                    ...u,
+                                    amount: 0,
+                                    history: [{ date: currentDate, type: "Online UPI Payment Cleared", amount: amt, mode: "Online UPI" }, ...u.history]
+                                };
+                            }
+                            return u;
+                        });
+                        setUdhariList(updatedUdh);
+                        alert("✅ Aapka Udhari Khata clear ho gaya hai! Dhanyawad.");
+                        checkMyOrders();
+                    }
+                }, 2000);
+            };
+
             const categories = [
                 { name: 'All', icon: '🏪' },
                 { name: 'Groceries', icon: '🌾' },
@@ -688,6 +720,32 @@
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* UDHARI AMOUNT SUMMARY WIDGET IN MY ORDERS */}
+                                {customerSearchPhone && customerSearchPhone.length >= 10 && (
+                                    (() => {
+                                        const custUdh = udhariList.find(u => u.phone === customerSearchPhone);
+                                        const bakiAmt = custUdh ? custUdh.amount : 0;
+                                        return (
+                                            <div className="bg-red-50 p-4 rounded-2xl border-2 border-red-300 shadow-sm space-y-2 text-xs">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-extrabold text-red-900 text-sm">💳 Aapka Total Pending Udhari:</span>
+                                                    <span className="font-black text-red-700 text-base">₹{bakiAmt}</span>
+                                                </div>
+                                                {bakiAmt > 0 ? (
+                                                    <div>
+                                                        <p className="text-gray-700 mb-2">Aap apna yeh baki udhar yahan se seedha Online UPI payment karke chuka sakte hain:</p>
+                                                        <button onClick={() => payUdhariOnline(customerSearchPhone)} className="w-full bg-blue-700 text-white py-2.5 rounded-xl font-black shadow-md hover:bg-blue-800">
+                                                            💳 Pay Udhari Online via UPI (₹{bakiAmt})
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-green-700 font-bold">🎉 Aapka koi bhi udhar baki nahi hai! Sab clear hai.</p>
+                                                )}
+                                            </div>
+                                        );
+                                    })()
+                                )}
 
                                 {myOldOrders && myOldOrders.length === 0 && (
                                     <div className="bg-white p-6 rounded-2xl border text-center text-xs text-gray-500">
@@ -1014,8 +1072,8 @@
                                                     <p className="font-bold text-gray-900">{hist.type}</p>
                                                     <p className="text-[10px] text-gray-500">{hist.date} • {hist.mode}</p>
                                                 </div>
-                                                <span className={`font-black ${hist.type.includes('Received') ? 'text-green-700' : 'text-red-600'}`}>
-                                                    {hist.type.includes('Received') ? `-₹${hist.amount}` : `+₹${hist.amount}`}
+                                                <span className={`font-black ${hist.type.includes('Received') || hist.type.includes('Cleared') ? 'text-green-700' : 'text-red-600'}`}>
+                                                    {hist.type.includes('Received') || hist.type.includes('Cleared') ? `-₹${hist.amount}` : `+₹${hist.amount}`}
                                                 </span>
                                             </div>
                                         ))}
