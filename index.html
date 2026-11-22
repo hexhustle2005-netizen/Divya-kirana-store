@@ -13,8 +13,8 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @media print {
             body * { visibility: hidden; }
-            #printable-invoice, #printable-invoice *, #printable-statement, #printable-statement * { visibility: visible; }
-            #printable-invoice, #printable-statement {
+            #printable-invoice, #printable-invoice * { visibility: visible; }
+            #printable-invoice {
                 position: absolute;
                 left: 0;
                 top: 0;
@@ -361,7 +361,7 @@
                             ...ord,
                             total: amt,
                             status: "Ready",
-                            ownerBillImage: ownerBillImage, // Owner uploaded bill photo saved here!
+                            ownerBillImage: ownerBillImage,
                             items: [
                                 {
                                     name: detailedDescription,
