@@ -127,6 +127,7 @@
             const [parchaName, setParchaName] = React.useState("");
             const [parchaPhone, setParchaPhone] = React.useState("");
             const [parchaText, setParchaText] = React.useState("");
+            const [parchaExpectedPrice, setParchaExpectedPrice] = React.useState("");
             const [parchaImage, setParchaImage] = React.useState(null);
             
             // Owner Price & Items Update State for Parcha Order
@@ -181,7 +182,7 @@
                 }, 0);
             };
 
-            // Handle Image Upload with High Quality Base64 Encoding
+            // Handle Image Upload to Base64
             const handleImageUpload = (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -287,7 +288,7 @@
                 alert("🎉 Order Successfully Placed!");
             };
 
-            // Submit Parcha / Photo Bulk Order (Starts as Price Pending so Owner sees it)
+            // Submit Parcha / Photo Bulk Order with Expected Items & Price
             const placeParchaOrder = () => {
                 if (!parchaName || !parchaPhone) {
                     alert("Kripya apna Naam aur Mobile Number zaroor dalein!");
@@ -300,6 +301,7 @@
 
                 const currentDate = new Date().toLocaleDateString('en-IN');
                 const currentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                const expPrice = parseFloat(parchaExpectedPrice) || 0;
 
                 let parchaOrderDetails = {
                     id: Date.now(),
@@ -308,25 +310,27 @@
                     customerName: parchaName,
                     customerPhone: parchaPhone,
                     pickupTime: "As Soon As Ready",
-                    paymentMode: "Cash",
-                    status: "Price Pending", // Crucial so owner sees it in Live Orders Queue
+                    paymentMode: "Pending Payment",
+                    status: "Price Pending",
                     date: currentDate,
                     time: currentTime,
                     parchaText: parchaText || "Photo Parcha Uploaded",
+                    parchaExpectedPrice: expPrice,
                     parchaImage: parchaImage,
                     items: [
-                        { name: parchaText ? `Parcha List: ${parchaText}` : "Uploaded Parcha Photo Items", qty: 1, price: 0, subtotal: 0 }
+                        { name: parchaText ? `Parcha List: ${parchaText}` : "Uploaded Parcha Photo Items", qty: 1, price: expPrice, subtotal: expPrice }
                     ],
-                    total: 0
+                    total: expPrice
                 };
 
                 setOrdersList([parchaOrderDetails, ...ordersList]);
                 setParchaName("");
                 setParchaPhone("");
                 setParchaText("");
+                setParchaExpectedPrice("");
                 setParchaImage(null);
                 setShowParchaModal(false);
-                alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price update karne ke baad aapko 'My Orders' mein bill dikhega.");
+                alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price confirm karke bill ready karega.");
             };
 
             // Owner Updates Price & Items for Parcha Order -> Sends WhatsApp Alert to Customer
@@ -501,7 +505,7 @@
                                     className="w-full bg-yellow-400 text-gray-900 py-2.5 px-3 rounded-xl font-black text-xs shadow-md flex items-center justify-center space-x-2 hover:bg-yellow-300 transition border border-yellow-500"
                                 >
                                     <span>📸</span>
-                                    <span>Bahut Saman Hai? Parcha Photo / List Upload Karein</span>
+                                    <span>Bahut Saman Hai? Parcha & Price Likhar Upload Karein</span>
                                 </button>
                             </div>
                         )}
@@ -675,8 +679,11 @@
                                         </div>
                                         
                                         {ord.status === 'Price Pending' ? (
-                                            <div className="bg-orange-50 p-3 rounded-xl border border-orange-200 text-orange-900 font-semibold">
-                                                ⏳ Aapka Parcha order owner ke paas hai. Owner price update kar rahe hain.
+                                            <div className="bg-orange-50 p-3 rounded-xl border border-orange-200 text-orange-900 font-semibold space-y-1">
+                                                <p>⏳ Aapka Parcha order owner ke paas hai. Owner price confirm kar rahe hain.</p>
+                                                {ord.parchaExpectedPrice > 0 && (
+                                                    <p className="text-green-800 font-bold">Aapka Likha Price: ₹{ord.parchaExpectedPrice}</p>
+                                                )}
                                             </div>
                                         ) : (
                                             <div className="space-y-2">
@@ -836,7 +843,7 @@
                                             setNewItemName(""); setNewItemWeight(""); setNewItemPrice(""); setNewItemImg("");
                                             alert("Item added successfully!");
                                         } else { alert("Please enter Name and Price."); }
-                                    }} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-bold">Add Item</button>
+                                    }} className="w-full bg-green-700 text-white py-2.5 rounded-bold">Add Item</button>
                                 </div>
                             </div>
                         )}
@@ -871,8 +878,8 @@
                             <div className="bg-white w-full max-w-sm rounded-3xl p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
                                 <div className="flex justify-between items-center border-b pb-2.5">
                                     <div>
-                                        <h3 className="font-black text-base text-green-800">📸 Parcha Photo / Bulk List Order</h3>
-                                        <p className="text-[11px] text-gray-500">Apne saman ki list likhein ya photo upload karein</p>
+                                        <h3 className="font-black text-base text-green-800">📸 Parcha & Expected Price</h3>
+                                        <p className="text-[11px] text-gray-500">Saman likhein, price dalein ya photo upload karein</p>
                                     </div>
                                     <button onClick={() => setShowParchaModal(false)} className="text-gray-400 font-bold text-lg px-2">✕</button>
                                 </div>
@@ -890,14 +897,25 @@
                                     </div>
 
                                     <div>
-                                        <label className="font-bold text-gray-700 block mb-1">✍️ Saman ki List Likhein (Optional):</label>
+                                        <label className="font-bold text-gray-700 block mb-1">✍️ Saman ki List Likhein:</label>
                                         <textarea 
                                             rows="2" 
-                                            placeholder="Jaise: 5kg Chawal, 2kg Dal, 1L Sarso Tel..." 
+                                            placeholder="Jaise: 5kg Chawal, 2kg Dal..." 
                                             value={parchaText} 
                                             onChange={(e) => setParchaText(e.target.value)}
                                             className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"
                                         ></textarea>
+                                    </div>
+
+                                    <div>
+                                        <label className="font-bold text-gray-700 block mb-1">💰 Approximate Total Price (₹) [Optional]:</label>
+                                        <input 
+                                            type="number" 
+                                            placeholder="Jaise: 500 ( अंदाज़ा )" 
+                                            value={parchaExpectedPrice} 
+                                            onChange={(e) => setParchaExpectedPrice(e.target.value)}
+                                            className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"
+                                        />
                                     </div>
 
                                     <div className="bg-green-50 p-2.5 rounded-xl border border-dashed border-green-600 text-center space-y-1">
@@ -945,6 +963,10 @@
                                         <h4 className="font-black text-yellow-900">📋 Customer Parcha / Saman List:</h4>
                                         <p className="bg-white p-2 rounded border text-gray-800 whitespace-pre-line">{selectedOwnerOrder.parchaText}</p>
                                         
+                                        {selectedOwnerOrder.parchaExpectedPrice > 0 && (
+                                            <p className="font-bold text-green-800">Customer Expected Price: ₹{selectedOwnerOrder.parchaExpectedPrice}</p>
+                                        )}
+
                                         {selectedOwnerOrder.parchaImage && (
                                             <div>
                                                 <p className="font-bold text-gray-700 mb-1">Uploaded Photo:</p>
@@ -953,7 +975,7 @@
                                         )}
 
                                         <div className="pt-2 border-t border-yellow-300 space-y-2">
-                                            <label className="font-black text-green-900 block">✍️ Saman ka Kul Price Likhein (₹):</label>
+                                            <label className="font-black text-green-900 block">✍️ Final Price Confirm Karein (₹):</label>
                                             <input 
                                                 type="number" 
                                                 placeholder="Total Bill Amount (e.g. 850)" 
