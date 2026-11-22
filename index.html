@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Divya Kirana Store</title>
-    <!-- React & Tailwind CSS -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -40,21 +38,20 @@
         };
         
         let db = null;
-        try {
+        if (firebaseConfig.databaseURL) {
             if (!firebase.apps.length) {
                 firebase.initializeApp(firebaseConfig);
             }
             db = firebase.database();
-        } catch (e) {
-            console.log("Firebase Init Error:", e);
         }
 
         function App() {
             const [activeTab, setActiveTab] = React.useState('store');
+            const [showCheckoutModal, setShowCheckoutModal] = React.useState(false);
+            const [showParchaModal, setShowParchaModal] = React.useState(false);
             const [isAdminAuthenticated, setIsAdminAuthenticated] = React.useState(false);
             const ADMIN_PIN = "728084";
 
-            // Title click counter for Secret Admin Access
             const [titleClicks, setTitleClicks] = React.useState(0);
             const handleTitleClick = () => {
                 const newClicks = titleClicks + 1;
@@ -67,7 +64,6 @@
                         const enteredPin = prompt("🔒 Admin PIN Dalein:");
                         if (enteredPin === ADMIN_PIN) {
                             setIsAdminAuthenticated(true);
-                            setActiveTab('admin');
                             alert("✅ Admin Access Successful!");
                         } else if (enteredPin !== null) {
                             alert("❌ Galat PIN!");
@@ -95,7 +91,6 @@
             const [ordersList, setOrdersList] = React.useState([]);
             const [udhariList, setUdhariList] = React.useState([]);
 
-            // Cloud Sync
             React.useEffect(() => {
                 if (db) {
                     db.ref('divya_store/items').on('value', (snapshot) => {
@@ -111,7 +106,7 @@
                         const val = snapshot.val();
                         if (val) setUdhariList(val);
                         else {
-                            const initialUdhari = [{ id: 1, name: "Ramesh Kumar", phone: "9876543210", amount: 450, note: "Chawal baki", history: [] }];
+                            const initialUdhari = [{ id: 1, name: "Ramesh Kumar", phone: "9876543210", amount: 450, note: "Chawal aur Dal baki", history: [{ date: "24/11/2026", type: "Udhari Liya", amount: 450, mode: "Udhari" }] }];
                             db.ref('divya_store/udhari').set(initialUdhari);
                         }
                     });
@@ -124,20 +119,19 @@
                 }
             };
 
-            const [cart, setCart] = React.useState({});
-            const [showCheckoutModal, setShowCheckoutModal] = React.useState(false);
-            const [showParchaModal, setShowParchaModal] = React.useState(false);
+            const [searchTerm, setSearchTerm] = React.useState("");
             const [selectedCategory, setSelectedCategory] = React.useState("All");
-
+            const [cart, setCart] = React.useState({});
+            const [customerTime, setCustomerTime] = React.useState("10:00");
             const [customerName, setCustomerName] = React.useState("");
             const [customerPhone, setCustomerPhone] = React.useState("");
-            const [customerTime, setCustomerTime] = React.useState("10:00");
             const [paymentMode, setPaymentMode] = React.useState("Cash");
             const [checkoutUtrPin, setCheckoutUtrPin] = React.useState("");
 
             const [parchaName, setParchaName] = React.useState("");
             const [parchaPhone, setParchaPhone] = React.useState("");
             const [parchaText, setParchaText] = React.useState("");
+            const [parchaExpectedPrice, setParchaExpectedPrice] = React.useState("");
 
             const addToCart = (id) => setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
             const removeFromCart = (id) => {
@@ -202,17 +196,18 @@
                 setCustomerPhone("");
                 setCheckoutUtrPin("");
                 setShowCheckoutModal(false);
-                setActiveTab('orders');
+                setActiveTab('store');
                 alert("🎉 Order Successfully Placed & Saved to Cloud!");
             };
 
             const placeParchaOrder = () => {
                 if (!parchaName || !parchaPhone) {
-                    alert("Kripya apna Naam aur Mobile Number likhein!");
+                    alert("Kripya apna Naam aur Mobile Number zaroor dalein!");
                     return;
                 }
                 const currentDate = new Date().toLocaleDateString('en-IN');
                 const currentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                const expPrice = parseFloat(parchaExpectedPrice) || 0;
 
                 let parchaOrderDetails = {
                     id: Date.now(),
@@ -225,9 +220,10 @@
                     status: "Price Pending",
                     date: currentDate,
                     time: currentTime,
-                    parchaText: parchaText || "Parcha Uploaded",
-                    items: [{ name: parchaText || "Parcha List", qty: 1, price: 0, subtotal: 0 }],
-                    total: 0
+                    parchaText: parchaText || "Parcha Photo Uploaded",
+                    parchaExpectedPrice: expPrice,
+                    items: [{ name: parchaText || "Parcha Photo", qty: 1, price: expPrice, subtotal: expPrice }],
+                    total: expPrice
                 };
 
                 const newOrders = [parchaOrderDetails, ...ordersList];
@@ -237,11 +233,14 @@
                 setParchaName("");
                 setParchaPhone("");
                 setParchaText("");
+                setParchaExpectedPrice("");
                 setShowParchaModal(false);
                 alert("🎉 Parcha Order bhej diya gaya hai!");
             };
 
-            const filteredItems = selectedCategory === "All" ? items : items.filter(i => i.category === selectedCategory);
+            const filteredItems = selectedCategory === "All" 
+                ? items.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                : items.filter(item => item.category === selectedCategory && item.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
             return (
                 <div className="min-h-screen pb-12">
@@ -254,7 +253,7 @@
                                 <button onClick={() => setActiveTab('store')} className={`px-3 py-1 rounded text-sm ${activeTab === 'store' ? 'bg-white text-green-700 font-bold' : 'bg-green-600'}`}>Store</button>
                                 <button onClick={() => setActiveTab('orders')} className={`px-3 py-1 rounded text-sm ${activeTab === 'orders' ? 'bg-white text-green-700 font-bold' : 'bg-green-600'}`}>Orders</button>
                                 {isAdminAuthenticated && (
-                                    <button onClick={() => setActiveTab('admin')} className="px-3 py-1 rounded text-sm bg-yellow-500 text-black font-bold">Admin</button>
+                                    <button onClick={() => setActiveTab('admin')} className={`px-3 py-1 rounded text-sm bg-yellow-500 text-black font-bold`}>Admin Dashboard</button>
                                 )}
                             </div>
                         </div>
@@ -271,6 +270,10 @@
                                     <button onClick={() => setShowParchaModal(true)} className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-orange-600">
                                         📝 Upload Parcha
                                     </button>
+                                </div>
+
+                                <div className="mb-4">
+                                    <input type="text" placeholder="🔍 Search items (Atta, Oil, DAP...)" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full border p-2.5 rounded-lg shadow-sm" />
                                 </div>
 
                                 <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
@@ -320,7 +323,7 @@
 
                         {activeTab === 'orders' && (
                             <div className="bg-white p-4 rounded-lg shadow">
-                                <h2 className="text-xl font-bold mb-4 text-green-800">📦 All Orders List</h2>
+                                <h2 className="text-xl font-bold mb-4 text-green-800">📦 Customer Orders & Tracking</h2>
                                 {ordersList.length === 0 ? (
                                     <p className="text-gray-500">Koi order nahi mila.</p>
                                 ) : (
@@ -388,7 +391,7 @@
                             <div className="bg-white p-5 rounded-lg max-w-md w-full shadow-lg">
                                 <h3 className="text-lg font-bold mb-3 text-orange-600">📝 Upload Parcha Order</h3>
                                 <input type="text" placeholder="Aapka Naam" value={parchaName} onChange={e => setParchaName(e.target.value)} className="w-full border p-2 rounded mb-3" />
-                                <input type="text" placeholder="Mobile Number" value={parchaPhone} onChange={e => setParchaPhone(e.target.value)} className="w-full border p-2 rounded mb-3" />
+                                <input type="text" placeholder="Mobile Number" value={parchaPhone} onChange={e => setParcahPhone ? setParchaPhone(e.target.value) : setParchaPhone(e.target.value)} className="w-full border p-2 rounded mb-3" />
                                 <textarea placeholder="Parcha ki list yahan likhein..." value={parchaText} onChange={e => setParchaText(e.target.value)} className="w-full border p-2 rounded mb-3"></textarea>
                                 <div className="flex justify-end gap-2 mt-4">
                                     <button onClick={() => setShowParchaModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
