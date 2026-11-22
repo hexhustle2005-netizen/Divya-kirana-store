@@ -46,13 +46,26 @@
             const [shopOpenTime, setShopOpenTime] = React.useState("08:00");
             const [shopCloseTime, setShopCloseTime] = React.useState("20:00");
 
-            // Items list with Categories and Images (Blinkit style)
+            // Expanded Items list including Khad, Beej, Hardware, Pattal, Pashupalan
             const [items, setItems] = React.useState([
+                // Groceries
                 { id: 1, name: "Aashirvaad Atta (10kg)", price: 420, category: "Groceries", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80" },
                 { id: 2, name: "Fortune Sunflower Oil (1L)", price: 135, category: "Groceries", image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80" },
                 { id: 3, name: "Tata Salt (1kg)", price: 28, category: "Groceries", image: "https://images.unsplash.com/photo-1518110991417-010777ea462f?auto=format&fit=crop&w=300&q=80" },
-                { id: 4, name: "Surf Excel Detergent (1kg)", price: 140, category: "Household", image: "https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?auto=format&fit=crop&w=300&q=80" },
-                { id: 5, name: "Colgate Toothpaste", price: 95, category: "Personal Care", image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=300&q=80" }
+                // Khad & Beej
+                { id: 4, name: "DAP Khaad (50kg Bag)", price: 1350, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&w=300&q=80" },
+                { id: 5, name: "Urea Khaad (45kg Bag)", price: 266, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=300&q=80" },
+                { id: 6, name: "Gehu ka Beej (Certified Wheat Seed 40kg)", price: 1400, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=300&q=80" },
+                // Hardware
+                { id: 7, name: "Lohe ki Kil (Iron Nails 1kg)", price: 80, category: "Hardware", image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80" },
+                { id: 8, name: "Hathoda (Hammer)", price: 180, category: "Hardware", image: "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=300&q=80" },
+                { id: 9, name: "Plier (Pakkad)", price: 220, category: "Hardware", image: "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?auto=format&fit=crop&w=300&q=80" },
+                // Pattal & Glass
+                { id: 10, name: "Disposable Thali / Pattal (Pack of 50)", price: 110, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=300&q=80" },
+                { id: 11, name: "Paper Glass (Pack of 100)", price: 70, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1516594798947-e65505dbb29d?auto=format&fit=crop&w=300&q=80" },
+                // Pashupalan
+                { id: 12, name: "Pashu Aahar / Cattle Feed (50kg)", price: 1250, category: "Pashupalan", image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=300&q=80" },
+                { id: 13, name: "Mineral Mixture for Cattle (1kg)", price: 150, category: "Pashupalan", image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=300&q=80" }
             ]);
 
             const [searchTerm, setSearchTerm] = React.useState("");
@@ -201,9 +214,9 @@
                         <div className="flex justify-between items-center">
                             <div>
                                 <h1 className="text-xl font-extrabold tracking-wide">🛒 Divya Kirana Store</h1>
-                                <p className="text-xs text-green-100">Samay: {shopOpenTime} se {shopCloseTime} (Fast Delivery)</p>
+                                <p className="text-xs text-green-100">Samay: {shopOpenTime} se {shopCloseTime} (General & Agri Store)</p>
                             </div>
-                            <span className="text-[10px] bg-green-800 px-2 py-1 rounded text-green-200">Quick Store</span>
+                            <span className="text-[10px] bg-green-800 px-2 py-1 rounded text-green-200">All-in-One</span>
                         </div>
                     </header>
 
@@ -223,14 +236,14 @@
                     </nav>
 
                     <main className="p-4 flex-grow mb-16 bg-gray-50">
-                        {/* STORE TAB (Blinkit Style Search & Categories) */}
+                        {/* STORE TAB */}
                         {activeTab === 'store' && (
                             <div>
                                 {/* Search Bar */}
                                 <div className="mb-3">
                                     <input 
                                         type="text" 
-                                        placeholder="🔍 Saman khojein (Atta, Dal, Oil...)" 
+                                        placeholder="🔍 Saman khojein (Khad, Atta, Nail, Pattal...)" 
                                         value={searchTerm} 
                                         onChange={(e) => setSearchTerm(e.target.value)} 
                                         className="w-full p-2.5 border rounded-lg text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600"
@@ -239,7 +252,7 @@
 
                                 {/* Category Filters */}
                                 <div className="flex space-x-2 overflow-x-auto pb-2 mb-3 text-xs">
-                                    {['All', 'Groceries', 'Household', 'Personal Care'].map(cat => (
+                                    {['All', 'Groceries', 'Khad & Beej', 'Hardware', 'Pattal & Glass', 'Pashupalan'].map(cat => (
                                         <button 
                                             key={cat} 
                                             onClick={() => setSelectedCategory(cat)}
@@ -468,6 +481,10 @@
                                     <input type="number" placeholder="Rate (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
                                     <select value={newItemCat} onChange={(e) => setNewItemCat(e.target.value)} className="w-full p-2 border rounded bg-gray-50">
                                         <option value="Groceries">Groceries</option>
+                                        <option value="Khad & Beej">Khad & Beej</option>
+                                        <option value="Hardware">Hardware</option>
+                                        <option value="Pattal & Glass">Pattal & Glass</option>
+                                        <option value="Pashupalan">Pashupalan</option>
                                         <option value="Household">Household</option>
                                         <option value="Personal Care">Personal Care</option>
                                     </select>
