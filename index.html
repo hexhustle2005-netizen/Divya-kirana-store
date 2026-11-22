@@ -295,14 +295,14 @@
                 return matchesSearch && matchesCat;
             });
 
-            // Customer self online payment for Udhari from My Orders tab
+            // Customer self online payment for Udhari from My Orders tab with Owner UPI ID display
             const handleCustomerUdhariPay = (phone) => {
                 const udhRecord = udhariList.find(u => u.phone === phone);
                 if (!udhRecord) {
                     alert("Aapka koi baki Udhari Khata nahi hai!");
                     return;
                 }
-                let payAmt = prompt(`Aapka kul baki udhari ₹${udhRecord.amount} hai. Aap kitna Online (UPI) payment karna chahte hain?`, udhRecord.amount);
+                let payAmt = prompt(`Dukaan ki UPI ID par payment karein: ${upiId}\nAapka kul baki udhari ₹${udhRecord.amount} hai. Aap kitna Online (UPI) payment karna chahte hain?`, udhRecord.amount);
                 if (payAmt !== null) {
                     let paid = parseFloat(payAmt);
                     if (!isNaN(paid) && paid > 0) {
@@ -502,13 +502,19 @@
                                 </div>
 
                                 {myOldOrders && (
-                                    <div className="bg-blue-50 p-4 rounded-2xl border border-blue-200 text-xs space-y-2">
+                                    <div className="bg-blue-50 p-4 rounded-2xl border border-blue-200 text-xs space-y-3">
                                         <h3 className="font-black text-blue-900 text-sm">💳 Aapka Udhari Khata Status:</h3>
                                         {udhariList.find(u => u.phone === customerSearchPhone) ? (
-                                            <div className="space-y-2">
+                                            <div className="space-y-2.5">
                                                 <p className="text-gray-800">Kul Baki Udhari: <strong className="text-red-600 text-base">₹{udhariList.find(u => u.phone === customerSearchPhone).amount}</strong></p>
+                                                
+                                                <div className="bg-white p-3 rounded-xl border border-blue-200 text-center space-y-1">
+                                                    <p className="font-bold text-gray-800">📱 Owner UPI ID (Payment ke liye):</p>
+                                                    <p className="text-green-800 font-mono font-black text-sm">{upiId}</p>
+                                                </div>
+
                                                 <button onClick={() => handleCustomerUdhariPay(customerSearchPhone)} className="w-full bg-blue-700 text-white py-2.5 rounded-xl font-bold shadow hover:bg-blue-800">
-                                                    📱 Pay Udhari Online (UPI) & Auto-Update
+                                                    📲 Pay Udhari Online & Auto-Update Owner Khata
                                                 </button>
                                             </div>
                                         ) : (
@@ -538,7 +544,7 @@
                                         
                                         {ord.status === 'Ready' && (
                                             <div className="bg-green-50 p-2.5 rounded-xl border border-green-300 text-green-900 font-bold text-center">
-                                                📦 Aapka order pack ho chuka hai! Dukan से aakar le jayein.
+                                                📦 Aapka order pack ho chuka hai! Dukan se aakar le jayein.
                                             </div>
                                         )}
 
