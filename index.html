@@ -36,13 +36,27 @@
             const [isAdminAuthenticated, setIsAdminAuthenticated] = React.useState(false);
             const ADMIN_PIN = "728084";
 
-            const [customerSession, setCustomerSession] = React.useState(null);
-            const [showCustomerLoginModal, setShowCustomerLoginModal] = React.useState(false);
-            const [loginNameInput, setLoginNameInput] = React.useState("");
-            const [loginPhoneInput, setLoginPhoneInput] = React.useState("");
-
-            const [showCheckoutModal, setShowCheckoutModal] = React.useState(false);
-            const [showParchaModal, setShowParchaModal] = React.useState(false);
+            // Title click counter for secret Admin Access
+            const [titleClicks, setTitleClicks] = React.useState(0);
+            const handleTitleClick = () => {
+                const newClicks = titleClicks + 1;
+                setTitleClicks(newClicks);
+                if (newClicks >= 3) {
+                    setTitleClicks(0);
+                    if (isAdminAuthenticated) {
+                        alert("🔓 Aap pehle se Admin mode mein hain!");
+                    } else {
+                        const enteredPin = prompt("🔒 Admin PIN Dalein:");
+                        if (enteredPin === ADMIN_PIN) {
+                            setIsAdminAuthenticated(true);
+                            setActiveTab('admin');
+                            alert("✅ Admin Access Successful!");
+                        } else if (enteredPin !== null) {
+                            alert("❌ Galat PIN!");
+                        }
+                    }
+                }
+            };
 
             const defaultItems = [
                 { id: 1, name: "Aashirvaad Atta (10kg)", weight: "10 kg Pack", price: 420, category: "Groceries", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80" },
@@ -62,6 +76,7 @@
             const [items, setItems] = React.useState(defaultItems);
             const [ordersList, setOrdersList] = React.useState([]);
 
+            // Cloud Sync
             React.useEffect(() => {
                 if (db) {
                     db.ref('divya_store/items').on('value', (snapshot) => {
@@ -74,10 +89,6 @@
                         if (val) setOrdersList(val);
                     });
                 }
-                const savedCust = localStorage.getItem("divya_customer_session");
-                if (savedCust) {
-                    setCustomerSession(JSON.parse(savedCust));
-                }
             }, []);
 
             const updateCloudData = (path, data) => {
@@ -86,44 +97,17 @@
                 }
             };
 
-            const handleCustomerLogin = () => {
-                if (!loginNameInput || !loginPhoneInput || loginPhoneInput.length < 10) {
-                    alert("Kripya Sahi Naam aur 10-digit Mobile Number dalein!");
-                    return;
-                }
-                const sessionData = { name: loginNameInput, phone: loginPhoneInput };
-                setCustomerSession(sessionData);
-                localStorage.setItem("divya_customer_session", JSON.stringify(sessionData));
-                setShowCustomerLoginModal(false);
-                setLoginNameInput("");
-                setLoginPhoneInput("");
-                alert("🎉 Login Successful!");
-            };
-
-            const handleCustomerLogout = () => {
-                setCustomerSession(null);
-                localStorage.removeItem("divya_customer_session");
-                alert("Aap logout ho chuke hain.");
-            };
-
-            const handleOwnerLogin = () => {
-                if (isAdminAuthenticated) {
-                    setActiveTab('admin');
-                    return;
-                }
-                const pin = prompt("🔒 Enter Owner Admin PIN:");
-                if (pin === ADMIN_PIN) {
-                    setIsAdminAuthenticated(true);
-                    setActiveTab('admin');
-                    alert("✅ Owner Admin Logged In Successfully!");
-                } else if (pin !== null) {
-                    alert("❌ Galat PIN!");
-                }
-            };
-
             const [cart, setCart] = React.useState({});
+            const [showCheckoutModal, setShowCheckoutModal] = React.useState(false);
+            const [showParchaModal, setShowParchaModal] = React.useState(false);
+
+            const [customerName, setCustomerName] = React.useState("");
+            const [customerPhone, setCustomerPhone] = React.useState("");
             const [customerTime, setCustomerTime] = React.useState("10:00");
             const [paymentMode, setPaymentMode] = React.useState("Cash");
+
+            const [parchaName, setParchaName] = React.useState("");
+            const [parchaPhone, setParchaPhone] = React.useState("");
             const [parchaText, setParchaText] = React.useState("");
 
             const addToCart = (id) => setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
@@ -145,9 +129,8 @@
             };
 
             const placeOrder = () => {
-                if (!customerSession) {
-                    alert("Kripya pehle Login / Signup karein!");
-                    setShowCustomerLoginModal(true);
+                if (!customerName || !customerPhone) {
+                    alert("Kripya apna Naam aur Mobile Number likhein!");
                     return;
                 }
                 const totalAmt = getTotalAmount();
@@ -157,8 +140,8 @@
                 let billDetails = {
                     id: Date.now(),
                     invoiceNo: "INV-" + Math.floor(1000 + Math.random() * 9000),
-                    customerName: customerSession.name,
-                    customerPhone: customerSession.phone,
+                    customerName,
+                    customerPhone,
                     pickupTime: customerTime,
                     paymentMode: paymentMode,
                     status: "Completed",
@@ -185,15 +168,16 @@
                 updateCloudData('orders', newOrders);
                 
                 setCart({});
+                setCustomerName("");
+                setCustomerPhone("");
                 setShowCheckoutModal(false);
                 setActiveTab('orders');
                 alert("🎉 Order Successfully Placed!");
             };
 
             const placeParchaOrder = () => {
-                if (!customerSession) {
-                    alert("Kripya pehle Login / Signup karein!");
-                    setShowCustomerLoginModal(true);
+                if (!parchaName || !parchaPhone) {
+                    alert("Kripya apna Naam aur Mobile Number likhein!");
                     return;
                 }
                 const currentDate = new Date().toLocaleDateString('en-IN');
@@ -203,8 +187,8 @@
                     id: Date.now(),
                     invoiceNo: "PRC-" + Math.floor(1000 + Math.random() * 9000),
                     isParcha: true,
-                    customerName: customerSession.name,
-                    customerPhone: customerSession.phone,
+                    customerName: parchaName,
+                    customerPhone: parchaPhone,
                     pickupTime: "As Soon As Ready",
                     paymentMode: "Payment Pending",
                     status: "Price Pending",
@@ -219,6 +203,8 @@
                 setOrdersList(newOrders);
                 updateCloudData('orders', newOrders);
 
+                setParchaName("");
+                setParchaPhone("");
                 setParchaText("");
                 setShowParchaModal(false);
                 alert("🎉 Parcha Order bhej diya gaya hai!");
@@ -227,26 +213,16 @@
             return (
                 <div className="min-h-screen pb-12">
                     <header className="bg-green-700 text-white p-4 shadow-md sticky top-0 z-50">
-                        <div className="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-2">
-                            <h1 className="text-xl font-bold">🛒 Divya Kirana Store</h1>
-                            <div className="flex items-center gap-2 flex-wrap">
+                        <div className="max-w-4xl mx-auto flex justify-between items-center">
+                            <h1 onClick={handleTitleClick} className="text-xl font-bold cursor-pointer select-none">
+                                🛒 Divya Kirana Store
+                            </h1>
+                            <div className="flex gap-2">
                                 <button onClick={() => setActiveTab('store')} className={`px-3 py-1 rounded text-sm ${activeTab === 'store' ? 'bg-white text-green-700 font-bold' : 'bg-green-600'}`}>Store</button>
-                                
-                                {customerSession ? (
-                                    <div className="flex items-center gap-2 bg-green-800 px-3 py-1 rounded text-sm">
-                                        <span>👤 {customerSession.name}</span>
-                                        <button onClick={() => setActiveTab('orders')} className="underline">My Orders</button>
-                                        <button onClick={handleCustomerLogout} className="bg-red-500 px-2 py-0.5 rounded text-xs">Logout</button>
-                                    </div>
-                                ) : (
-                                    <button onClick={() => setShowCustomerLoginModal(true)} className="bg-yellow-500 text-black font-bold px-3 py-1 rounded text-sm">
-                                        Customer Login / Signup
-                                    </button>
+                                <button onClick={() => setActiveTab('orders')} className={`px-3 py-1 rounded text-sm ${activeTab === 'orders' ? 'bg-white text-green-700 font-bold' : 'bg-green-600'}`}>Orders</button>
+                                {isAdminAuthenticated && (
+                                    <button onClick={() => setActiveTab('admin')} className="px-3 py-1 rounded text-sm bg-yellow-500 text-black font-bold">Admin</button>
                                 )}
-
-                                <button onClick={handleOwnerLogin} className="bg-gray-900 text-yellow-400 font-bold px-3 py-1 rounded text-sm border border-yellow-400">
-                                    🔐 Owner Login
-                                </button>
                             </div>
                         </div>
                     </header>
@@ -259,10 +235,7 @@
                                         <h2 className="font-bold text-lg text-green-800">Welcome to Divya Kirana Store!</h2>
                                         <p className="text-sm text-gray-600">Order groceries, hardware, khad beej & cattle feed online.</p>
                                     </div>
-                                    <button onClick={() => {
-                                        if(!customerSession) { setShowCustomerLoginModal(true); return; }
-                                        setShowParchaModal(true);
-                                    }} className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-orange-600">
+                                    <button onClick={() => setShowParchaModal(true)} className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-orange-600">
                                         📝 Upload Parcha
                                     </button>
                                 </div>
@@ -296,10 +269,7 @@
                                         <div>
                                             <span className="font-bold">{getTotalItems()} Items</span> | <span className="font-bold">Total: ₹{getTotalAmount()}</span>
                                         </div>
-                                        <button onClick={() => {
-                                            if(!customerSession) { setShowCustomerLoginModal(true); return; }
-                                            setShowCheckoutModal(true);
-                                        }} className="bg-white text-green-800 px-6 py-2 rounded font-bold shadow">
+                                        <button onClick={() => setShowCheckoutModal(true)} className="bg-white text-green-800 px-6 py-2 rounded font-bold shadow">
                                             Checkout Now ➔
                                         </button>
                                     </div>
@@ -309,19 +279,17 @@
 
                         {activeTab === 'orders' && (
                             <div className="bg-white p-4 rounded-lg shadow">
-                                <h2 className="text-xl font-bold mb-4 text-green-800">📦 My Orders</h2>
-                                {!customerSession ? (
-                                    <p className="text-red-500 font-bold">Kripya apne orders dekhne ke liye pehle Login karein.</p>
-                                ) : ordersList.filter(o => o.customerPhone === customerSession.phone).length === 0 ? (
-                                    <p className="text-gray-500">Aapne abhi tak koi order nahi diya hai.</p>
+                                <h2 className="text-xl font-bold mb-4 text-green-800">📦 All Orders List</h2>
+                                {ordersList.length === 0 ? (
+                                    <p className="text-gray-500">Koi order nahi mila.</p>
                                 ) : (
                                     <div className="space-y-3">
-                                        {ordersList.filter(o => o.customerPhone === customerSession.phone).map(ord => (
+                                        {ordersList.map(ord => (
                                             <div key={ord.id} className="border p-3 rounded bg-gray-50 flex justify-between items-center">
                                                 <div>
-                                                    <p className="font-bold text-green-800">{ord.invoiceNo} - Total: ₹{ord.total}</p>
+                                                    <p className="font-bold text-green-800">{ord.invoiceNo} - {ord.customerName} ({ord.customerPhone})</p>
                                                     <p className="text-xs text-gray-500">Date: {ord.date} | Time: {ord.time}</p>
-                                                    <p className="text-sm font-semibold mt-1">Status: <span className="text-blue-600">{ord.status}</span></p>
+                                                    <p className="text-sm font-semibold mt-1">Total: ₹{ord.total} | Status: <span className="text-blue-600">{ord.status}</span></p>
                                                 </div>
                                             </div>
                                         ))}
@@ -337,41 +305,18 @@
                                     <div className="bg-gray-50 p-3 rounded border">
                                         <h3 className="font-bold text-gray-700">Total Store Orders: {ordersList.length}</h3>
                                     </div>
-                                    <h3 className="font-bold text-lg mt-4">All Customer Orders:</h3>
-                                    <div className="space-y-2">
-                                        {ordersList.map(ord => (
-                                            <div key={ord.id} className="border p-2 rounded bg-yellow-50 flex justify-between items-center">
-                                                <div>
-                                                    <p className="font-bold">{ord.invoiceNo} - {ord.customerName} ({ord.customerPhone})</p>
-                                                    <p className="text-xs text-gray-600">Total: ₹{ord.total} | {ord.date}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
                                 </div>
                             </div>
                         )}
                     </main>
 
-                    {showCustomerLoginModal && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-                            <div className="bg-white p-5 rounded-lg max-w-md w-full shadow-lg">
-                                <h3 className="text-lg font-bold mb-3 text-green-800">👤 Customer Login / Signup</h3>
-                                <input type="text" placeholder="Aapka Poora Naam" value={loginNameInput} onChange={e => setLoginNameInput(e.target.value)} className="w-full border p-2 rounded mb-3" />
-                                <input type="text" placeholder="Mobile Number (10 Digit)" value={loginPhoneInput} onChange={e => setLoginPhoneInput(e.target.value)} className="w-full border p-2 rounded mb-3" />
-                                <div className="flex justify-end gap-2 mt-4">
-                                    <button onClick={() => setShowCustomerLoginModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
-                                    <button onClick={handleCustomerLogin} className="bg-green-600 text-white px-4 py-2 rounded font-bold">Login / Continue</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
+                    {/* Checkout Modal */}
                     {showCheckoutModal && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-                            <div className="bg-white p-5 rounded-lg max-w-md w-full">
-                                <h3 className="text-lg font-bold mb-3 text-green-800">Confirm Order</h3>
-                                <p className="text-sm mb-3">Logged in as: <b>{customerSession?.name}</b> ({customerSession?.phone})</p>
+                            <div className="bg-white p-5 rounded-lg max-w-md w-full shadow-lg">
+                                <h3 className="text-lg font-bold mb-3 text-green-800">Complete Your Order</h3>
+                                <input type="text" placeholder="Aapka Naam" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full border p-2 rounded mb-3" />
+                                <input type="text" placeholder="Mobile Number (10 Digit)" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full border p-2 rounded mb-3" />
                                 <div className="flex justify-end gap-2 mt-4">
                                     <button onClick={() => setShowCheckoutModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
                                     <button onClick={placeOrder} className="bg-green-600 text-white px-4 py-2 rounded font-bold">Place Order</button>
@@ -380,10 +325,13 @@
                         </div>
                     )}
 
+                    {/* Parcha Modal */}
                     {showParchaModal && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-                            <div className="bg-white p-5 rounded-lg max-w-md w-full">
+                            <div className="bg-white p-5 rounded-lg max-w-md w-full shadow-lg">
                                 <h3 className="text-lg font-bold mb-3 text-orange-600">📝 Upload Parcha Order</h3>
+                                <input type="text" placeholder="Aapka Naam" value={parchaName} onChange={e => setParchaName(e.target.value)} className="w-full border p-2 rounded mb-3" />
+                                <input type="text" placeholder="Mobile Number" value={parchaPhone} onChange={e => setParchaPhone(e.target.value)} className="w-full border p-2 rounded mb-3" />
                                 <textarea placeholder="Parcha ki list yahan likhein..." value={parchaText} onChange={e => setParchaText(e.target.value)} className="w-full border p-2 rounded mb-3"></textarea>
                                 <div className="flex justify-end gap-2 mt-4">
                                     <button onClick={() => setShowParchaModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
