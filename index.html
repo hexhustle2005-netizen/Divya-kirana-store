@@ -89,14 +89,14 @@
             const [customerPhone, setCustomerPhone] = React.useState("");
             const [paymentMode, setPaymentMode] = React.useState("Cash");
             
-            // Orders & History
+            // Orders & History (Status: 'Pending', 'Ready', 'Completed')
             const [ordersList, setOrdersList] = React.useState([]);
             const [customerSearchPhone, setCustomerSearchPhone] = React.useState("");
             const [myOldOrders, setMyOldOrders] = React.useState(null);
             const [lastBill, setLastBill] = React.useState(null);
-
-            // Owner Orders Search State
-            const [ownerSearchQuery, setOwnerSearchQuery] = React.useState("");
+            
+            // Selected order for Owner to open & inspect detail modal
+            const [selectedOwnerOrder, setSelectedOwnerOrder] = React.useState(null);
 
             // Udhari Khata
             const [udhariList, setUdhariList] = React.useState([
@@ -145,6 +145,7 @@
                 }, 0);
             };
 
+            // Flipkart Style Order Placement (No WhatsApp dependency on placement)
             const placeOrder = () => {
                 if (!customerName || !customerPhone) {
                     alert("Kripya apna Naam aur Mobile Number likhein!");
@@ -158,6 +159,7 @@
                     customerPhone,
                     pickupTime: customerTime,
                     paymentMode,
+                    status: "Pending", // Pending -> Ready -> Completed
                     date: new Date().toLocaleDateString('en-IN'),
                     time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
                     items: [],
@@ -184,12 +186,39 @@
                 setLastBill(billDetails);
                 setCart({});
                 setShowCheckoutModal(false);
+                setActiveTab('store');
+                alert("🎉 Order Successfully Placed! Aapka order store par bhej diya gaya hai.");
+            };
 
-                let message = `🛒 *Naya Order - Divya Kirana Store*\n📄 *Invoice:* ${billDetails.invoiceNo}\n\n👤 *Customer:* ${customerName} (${customerPhone})\n⏰ *Pickup:* ${customerTime}\n💳 *Payment:* ${paymentMode}\n\n`;
-                billDetails.items.forEach(bi => { message += `• ${bi.name} (x${bi.qty}) = ₹${bi.subtotal}\n`; });
-                message += `\n*Grand Total: ₹${totalAmt}*`;
+            // Owner marks order as Ready and sends WhatsApp alert to customer
+            const markOrderReady = (orderId) => {
+                setOrdersList(ordersList.map(ord => {
+                    if (ord.id === orderId) {
+                        const updatedOrd = { ...ord, status: "Ready" };
+                        // Send WhatsApp message to customer automatically
+                        let msg = `📦 *Divya Kirana Store Update*\n\nHello ${ord.customerName},\nAapka order (${ord.invoiceNo}) pack ho kar **READY** ho chuka hai!\n\nKripya dukan se aakar apna saman le jayein. 🙏\nKul Rashi: ₹${ord.total}`;
+                        let cleanPhone = ord.customerPhone.startsWith("91") ? ord.customerPhone : "91" + ord.customerPhone;
+                        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                        return updatedOrd;
+                    }
+                    return ord;
+                }));
+                if (selectedOwnerOrder && selectedOwnerOrder.id === orderId) {
+                    setSelectedOwnerOrder(prev => ({ ...prev, status: "Ready" }));
+                }
+            };
 
-                window.open(`https://wa.me/${whatsappNo}?text=${encodeURIComponent(message)}`, '_blank');
+            // Owner marks order as Completed
+            const markOrderCompleted = (orderId) => {
+                setOrdersList(ordersList.map(ord => {
+                    if (ord.id === orderId) {
+                        return { ...ord, status: "Completed" };
+                    }
+                    return ord;
+                }));
+                if (selectedOwnerOrder && selectedOwnerOrder.id === orderId) {
+                    setSelectedOwnerOrder(prev => ({ ...prev, status: "Completed" }));
+                }
             };
 
             const checkMyOrders = () => {
@@ -215,12 +244,6 @@
                 return matchesSearch && matchesCat;
             });
 
-            // Filtered Orders for Owner Search by Name or Phone
-            const filteredOwnerOrders = ordersList.filter(ord => {
-                const query = ownerSearchQuery.toLowerCase();
-                return ord.customerName.toLowerCase().includes(query) || ord.customerPhone.includes(query) || ord.invoiceNo.toLowerCase().includes(query);
-            });
-
             return (
                 <div className="max-w-md mx-auto bg-gray-50 min-h-screen shadow-2xl flex flex-col relative pb-24">
                     {/* Top Modern App Header */}
@@ -231,10 +254,10 @@
                                     <span className="text-xl">🛒</span>
                                     <h1 className="text-lg font-black tracking-tight text-white">Divya Kirana Store</h1>
                                 </div>
-                                <p className="text-xs text-green-200 mt-0.5">Open: {shopOpenTime} – {shopCloseTime} • Owner Direct Mode</p>
+                                <p className="text-xs text-green-200 mt-0.5">Open: {shopOpenTime} – {shopCloseTime} • Direct Order System</p>
                             </div>
                             <span className="text-xs bg-green-700 border border-green-500 px-2.5 py-1 rounded-full font-bold text-white shadow-sm">
-                                ⚡ Owner Portal
+                                ⚡ Live Store
                             </span>
                         </div>
 
@@ -263,9 +286,9 @@
                         </button>
                         {isAdminAuthenticated && (
                             <>
-                                <button onClick={() => setActiveTab('orders')} className={`px-3 py-1.5 rounded-full text-xs font-extrabold ${activeTab === 'orders' ? 'bg-yellow-500 text-black shadow' : 'bg-yellow-100 text-yellow-900 border border-yellow-300'}`}>Orders</button>
+                                <button onClick={() => setActiveTab('orders')} className={`px-3 py-1.5 rounded-full text-xs font-extrabold ${activeTab === 'orders' ? 'bg-yellow-500 text-black shadow' : 'bg-yellow-100 text-yellow-900 border border-yellow-300'}`}>Orders ({ordersList.filter(o => o.status === 'Pending').length})</button>
                                 <button onClick={() => setActiveTab('udhari')} className={`px-3 py-1.5 rounded-full text-xs font-extrabold ${activeTab === 'udhari' ? 'bg-yellow-500 text-black shadow' : 'bg-yellow-100 text-yellow-900 border border-yellow-300'}`}>Udhari</button>
-                                <button onClick={() => setActiveTab('rate')} className={`px-3 py-1.5 rounded-full text-xs font-extrabold ${activeTab === 'rate' ? 'bg-yellow-500 text-black shadow' : 'bg-yellow-100 text-yellow-900 border border-yellow-300'}`}>Manage Items</button>
+                                <button onClick={() => setActiveTab('rate')} className={`px-3 py-1.5 rounded-full text-xs font-extrabold ${activeTab === 'rate' ? 'bg-yellow-500 text-black shadow' : 'bg-yellow-100 text-yellow-900 border border-yellow-300'}`}>Manage</button>
                                 <button onClick={() => setActiveTab('settings')} className={`px-3 py-1.5 rounded-full text-xs font-extrabold ${activeTab === 'settings' ? 'bg-yellow-500 text-black shadow' : 'bg-yellow-100 text-yellow-900 border border-yellow-300'}`}>Settings</button>
                             </>
                         )}
@@ -331,7 +354,7 @@
                                             <h2 className="font-black text-lg text-green-800 uppercase tracking-wider">DIVYA KIRANA STORE</h2>
                                             <p className="text-[11px] text-gray-600">General Merchant, Khad-Beej, Hardware & Pashupalan</p>
                                             <span className="inline-block mt-1.5 bg-green-100 text-green-900 px-3 py-0.5 rounded-full text-[10px] font-extrabold">
-                                                OFFICIAL TAX INVOICE / CASH MEMO
+                                                ORDER PLACED SUCCESSFULLY 🎉
                                             </span>
                                         </div>
 
@@ -392,7 +415,7 @@
                         {activeTab === 'myorders' && (
                             <div className="space-y-4">
                                 <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-                                    <h2 className="text-sm font-extrabold text-gray-900">Track Your Order History</h2>
+                                    <h2 className="text-sm font-extrabold text-gray-900">Track Your Orders & Status</h2>
                                     <div className="flex space-x-2">
                                         <input 
                                             type="tel" 
@@ -415,11 +438,23 @@
 
                                 {myOldOrders && myOldOrders.map(ord => (
                                     <div key={ord.id} className="bg-white p-4 border border-gray-200 rounded-2xl shadow-sm text-xs space-y-2">
-                                        <div className="flex justify-between font-bold text-green-800 border-b pb-1.5">
-                                            <span>{ord.invoiceNo} • {ord.date}</span>
-                                            <span className="text-sm font-black text-gray-900">₹{ord.total}</span>
+                                        <div className="flex justify-between items-center font-bold border-b pb-1.5">
+                                            <span className="text-green-800">{ord.invoiceNo} • {ord.date}</span>
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                                                ord.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                ord.status === 'Ready' ? 'bg-green-100 text-green-800 animate-pulse' : 'bg-gray-100 text-gray-700'
+                                            }`}>
+                                                Status: {ord.status}
+                                            </span>
                                         </div>
-                                        <p className="text-gray-600">Payment: <strong className="text-green-700">{ord.paymentMode}</strong></p>
+                                        <p className="text-gray-600">Payment: <strong className="text-green-700">{ord.paymentMode}</strong> | Total: <strong className="text-gray-900">₹{ord.total}</strong></p>
+                                        
+                                        {ord.status === 'Ready' && (
+                                            <div className="bg-green-50 p-2.5 rounded-xl border border-green-300 text-green-900 font-bold text-center">
+                                                📦 Aapka order pack ho chuka hai! Dukan se aakar le jayein.
+                                            </div>
+                                        )}
+
                                         <div className="bg-gray-50 p-2.5 rounded-xl space-y-1">
                                             {ord.items.map((it, idx) => (
                                                 <div key={idx} className="flex justify-between">
@@ -436,67 +471,67 @@
                             </div>
                         )}
 
-                        {/* OWNER ORDERS (OPEN DIRECT SYSTEM WITH NAME SEARCH) */}
+                        {/* OWNER ORDERS (LINE-TO-LINE QUEUE SYSTEM) */}
                         {activeTab === 'orders' && isAdminAuthenticated && (
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center mb-1">
-                                    <h2 className="text-base font-extrabold text-gray-900">Owner Orders Record</h2>
+                                    <h2 className="text-base font-extrabold text-gray-900">Live Orders Queue (Line-by-Line)</h2>
                                     <span className="bg-green-100 text-green-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full border border-green-300">
-                                        Total: {ordersList.length} Orders
+                                        Total: {ordersList.length}
                                     </span>
                                 </div>
 
-                                {/* Owner Search Bar by Name or Phone */}
-                                <div className="relative mb-2">
-                                    <input 
-                                        type="text" 
-                                        placeholder="🔍 Grahak ka Naam ya Mobile Number se khojein..." 
-                                        value={ownerSearchQuery} 
-                                        onChange={(e) => setOwnerSearchQuery(e.target.value)} 
-                                        className="w-full p-2.5 pl-9 border border-gray-300 rounded-xl text-xs bg-white font-medium focus:outline-none focus:ring-2 focus:ring-green-600 shadow-sm"
-                                    />
-                                    <span className="absolute left-3 top-3 text-gray-400 text-xs">🔍</span>
-                                </div>
-
-                                {filteredOwnerOrders.length === 0 ? (
+                                {ordersList.length === 0 ? (
                                     <div className="bg-white p-8 rounded-2xl text-center border text-xs text-gray-500 shadow-sm">
-                                        📭 Koi order nahi mila.
+                                        📭 Abhi tak koi naya order nahi aaya hai.
                                     </div>
                                 ) : (
-                                    filteredOwnerOrders.map(ord => (
+                                    ordersList.map((ord, index) => (
                                         <div key={ord.id} className="bg-white p-4 border border-gray-200 rounded-2xl text-xs space-y-2.5 shadow-sm">
                                             <div className="flex justify-between items-center border-b pb-2">
-                                                <div>
-                                                    <span className="font-black text-green-800 text-sm">{ord.invoiceNo}</span>
-                                                    <p className="text-[11px] text-gray-500">{ord.date} at {ord.time}</p>
+                                                <div className="flex items-center space-x-2">
+                                                    <span className="bg-green-800 text-white font-black px-2 py-0.5 rounded text-[10px]">
+                                                        #{index + 1}
+                                                    </span>
+                                                    <div>
+                                                        <span className="font-black text-green-800 text-sm">{ord.invoiceNo}</span>
+                                                        <p className="text-[10px] text-gray-500">{ord.time}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="flex space-x-2">
-                                                    <button onClick={() => { setLastBill(ord); setActiveTab('store'); }} className="bg-gray-900 text-white px-3 py-1.5 rounded-xl font-bold hover:bg-black transition">
-                                                        📄 Bill PDF
-                                                    </button>
-                                                    <button onClick={() => deleteOrder(ord.id)} className="bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-xl font-bold hover:bg-red-600 hover:text-white transition">
-                                                        🗑️ Delete
-                                                    </button>
-                                                </div>
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                                                    ord.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                    ord.status === 'Ready' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'
+                                                }`}>
+                                                    {ord.status}
+                                                </span>
                                             </div>
 
                                             <div>
                                                 <p className="font-extrabold text-gray-900 text-sm">👤 {ord.customerName} <span className="text-green-700 font-mono">({ord.customerPhone})</span></p>
-                                                <p className="text-gray-600 mt-0.5">Pickup Time: <strong className="text-gray-900">{ord.pickupTime}</strong> | Mode: <strong className="text-green-800">{ord.paymentMode}</strong></p>
+                                                <p className="text-gray-600 mt-0.5">Pickup: <strong className="text-gray-900">{ord.pickupTime}</strong> | Mode: <strong className="text-green-800">{ord.paymentMode}</strong> | Total: <strong className="text-green-800">₹{ord.total}</strong></p>
                                             </div>
 
-                                            <div className="bg-gray-50 p-2.5 rounded-xl border space-y-1">
-                                                {ord.items.map((it, idx) => (
-                                                    <div key={idx} className="flex justify-between font-medium text-gray-800">
-                                                        <span>• {it.name} (Qty: {it.qty})</span>
-                                                        <span className="font-bold">₹{it.subtotal}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                            {/* Action Buttons */}
+                                            <div className="flex space-x-2 pt-1">
+                                                <button onClick={() => setSelectedOwnerOrder(ord)} className="flex-grow bg-blue-50 text-blue-700 border border-blue-200 py-2 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition">
+                                                    👁️ Khol Kar Dekhein (Inspect)
+                                                </button>
+                                                
+                                                {ord.status === 'Pending' && (
+                                                    <button onClick={() => markOrderReady(ord.id)} className="bg-green-700 text-white px-3 py-2 rounded-xl font-bold hover:bg-green-800 transition">
+                                                        📦 Order Ready (WhatsApp Msg)
+                                                    </button>
+                                                )}
 
-                                            <div className="flex justify-between items-center pt-1">
-                                                <span className="text-gray-500 font-bold">Grand Total:</span>
-                                                <span className="font-black text-green-800 text-base">₹{ord.total}</span>
+                                                {ord.status === 'Ready' && (
+                                                    <button onClick={() => markOrderCompleted(ord.id)} className="bg-purple-700 text-white px-3 py-2 rounded-xl font-bold hover:bg-purple-800 transition">
+                                                        ✅ Complete / Done
+                                                    </button>
+                                                )}
+
+                                                <button onClick={() => deleteOrder(ord.id)} className="bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-xl font-bold hover:bg-red-600 hover:text-white transition">
+                                                    🗑️
+                                                </button>
                                             </div>
                                         </div>
                                     ))
@@ -612,6 +647,74 @@
                         )}
                     </main>
 
+                    {/* OWNER INSPECT ORDER MODAL (KHOL KAR DEKHEIN) */}
+                    {selectedOwnerOrder && (
+                        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 no-print">
+                            <div className="bg-white w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                                <div className="flex justify-between items-center border-b pb-3">
+                                    <div>
+                                        <h3 className="font-black text-base text-gray-900">Order Details</h3>
+                                        <p className="text-xs text-green-700 font-bold">{selectedOwnerOrder.invoiceNo}</p>
+                                    </div>
+                                    <button onClick={() => setSelectedOwnerOrder(null)} className="text-gray-400 font-bold text-lg px-2">✕</button>
+                                </div>
+
+                                <div className="text-xs space-y-1 bg-gray-50 p-3 rounded-xl border">
+                                    <p><strong>Customer:</strong> {selectedOwnerOrder.customerName}</p>
+                                    <p><strong>Mobile:</strong> {selectedOwnerOrder.customerPhone}</p>
+                                    <p><strong>Pickup Time:</strong> {selectedOwnerOrder.pickupTime}</p>
+                                    <p><strong>Payment Mode:</strong> {selectedOwnerOrder.paymentMode}</p>
+                                    <p><strong>Order Status:</strong> <span className="font-bold uppercase text-green-700">{selectedOwnerOrder.status}</span></p>
+                                </div>
+
+                                <div className="space-y-1 text-xs">
+                                    <h4 className="font-extrabold text-gray-800">Items List:</h4>
+                                    <div className="border rounded-xl overflow-hidden">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="bg-green-800 text-white">
+                                                    <th className="p-2">Item</th>
+                                                    <th className="p-2 text-center">Qty</th>
+                                                    <th className="p-2 text-right">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200">
+                                                {selectedOwnerOrder.items.map((it, idx) => (
+                                                    <tr key={idx}>
+                                                        <td className="p-2 font-medium">{it.name}</td>
+                                                        <td className="p-2 text-center font-bold">{it.qty}</td>
+                                                        <td className="p-2 text-right font-bold">₹{it.subtotal}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-between items-center pt-2 border-t font-bold text-sm">
+                                    <span>Grand Total:</span>
+                                    <span className="text-green-800 text-base font-black">₹{selectedOwnerOrder.total}</span>
+                                </div>
+
+                                <div className="space-y-2 pt-2">
+                                    {selectedOwnerOrder.status === 'Pending' && (
+                                        <button onClick={() => markOrderReady(selectedOwnerOrder.id)} className="w-full bg-green-700 text-white py-3 rounded-xl font-extrabold text-xs shadow hover:bg-green-800">
+                                            📦 Order Ready (Send WhatsApp Alert)
+                                        </button>
+                                    )}
+                                    {selectedOwnerOrder.status === 'Ready' && (
+                                        <button onClick={() => markOrderCompleted(selectedOwnerOrder.id)} className="w-full bg-purple-700 text-white py-3 rounded-xl font-extrabold text-xs shadow hover:bg-purple-800">
+                                            ✅ Mark as Completed / Delivered
+                                        </button>
+                                    )}
+                                    <button onClick={() => { setLastBill(selectedOwnerOrder); setSelectedOwnerOrder(null); setActiveTab('store'); }} className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-bold text-xs">
+                                        🖨️ Print / Download Official Bill PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* FLOATING BOTTOM CART BAR (Blinkit Style) */}
                     {getTotalItems() > 0 && activeTab === 'store' && (
                         <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-green-800 text-white p-3.5 px-4 flex justify-between items-center shadow-2xl rounded-t-2xl z-50 no-print border-t border-green-600">
@@ -620,7 +723,7 @@
                                 <p className="text-base font-black">₹{getTotalAmount()}</p>
                             </div>
                             <button onClick={() => setShowCheckoutModal(true)} className="bg-white text-green-900 px-6 py-2.5 rounded-xl font-black text-xs shadow-lg hover:bg-green-50 transition">
-                                View Cart & Checkout ➡️
+                                View Cart & Place Order ➡️
                             </button>
                         </div>
                     )}
@@ -666,7 +769,7 @@
 
                                 <div className="pt-2">
                                     <button onClick={placeOrder} className="w-full bg-green-700 text-white py-3.5 rounded-xl font-extrabold shadow-lg text-sm hover:bg-green-800 transition">
-                                        Send Order via WhatsApp & Generate Bill 📲
+                                        Place Order Now 🎉
                                     </button>
                                 </div>
                             </div>
