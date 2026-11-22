@@ -113,6 +113,12 @@
                 }
             };
 
+            const deleteOrder = (id) => {
+                if (confirm("Kya aap is order ko delete karna chahte hain?")) {
+                    setOrdersList(ordersList.filter(ord => ord.id !== id));
+                }
+            };
+
             const getTotalAmount = () => {
                 return Object.keys(cart).reduce((total, id) => {
                     const item = items.find(i => i.id === parseInt(id));
@@ -173,7 +179,9 @@
                 let message = `🛒 *Naya Order - Divya Kirana Store*\n\n`;
                 message += `👤 *Grahak:* ${customerName} (${customerPhone})\n`;
                 message += `⏰ *Lena hai Samay:* ${customerTime}\n`;
-                message += `💳 *Payment Type:* ${paymentMode}\n\n`; billDetails.items.forEach(bi => { message += `- ${bi.name} x ${bi.qty} = ₹${bi.subtotal}\n`;
+                message += `💳 *Payment Type:* ${paymentMode}\n\n`;
+                billDetails.items.forEach(bi => {
+                    message += `- ${bi.name} x ${bi.qty} = ₹${bi.subtotal}\n`;
                 });
                 message += `\n*Kul Rashi: ₹${totalAmt}*`;
 
@@ -223,4 +231,293 @@
                                 <button onClick={() => setActiveTab('orders')} className={`px-2 py-1 rounded bg-yellow-600 text-white font-bold`}>Owner Orders</button>
                                 <button onClick={() => setActiveTab('udhari')} className={`px-2 py-1 rounded bg-yellow-600 text-white font-bold`}>Udhari</button>
                                 <button onClick={() => setActiveTab('rate')} className={`px-2 py-1 rounded bg-yellow-600 text-white font-bold`}>Rate</button>
-                                <button onClick={() => setActiveTab('settings')} className={`px-2 py-1 rounded bg-yellow-600
+                                <button onClick={() => setActiveTab('settings')} className={`px-2 py-1 rounded bg-yellow-600 text-white font-bold`}>Settings</button>
+                            </>
+                        )}
+                    </nav>
+
+                    <main className="p-4 flex-grow mb-16 bg-gray-50">
+                        {/* STORE TAB */}
+                        {activeTab === 'store' && (
+                            <div>
+                                <div className="mb-3">
+                                    <input 
+                                        type="text" 
+                                        placeholder="🔍 Saman khojein..." 
+                                        value={searchTerm} 
+                                        onChange={(e) => setSearchTerm(e.target.value)} 
+                                        className="w-full p-2.5 border rounded-lg text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600"
+                                    />
+                                </div>
+
+                                <div className="flex space-x-2 overflow-x-auto pb-2 mb-3 text-xs">
+                                    {['All', 'Groceries', 'Khad & Beej', 'Hardware', 'Pattal & Glass', 'Pashupalan'].map(cat => (
+                                        <button 
+                                            key={cat} 
+                                            onClick={() => setSelectedCategory(cat)}
+                                            className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap shadow-sm transition ${selectedCategory === cat ? 'bg-green-700 text-white' : 'bg-white text-gray-700 border'}`}
+                                        >
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="space-y-3">
+                                    {filteredItems.length === 0 ? (
+                                        <p className="text-center text-gray-500 py-6 text-sm">Koi saman nahi mila.</p>
+                                    ) : (
+                                        filteredItems.map(item => (
+                                            <div key={item.id} className="flex justify-between items-center p-3 border rounded-xl shadow-sm bg-white hover:shadow-md transition">
+                                                <div className="flex items-center space-x-3">
+                                                    <img src={item.image} alt={item.name} className="w-14 h-14 object-cover rounded-lg border bg-gray-100" />
+                                                    <div>
+                                                        <span className="text-[10px] text-green-700 bg-green-50 px-1.5 py-0.5 rounded font-bold">{item.category}</span>
+                                                        <h3 className="font-bold text-gray-800 text-sm mt-0.5">{item.name}</h3>
+                                                        <p className="text-green-600 font-extrabold text-sm">₹{item.price}</p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    {cart[item.id] ? (
+                                                        <div className="flex items-center space-x-2 bg-green-50 p-1 rounded-lg border border-green-200">
+                                                            <button onClick={() => removeFromCart(item.id)} className="bg-red-500 text-white w-6 h-6 rounded flex items-center justify-center font-bold text-xs">-</button>
+                                                            <span className="text-sm font-bold text-green-800">{cart[item.id]}</span>
+                                                            <button onClick={() => addToCart(item.id)} className="bg-green-600 text-white w-6 h-6 rounded flex items-center justify-center font-bold text-xs">+</button>
+                                                        </div>
+                                                    ) : (
+                                                        <button onClick={() => addToCart(item.id)} className="bg-green-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow hover:bg-green-800">ADD</button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {Object.keys(cart).length > 0 && (
+                                    <div className="mt-6 p-4 bg-white border border-green-300 rounded-xl shadow-lg space-y-3">
+                                        <div className="flex justify-between items-center border-b pb-2">
+                                            <h3 className="font-extrabold text-green-800">Aapka Cart</h3>
+                                            <span className="font-bold text-green-700">Total: ₹{getTotalAmount()}</span>
+                                        </div>
+                                        
+                                        <div className="space-y-2 text-xs">
+                                            <input type="text" placeholder="Aapka Naam" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
+                                            <input type="text" placeholder="Mobile Number" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
+                                            
+                                            <div>
+                                                <label className="font-semibold text-gray-600">Kis Samay Saman Lena Hai?</label>
+                                                <input type="time" value={customerTime} onChange={(e) => setCustomerTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-gray-50"/>
+                                            </div>
+
+                                            <div>
+                                                <label className="font-semibold text-gray-600">Payment Ka Tarika</label>
+                                                <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} className="w-full p-2 border rounded mt-1 bg-gray-50 font-bold text-green-700">
+                                                    <option value="Cash">Cash (Nagad dukan par)</option>
+                                                    <option value="UPI">Online UPI Payment</option>
+                                                    <option value="Udhari">Udhari Khata (Baad mein denge)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {paymentMode === "UPI" && (
+                                            <div className="text-xs bg-green-50 p-3 rounded-lg border border-green-200 text-center space-y-1">
+                                                <p className="font-bold text-gray-700">💳 Scan & Pay via UPI:</p>
+                                                <p className="text-green-700 font-mono font-bold text-sm">{upiId}</p>
+                                            </div>
+                                        )}
+
+                                        <button onClick={placeOrder} className="w-full bg-green-600 text-white py-2.5 rounded-xl font-extrabold shadow-md text-sm hover:bg-green-700 transition">
+                                            WhatsApp par Order Bhejein & Bill Banayein 📲
+                                        </button>
+                                    </div>
+                                )}
+
+                                {lastBill && (
+                                    <div className="mt-6 bg-white p-4 border rounded-xl shadow-md space-y-3">
+                                        <div className="text-center border-b pb-2">
+                                            <h3 className="font-bold text-base text-green-700">Divya Kirana Store - Bill</h3>
+                                            <p className="text-xs text-gray-500">Grahak: {lastBill.customerName} | Samay: {lastBill.pickupTime}</p>
+                                            <p className="text-xs font-bold text-green-600">Payment: {lastBill.paymentMode}</p>
+                                        </div>
+                                        <div className="space-y-1 text-xs">
+                                            {lastBill.items.map((bi, idx) => (
+                                                <div key={idx} className="flex justify-between">
+                                                    <span>{bi.name} (x{bi.qty})</span>
+                                                    <span>₹{bi.subtotal}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="border-t pt-2 flex justify-between font-bold text-sm text-gray-800">
+                                            <span>Kul Yog (Total):</span>
+                                            <span className="text-green-700">₹{lastBill.total}</span>
+                                        </div>
+                                        <button onClick={() => window.print()} className="w-full bg-gray-800 text-white py-2 rounded-lg font-bold text-xs hover:bg-black transition">
+                                            🖨️ Bill Print / Download PDF
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* CUSTOMER ORDER HISTORY */}
+                        {activeTab === 'myorders' && (
+                            <div className="space-y-4">
+                                <h2 className="text-base font-extrabold text-gray-800">Mere Purane Orders</h2>
+                                <div className="flex space-x-2">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Apna Mobile Number Dalein" 
+                                        value={customerSearchPhone} 
+                                        onChange={(e) => setCustomerSearchPhone(e.target.value)} 
+                                        className="flex-grow p-2 border rounded-lg text-xs bg-white"
+                                    />
+                                    <button onClick={checkMyOrders} className="bg-green-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow">
+                                        Khojein
+                                    </button>
+                                </div>
+
+                                <div className="space-y-3 mt-4">
+                                    {myOldOrders.length === 0 ? (
+                                        <p className="text-xs text-gray-500 text-center py-6">Koi order history nahi mili.</p>
+                                    ) : (
+                                        myOldOrders.map(ord => (
+                                            <div key={ord.id} className="bg-white p-3 border rounded-xl shadow-sm text-xs space-y-2">
+                                                <div className="flex justify-between font-bold text-green-700 border-b pb-1">
+                                                    <span>Tarikh: {ord.date}</span>
+                                                    <span>₹{ord.total}</span>
+                                                </div>
+                                                <div className="bg-gray-50 p-2 rounded border space-y-1">
+                                                    {ord.items.map((it, idx) => (
+                                                        <div key={idx} className="flex justify-between text-gray-700">
+                                                            <span>{it.name} (x{it.qty})</span>
+                                                            <span>₹{it.subtotal}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* OWNER ORDERS (WITH DELETE BUTTON) */}
+                        {activeTab === 'orders' && isAdminAuthenticated && (
+                            <div>
+                                <h2 className="text-lg font-bold mb-2 text-gray-800">Owner Data: Saare Orders</h2>
+                                {ordersList.length === 0 ? (
+                                    <p className="text-sm text-gray-600">Abhi tak koi order nahi aaya hai.</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {ordersList.map(ord => (
+                                            <div key={ord.id} className="bg-white p-3 border rounded-xl text-xs space-y-1 shadow-sm flex justify-between items-center">
+                                                <div>
+                                                    <p className="font-bold text-gray-800">{ord.customerName} ({ord.customerPhone})</p>
+                                                    <p className="text-gray-500">Samay: {ord.pickupTime} | Mode: {ord.paymentMode}</p>
+                                                    <p className="text-green-700 font-bold">₹{ord.total}</p>
+                                                </div>
+                                                <button onClick={() => deleteOrder(ord.id)} className="bg-red-600 text-white px-2.5 py-1.5 rounded font-bold text-[10px] shadow">
+                                                    🗑️ Delete
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* UDHARI */}
+                        {activeTab === 'udhari' && isAdminAuthenticated && (
+                            <div>
+                                <h2 className="text-lg font-bold mb-2 text-gray-800">Udhari Khata</h2>
+                                <div className="space-y-2">
+                                    {udhariList.map(udh => (
+                                        <div key={udh.id} className="bg-white p-3 border rounded-xl shadow-sm flex justify-between items-center text-xs">
+                                            <div>
+                                                <h3 className="font-bold text-gray-800">{udh.name} ({udh.phone})</h3>
+                                                <p className="text-gray-500">{udh.note}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-red-600 font-bold text-sm">₹{udh.amount}</p>
+                                                <button onClick={() => {
+                                                    setUdhariList(udhariList.filter(u => u.id !== udh.id));
+                                                }} className="bg-green-700 text-white px-2 py-1 rounded text-[10px] mt-1 font-bold">Chukta (Clear)</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* RATE MANAGEMENT (WITH DELETE ITEM OPTION) */}
+                        {activeTab === 'rate' && isAdminAuthenticated && (
+                            <div>
+                                <h2 className="text-lg font-bold mb-2 text-gray-800">Rate & Items Management</h2>
+                                <div className="space-y-3 bg-white p-4 rounded-xl border text-xs shadow-sm mb-4">
+                                    <input type="text" placeholder="Item ka Naam" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
+                                    <input type="number" placeholder="Rate (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
+                                    <select value={newItemCat} onChange={(e) => setNewItemCat(e.target.value)} className="w-full p-2 border rounded bg-gray-50">
+                                        <option value="Groceries">Groceries</option>
+                                        <option value="Khad & Beej">Khad & Beej</option>
+                                        <option value="Hardware">Hardware</option>
+                                        <option value="Pattal & Glass">Pattal & Glass</option>
+                                        <option value="Pashupalan">Pashupalan</option>
+                                    </select>
+                                    <input type="text" placeholder="Image URL" value={newItemImg} onChange={(e) => setNewItemImg(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
+                                    <button onClick={() => {
+                                        if(newItemName && newItemPrice) {
+                                            const imgUrl = newItemImg || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=80";
+                                            setItems([...items, { id: items.length + 1, name: newItemName, price: parseFloat(newItemPrice), category: newItemCat, image: imgUrl }]);
+                                            setNewItemName(""); setNewItemPrice(""); setNewItemImg("");
+                                            alert("Naya item jud gaya!");
+                                        } else { alert("Naam aur price bharein."); }
+                                    }} className="w-full bg-green-700 text-white py-2 rounded font-bold">Naya Item Jodein</button>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <h3 className="font-bold text-gray-700 text-xs">Maujuda Items (Delete karne ke liye):</h3>
+                                    {items.map(item => (
+                                        <div key={item.id} className="flex justify-between items-center bg-white p-2 border rounded-lg text-xs">
+                                            <span>{item.name} - ₹{item.price}</span>
+                                            <button onClick={() => deleteItem(item.id)} className="bg-red-600 text-white px-2.5 py-1 rounded font-bold text-[10px]">
+                                                🗑️ Delete
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* SETTINGS */}
+                        {activeTab === 'settings' && isAdminAuthenticated && (
+                            <div>
+                                <h2 className="text-lg font-bold mb-2 text-gray-800">Dukaan ki Settings</h2>
+                                <div className="space-y-3 bg-white p-4 rounded-xl border text-xs shadow-sm">
+                                    <div>
+                                        <label className="font-semibold text-gray-600">Dukaan Khulne ka Samay</label>
+                                        <input type="time" value={shopOpenTime} onChange={(e) => setShopOpenTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-gray-50"/>
+                                    </div>
+                                    <div>
+                                        <label className="font-semibold text-gray-600">Dukaan Band Hone ka Samay</label>
+                                        <input type="time" value={shopCloseTime} onChange={(e) => setShopCloseTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-gray-50"/>
+                                    </div>
+                                    <div>
+                                        <label className="font-semibold text-gray-600">Owner WhatsApp Number</label>
+                                        <input type="text" value={whatsappNo} onChange={(e) => setWhatsappNo(e.target.value)} className="w-full p-2 border rounded mt-1 bg-gray-50"/>
+                                    </div>
+                                    <div>
+                                        <label className="font-semibold text-gray-600">UPI ID</label>
+                                        <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} className="w-full p-2 border rounded mt-1 bg-gray-50"/>
+                                    </div>
+                                    <button onClick={() => alert("Settings Save Ho Gayi!")} className="w-full bg-green-700 text-white py-2 rounded font-bold">Save Settings</button>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
