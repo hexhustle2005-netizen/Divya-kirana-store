@@ -229,7 +229,7 @@
                     customerPhone,
                     pickupTime: customerTime,
                     paymentMode: paymentMode === "UPI" ? `UPI Paid [Ref: ${checkoutUtrPin}]` : paymentMode,
-                    status: "Pending", // Starts as Pending so owner can click Ready & send WhatsApp
+                    status: "Pending",
                     date: currentDate,
                     time: currentTime,
                     items: [],
@@ -336,7 +336,6 @@
                     alert("Kripya sahi Total Amount (₹) dalein!");
                     return;
                 }
-                const currentDate = new Date().toLocaleDateString('en-IN');
 
                 setOrdersList(ordersList.map(ord => {
                     if (ord.id === orderId) {
