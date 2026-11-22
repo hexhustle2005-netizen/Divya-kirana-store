@@ -34,12 +34,30 @@
             ]);
 
             const [cart, setCart] = React.useState({});
-            const [newItemName, setNewItemName] = React.useState("");
-            const [newItemPrice, setNewItemPrice] = React.useState("");
+            const [customerTime, setCustomerTime] = React.useState("10:00");
+            const [customerName, setCustomerName] = React.useState("");
+            const [customerPhone, setCustomerPhone] = React.useState("");
+            
+            // Orders Data for Owner
+            const [ordersList, setOrdersList] = React.useState([]);
             const [lastBill, setLastBill] = React.useState(null);
 
+            // Udhari Khata Data (Protected)
+            const [udhariList, setUdhariList] = React.useState([
+                { id: 1, name: "Ramesh Kumar", phone: "9876543210", amount: 450, note: "Chawal aur Dal baki" },
+                { id: 2, name: "Suresh Sharma", phone: "9123456789", amount: 1200, note: "Mahine ka rashan" }
+            ]);
+            const [newUdhariName, setNewUdhariName] = React.useState("");
+            const [newUdhariPhone, setNewUdhariPhone] = React.useState("");
+            const [newUdhariAmount, setNewUdhariAmount] = React.useState("");
+            const [newUdhariNote, setNewUdhariNote] = React.useState("");
+
+            // Rate management inputs
+            const [newItemName, setNewItemName] = React.useState("");
+            const [newItemPrice, setNewItemPrice] = React.useState("");
+
             const handleProtectedTab = (tabName) => {
-                if (tabName === 'rate' || tabName === 'settings') {
+                if (tabName === 'rate' || tabName === 'settings' || tabName === 'udhari' || tabName === 'orders') {
                     if (isAdminAuthenticated) {
                         setActiveTab(tabName);
                     } else {
@@ -79,8 +97,17 @@
                 }, 0);
             };
 
-            const generateBill = () => {
+            const placeOrder = () => {
+                if (!customerName || !customerPhone) {
+                    alert("Kripya apna Naam aur Mobile Number likhein!");
+                    return;
+                }
+
                 let billDetails = {
+                    id: Date.now(),
+                    customerName,
+                    customerPhone,
+                    pickupTime: customerTime,
                     date: new Date().toLocaleDateString(),
                     time: new Date().toLocaleTimeString(),
                     items: [],
@@ -99,40 +126,42 @@
                     }
                 });
 
+                // Save to Owner Orders Data
+                setOrdersList([billDetails, ...ordersList]);
                 setLastBill(billDetails);
-                alert("✅ Bill taiyar ho gaya hai! Neeche PDF Bill section mein dekhein.");
-            };
 
-            const checkoutWhatsApp = () => {
-                let message = "🛒 *Naya Order - Divya Kirana Store*\n\n";
-                Object.keys(cart).forEach(id => {
-                    const item = items.find(i => i.id === parseInt(id));
-                    if (item) {
-                        message += `- ${item.name} x ${cart[id]} = ₹${item.price * cart[id]}\n`;
-                    }
+                // Send WhatsApp to Owner
+                let message = `🛒 *Naya Order - Divya Kirana Store*\n\n`;
+                message += `👤 *Grahak:* ${customerName} (${customerPhone})\n`;
+                message += `⏰ *Lena hai Samay:* ${customerTime}\n\n`;
+                billDetails.items.forEach(bi => {
+                    message += `- ${bi.name} x ${bi.qty} = ₹${bi.subtotal}\n`;
                 });
-                message += `\n*Kul Rashi (Total): ₹${getTotalAmount()}*\n`;
-                message += `💳 *Payment UPI ID:* ${upiId}`;
+                message += `\n*Kul Rashi: ₹${billDetails.total}*\n`;
+                message += `💳 *UPI ID:* ${upiId}`;
+
                 const url = `https://wa.me/${whatsappNo}?text=${encodeURIComponent(message)}`;
                 window.open(url, '_blank');
+                alert("✅ Order submit ho gaya aur Bill PDF ke liye taiyar hai!");
             };
 
             return (
                 <div className="max-w-md mx-auto bg-white min-h-screen shadow-lg flex flex-col">
                     <header className="bg-green-700 text-white p-4 shadow-md">
                         <h1 className="text-xl font-bold">🛒 Divya Kirana Store</h1>
-                        <p className="text-xs text-green-200">Samay: {shopOpenTime} se {shopCloseTime} tak khula hai</p>
+                        <p className="text-xs text-green-200">Dukaan Samay: {shopOpenTime} se {shopCloseTime}</p>
                     </header>
 
-                    <nav className="flex bg-green-800 text-white p-2 overflow-x-auto space-x-2 text-sm">
-                        <button onClick={() => setActiveTab('store')} className={`px-3 py-1 rounded ${activeTab === 'store' ? 'bg-green-600 font-bold' : ''}`}>Store</button>
-                        <button onClick={() => setActiveTab('orders')} className={`px-3 py-1 rounded ${activeTab === 'orders' ? 'bg-green-600 font-bold' : ''}`}>Bill/PDF</button>
-                        <button onClick={() => setActiveTab('udhari')} className={`px-3 py-1 rounded ${activeTab === 'udhari' ? 'bg-green-600 font-bold' : ''}`}>Udhari</button>
-                        <button onClick={() => handleProtectedTab('rate')} className={`px-3 py-1 rounded ${activeTab === 'rate' ? 'bg-green-600 font-bold' : ''}`}>Rate 🔒</button>
-                        <button onClick={() => handleProtectedTab('settings')} className={`px-3 py-1 rounded ${activeTab === 'settings' ? 'bg-green-600 font-bold' : ''}`}>Settings 🔒</button>
+                    <nav className="flex bg-green-800 text-white p-2 overflow-x-auto space-x-1 text-xs">
+                        <button onClick={() => setActiveTab('store')} className={`px-2.5 py-1.5 rounded ${activeTab === 'store' ? 'bg-green-600 font-bold' : ''}`}>Store</button>
+                        <button onClick={() => handleProtectedTab('orders')} className={`px-2.5 py-1.5 rounded ${activeTab === 'orders' ? 'bg-green-600 font-bold' : ''}`}>Orders/Data 🔒</button>
+                        <button onClick={() => handleProtectedTab('udhari')} className={`px-2.5 py-1.5 rounded ${activeTab === 'udhari' ? 'bg-green-600 font-bold' : ''}`}>Udhari 🔒</button>
+                        <button onClick={() => handleProtectedTab('rate')} className={`px-2.5 py-1.5 rounded ${activeTab === 'rate' ? 'bg-green-600 font-bold' : ''}`}>Rate 🔒</button>
+                        <button onClick={() => handleProtectedTab('settings')} className={`px-2.5 py-1.5 rounded ${activeTab === 'settings' ? 'bg-green-600 font-bold' : ''}`}>Settings 🔒</button>
                     </nav>
 
                     <main className="p-4 flex-grow mb-16">
+                        {/* STORE TAB */}
                         {activeTab === 'store' && (
                             <div>
                                 <h2 className="text-lg font-bold mb-3 text-gray-800">Saman ki Soochi</h2>
@@ -140,18 +169,18 @@
                                     {items.map(item => (
                                         <div key={item.id} className="flex justify-between items-center p-3 border rounded-lg shadow-sm bg-gray-50">
                                             <div>
-                                                <h3 className="font-semibold text-gray-800">{item.name}</h3>
-                                                <p className="text-green-600 font-bold">₹{item.price}</p>
+                                                <h3 className="font-semibold text-gray-800 text-sm">{item.name}</h3>
+                                                <p className="text-green-600 font-bold text-sm">₹{item.price}</p>
                                             </div>
                                             <div>
                                                 {cart[item.id] ? (
                                                     <div className="flex items-center space-x-2">
-                                                        <button onClick={() => removeFromCart(item.id)} className="bg-red-500 text-white px-2 py-1 rounded font-bold">-</button>
-                                                        <span>{cart[item.id]}</span>
-                                                        <button onClick={() => addToCart(item.id)} className="bg-green-600 text-white px-2 py-1 rounded font-bold">+</button>
+                                                        <button onClick={() => removeFromCart(item.id)} className="bg-red-500 text-white px-2 py-0.5 rounded font-bold">-</button>
+                                                        <span className="text-sm">{cart[item.id]}</span>
+                                                        <button onClick={() => addToCart(item.id)} className="bg-green-600 text-white px-2 py-0.5 rounded font-bold">+</button>
                                                     </div>
                                                 ) : (
-                                                    <button onClick={() => addToCart(item.id)} className="bg-green-700 text-white px-3 py-1 rounded text-sm font-semibold">Add</button>
+                                                    <button onClick={() => addToCart(item.id)} className="bg-green-700 text-white px-3 py-1 rounded text-xs font-semibold">Add</button>
                                                 )}
                                             </div>
                                         </div>
@@ -161,31 +190,34 @@
                                 {Object.keys(cart).length > 0 && (
                                     <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
                                         <h3 className="font-bold text-green-800">Total: ₹{getTotalAmount()}</h3>
-                                        <div className="text-xs text-gray-600 bg-white p-2 rounded border">
-                                            <p className="font-semibold">💳 Online Payment UPI ID:</p>
+                                        
+                                        <div className="space-y-2 text-xs">
+                                            <input type="text" placeholder="Aapka Naam" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full p-2 border rounded bg-white"/>
+                                            <input type="text" placeholder="Mobile Number" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full p-2 border rounded bg-white"/>
+                                            <div>
+                                                <label className="font-semibold text-gray-600">Kis Samay Saman Chahiye?</label>
+                                                <input type="time" value={customerTime} onChange={(e) => setCustomerTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-xs bg-white p-2 rounded border">
+                                            <p className="font-semibold text-gray-700">💳 Online Payment UPI ID:</p>
                                             <p className="text-green-700 font-mono font-bold">{upiId}</p>
                                         </div>
-                                        <button onClick={generateBill} className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold shadow hover:bg-blue-700">
-                                            📄 Bill Banayein (PDF ke liye)
-                                        </button>
-                                        <button onClick={checkoutWhatsApp} className="w-full bg-green-600 text-white py-2 rounded-lg font-bold shadow hover:bg-green-700">
-                                            WhatsApp par Order Bhejein 📲
+
+                                        <button onClick={placeOrder} className="w-full bg-green-600 text-white py-2 rounded-lg font-bold shadow text-sm hover:bg-green-700">
+                                            WhatsApp par Order Bhejein & Bill Banayein 📲
                                         </button>
                                     </div>
                                 )}
-                            </div>
-                        )}
 
-                        {activeTab === 'orders' && (
-                            <div>
-                                <h2 className="text-lg font-bold mb-2 text-gray-800">Bill & PDF Download</h2>
-                                {lastBill ? (
-                                    <div id="bill-section" className="bg-white p-4 border rounded-lg shadow-sm space-y-3">
+                                {lastBill && (
+                                    <div className="mt-6 bg-white p-4 border rounded-lg shadow-sm space-y-3">
                                         <div className="text-center border-b pb-2">
-                                            <h3 className="font-bold text-lg text-green-700">Divya Kirana Store</h3>
-                                            <p className="text-xs text-gray-500">Tarikh: {lastBill.date} | Samay: {lastBill.time}</p>
+                                            <h3 className="font-bold text-base text-green-700">Divya Kirana Store - Bill</h3>
+                                            <p className="text-xs text-gray-500">Grahak: {lastBill.customerName} | Samay: {lastBill.pickupTime}</p>
                                         </div>
-                                        <div className="space-y-1 text-sm">
+                                        <div className="space-y-1 text-xs">
                                             {lastBill.items.map((bi, idx) => (
                                                 <div key={idx} className="flex justify-between">
                                                     <span>{bi.name} (x{bi.qty})</span>
@@ -193,66 +225,124 @@
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="border-t pt-2 flex justify-between font-bold text-gray-800">
+                                        <div className="border-t pt-2 flex justify-between font-bold text-sm text-gray-800">
                                             <span>Kul Yog (Total):</span>
                                             <span className="text-green-700">₹{lastBill.total}</span>
                                         </div>
-                                        <div className="text-xs bg-gray-50 p-2 rounded border">
-                                            <p>Payment UPI: <span className="font-bold">{upiId}</span></p>
-                                        </div>
-                                        <button onClick={() => window.print()} className="w-full bg-gray-800 text-white py-2 rounded font-bold text-sm">
-                                            🖨️ Bill Print / Save as PDF
+                                        <button onClick={() => window.print()} className="w-full bg-gray-800 text-white py-2 rounded font-bold text-xs">
+                                            🖨️ Bill Print / Download PDF
                                         </button>
                                     </div>
-                                ) : (
-                                    <p className="text-gray-600 text-sm">Pehle Store mein saman select karke "Bill Banayein" par click karein.</p>
                                 )}
                             </div>
                         )}
 
-                        {activeTab === 'udhari' && (
+                        {/* ORDERS / OWNER DATA TAB (Protected) */}
+                        {activeTab === 'orders' && (
                             <div>
-                                <h2 className="text-lg font-bold mb-2 text-gray-800">Udhari Khata</h2>
-                                <p className="text-gray-600">Grahakon ka hisaab-kitaab yahan surakshit rakhein.</p>
+                                <h2 className="text-lg font-bold mb-2 text-gray-800">Owner Data: Saare Orders</h2>
+                                <p className="text-xs text-gray-500 mb-4">Yahan saare naye aur purane orders ka record rahega.</p>
+                                {ordersList.length === 0 ? (
+                                    <p className="text-sm text-gray-600">Abhi tak koi order nahi aaya hai.</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {ordersList.map(ord => (
+                                            <div key={ord.id} className="bg-gray-50 p-3 border rounded-lg text-xs space-y-1 shadow-sm">
+                                                <div className="flex justify-between font-bold text-gray-800">
+                                                    <span>{ord.customerName} ({ord.customerPhone})</span>
+                                                    <span className="text-green-700">₹{ord.total}</span>
+                                                </div>
+                                                <p className="text-gray-500">Dene ka Samay: <span className="font-semibold text-gray-700">{ord.pickupTime}</span> ({ord.date})</p>
+                                                <div className="border-t pt-1 text-gray-600">
+                                                    {ord.items.map((it, i) => (
+                                                        <span key={i}>{it.name} (x{it.qty}), </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 
+                        {/* UDHARI KHATA TAB (Protected) */}
+                        {activeTab === 'udhari' && (
+                            <div>
+                                <h2 className="text-lg font-bold mb-2 text-gray-800">Udhari Khata (Hisab-Kitab)</h2>
+                                <p className="text-xs text-gray-500 mb-3">Kis customer ka kitna baaki hai yahan dekhein aur jodein:</p>
+                                
+                                <div className="bg-gray-50 p-3 border rounded-lg space-y-2 mb-4 text-xs">
+                                    <h3 className="font-bold text-gray-700">Naya Udhari Jodein</h3>
+                                    <input type="text" placeholder="Grahak ka Naam" value={newUdhariName} onChange={(e) => setNewUdhariName(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
+                                    <input type="text" placeholder="Mobile Number" value={newUdhariPhone} onChange={(e) => setNewUdhariPhone(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
+                                    <input type="number" placeholder="Kitna Amount Baaki hai? (₹)" value={newUdhariAmount} onChange={(e) => setNewUdhariAmount(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
+                                    <input type="text" placeholder="Vivarann (Jaise: Cheeni aur Tel)" value={newUdhariNote} onChange={(e) => setNewUdhariNote(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
+                                    <button onClick={() => {
+                                        if(newUdhariName && newUdhariAmount) {
+                                            setUdhariList([...udhariList, { id: Date.now(), name: newUdhariName, phone: newUdhariPhone, amount: parseFloat(newUdhariAmount), note: newUdhariNote }]);
+                                            setNewUdhariName(""); setNewUdhariPhone(""); setNewUdhariAmount(""); setNewUdhariNote("");
+                                            alert("Udhari safalpurvak jud gayi!");
+                                        } else { alert("Naam aur Amount bharein."); }
+                                    }} className="w-full bg-red-600 text-white py-1.5 rounded font-bold">Udhari Darj Karein</button>
+                                </div>
+
+                                <div className="space-y-2">
+                                    {udhariList.map(udh => (
+                                        <div key={udh.id} className="bg-white p-3 border rounded-lg shadow-sm flex justify-between items-center text-xs">
+                                            <div>
+                                                <h3 className="font-bold text-gray-800">{udh.name} ({udh.phone})</h3>
+                                                <p className="text-gray-500">{udh.note}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-red-600 font-bold text-sm">₹{udh.amount}</p>
+                                                <button onClick={() => {
+                                                    setUdhariList(udhariList.filter(u => u.id !== udh.id));
+                                                }} className="text-green-700 underline text-[10px]">Chukta (Clear)</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* RATE MANAGEMENT TAB (Protected) */}
                         {activeTab === 'rate' && (
                             <div>
-                                <h2 className="text-lg font-bold mb-2 text-gray-800">Rate & Items Management (Protected)</h2>
-                                <div className="space-y-3 bg-gray-50 p-4 rounded-lg border">
-                                    <input type="text" placeholder="Item ka Naam" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-2 border rounded text-sm"/>
-                                    <input type="number" placeholder="Rate (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-2 border rounded text-sm"/>
+                                <h2 className="text-lg font-bold mb-2 text-gray-800">Rate & Items Management</h2>
+                                <div className="space-y-3 bg-gray-50 p-4 rounded-lg border text-xs">
+                                    <input type="text" placeholder="Item ka Naam" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-2 border rounded bg-white"/>
+                                    <input type="number" placeholder="Rate (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-2 border rounded bg-white"/>
                                     <button onClick={() => {
                                         if(newItemName && newItemPrice) {
                                             setItems([...items, { id: items.length + 1, name: newItemName, price: parseFloat(newItemPrice) }]);
                                             setNewItemName(""); setNewItemPrice("");
                                             alert("Naya item jud gaya!");
                                         } else { alert("Naam aur price bharein."); }
-                                    }} className="w-full bg-green-700 text-white py-2 rounded font-bold text-sm">Naya Item Jodein</button>
+                                    }} className="w-full bg-green-700 text-white py-2 rounded font-bold">Naya Item Jodein</button>
                                 </div>
                             </div>
                         )}
 
+                        {/* SETTINGS TAB (Protected) */}
                         {activeTab === 'settings' && (
                             <div>
-                                <h2 className="text-lg font-bold mb-2 text-gray-800">Dukaan ki Settings (Protected)</h2>
-                                <div className="space-y-3 bg-gray-50 p-4 rounded-lg border text-sm">
+                                <h2 className="text-lg font-bold mb-2 text-gray-800">Dukaan ki Settings</h2>
+                                <div className="space-y-3 bg-gray-50 p-4 rounded-lg border text-xs">
                                     <div>
                                         <label className="font-semibold text-gray-600">Dukaan Khulne ka Samay</label>
-                                        <input type="time" value={shopOpenTime} onChange={(e) => setShopOpenTime(e.target.value)} className="w-full p-2 border rounded mt-1"/>
+                                        <input type="time" value={shopOpenTime} onChange={(e) => setShopOpenTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
                                     </div>
                                     <div>
                                         <label className="font-semibold text-gray-600">Dukaan Band Hone ka Samay</label>
-                                        <input type="time" value={shopCloseTime} onChange={(e) => setShopCloseTime(e.target.value)} className="w-full p-2 border rounded mt-1"/>
+                                        <input type="time" value={shopCloseTime} onChange={(e) => setShopCloseTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
                                     </div>
                                     <div>
-                                        <label className="font-semibold text-gray-600">WhatsApp Number</label>
-                                        <input type="text" value={whatsappNo} onChange={(e) => setWhatsappNo(e.target.value)} className="w-full p-2 border rounded mt-1"/>
+                                        <label className="font-semibold text-gray-600">Owner WhatsApp Number</label>
+                                        <input type="text" value={whatsappNo} onChange={(e) => setWhatsappNo(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
                                     </div>
                                     <div>
                                         <label className="font-semibold text-gray-600">UPI ID (Payment ke liye)</label>
-                                        <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} className="w-full p-2 border rounded mt-1"/>
+                                        <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
                                     </div>
                                     <button onClick={() => alert("Settings Save Ho Gayi!")} className="w-full bg-green-700 text-white py-2 rounded font-bold">Save Settings</button>
                                 </div>
