@@ -46,26 +46,18 @@
             const [shopOpenTime, setShopOpenTime] = React.useState("08:00");
             const [shopCloseTime, setShopCloseTime] = React.useState("20:00");
 
-            // Expanded Items list including Khad, Beej, Hardware, Pattal, Pashupalan
+            // Items list with Categories and Images
             const [items, setItems] = React.useState([
-                // Groceries
                 { id: 1, name: "Aashirvaad Atta (10kg)", price: 420, category: "Groceries", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80" },
                 { id: 2, name: "Fortune Sunflower Oil (1L)", price: 135, category: "Groceries", image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80" },
                 { id: 3, name: "Tata Salt (1kg)", price: 28, category: "Groceries", image: "https://images.unsplash.com/photo-1518110991417-010777ea462f?auto=format&fit=crop&w=300&q=80" },
-                // Khad & Beej
                 { id: 4, name: "DAP Khaad (50kg Bag)", price: 1350, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&w=300&q=80" },
                 { id: 5, name: "Urea Khaad (45kg Bag)", price: 266, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=300&q=80" },
-                { id: 6, name: "Gehu ka Beej (Certified Wheat Seed 40kg)", price: 1400, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=300&q=80" },
-                // Hardware
-                { id: 7, name: "Lohe ki Kil (Iron Nails 1kg)", price: 80, category: "Hardware", image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80" },
+                { id: 6, name: "Gehu ka Beej (40kg)", price: 1400, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=300&q=80" },
+                { id: 7, name: "Lohe ki Kil (1kg)", price: 80, category: "Hardware", image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80" },
                 { id: 8, name: "Hathoda (Hammer)", price: 180, category: "Hardware", image: "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=300&q=80" },
-                { id: 9, name: "Plier (Pakkad)", price: 220, category: "Hardware", image: "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?auto=format&fit=crop&w=300&q=80" },
-                // Pattal & Glass
-                { id: 10, name: "Disposable Thali / Pattal (Pack of 50)", price: 110, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=300&q=80" },
-                { id: 11, name: "Paper Glass (Pack of 100)", price: 70, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1516594798947-e65505dbb29d?auto=format&fit=crop&w=300&q=80" },
-                // Pashupalan
-                { id: 12, name: "Pashu Aahar / Cattle Feed (50kg)", price: 1250, category: "Pashupalan", image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=300&q=80" },
-                { id: 13, name: "Mineral Mixture for Cattle (1kg)", price: 150, category: "Pashupalan", image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=300&q=80" }
+                { id: 9, name: "Disposable Thali (Pack of 50)", price: 110, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=300&q=80" },
+                { id: 10, name: "Pashu Aahar (50kg)", price: 1250, category: "Pashupalan", image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=300&q=80" }
             ]);
 
             const [searchTerm, setSearchTerm] = React.useState("");
@@ -115,6 +107,12 @@
                 });
             };
 
+            const deleteItem = (id) => {
+                if (confirm("Kya aap sach mein is item ko delete karna chahte hain?")) {
+                    setItems(items.filter(item => item.id !== id));
+                }
+            };
+
             const getTotalAmount = () => {
                 return Object.keys(cart).reduce((total, id) => {
                     const item = items.find(i => i.id === parseInt(id));
@@ -154,10 +152,8 @@
                     }
                 });
 
-                // Save to Orders List
                 setOrdersList([billDetails, ...ordersList]);
 
-                // Automatic Udhari entry if selected
                 if (paymentMode === "Udhari") {
                     setUdhariList([
                         { 
@@ -172,9 +168,8 @@
                 }
 
                 setLastBill(billDetails);
-                setCart({}); // clear cart
+                setCart({});
 
-                // Send WhatsApp to Owner
                 let message = `🛒 *Naya Order - Divya Kirana Store*\n\n`;
                 message += `👤 *Grahak:* ${customerName} (${customerPhone})\n`;
                 message += `⏰ *Lena hai Samay:* ${customerTime}\n`;
@@ -239,18 +234,16 @@
                         {/* STORE TAB */}
                         {activeTab === 'store' && (
                             <div>
-                                {/* Search Bar */}
                                 <div className="mb-3">
                                     <input 
                                         type="text" 
-                                        placeholder="🔍 Saman khojein (Khad, Atta, Nail, Pattal...)" 
+                                        placeholder="🔍 Saman khojein..." 
                                         value={searchTerm} 
                                         onChange={(e) => setSearchTerm(e.target.value)} 
                                         className="w-full p-2.5 border rounded-lg text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600"
                                     />
                                 </div>
 
-                                {/* Category Filters */}
                                 <div className="flex space-x-2 overflow-x-auto pb-2 mb-3 text-xs">
                                     {['All', 'Groceries', 'Khad & Beej', 'Hardware', 'Pattal & Glass', 'Pashupalan'].map(cat => (
                                         <button 
@@ -263,7 +256,6 @@
                                     ))}
                                 </div>
 
-                                {/* Items List */}
                                 <div className="space-y-3">
                                     {filteredItems.length === 0 ? (
                                         <p className="text-center text-gray-500 py-6 text-sm">Koi saman nahi mila.</p>
@@ -294,7 +286,6 @@
                                     )}
                                 </div>
 
-                                {/* Cart Checkout Section */}
                                 {Object.keys(cart).length > 0 && (
                                     <div className="mt-6 p-4 bg-white border border-green-300 rounded-xl shadow-lg space-y-3">
                                         <div className="flex justify-between items-center border-b pb-2">
@@ -304,7 +295,7 @@
                                         
                                         <div className="space-y-2 text-xs">
                                             <input type="text" placeholder="Aapka Naam" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
-                                            <input type="text" placeholder="Mobile Number (Order track karne ke liye)" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
+                                            <input type="text" placeholder="Mobile Number" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
                                             
                                             <div>
                                                 <label className="font-semibold text-gray-600">Kis Samay Saman Lena Hai?</label>
@@ -334,7 +325,6 @@
                                     </div>
                                 )}
 
-                                {/* Bill PDF Display */}
                                 {lastBill && (
                                     <div className="mt-6 bg-white p-4 border rounded-xl shadow-md space-y-3">
                                         <div className="text-center border-b pb-2">
@@ -362,12 +352,10 @@
                             </div>
                         )}
 
-                        {/* CUSTOMER ORDER HISTORY TAB ("My Orders") */}
+                        {/* CUSTOMER ORDER HISTORY */}
                         {activeTab === 'myorders' && (
                             <div className="space-y-4">
-                                <h2 className="text-base font-extrabold text-gray-800">Mere Purane Orders (My Orders)</h2>
-                                <p className="text-xs text-gray-500">Apna mobile number daal kar apne saare purane orders aur bills dekhein:</p>
-                                
+                                <h2 className="text-base font-extrabold text-gray-800">Mere Purane Orders</h2>
                                 <div className="flex space-x-2">
                                     <input 
                                         type="text" 
@@ -383,15 +371,14 @@
 
                                 <div className="space-y-3 mt-4">
                                     {myOldOrders.length === 0 ? (
-                                        <p className="text-xs text-gray-500 text-center py-6">Koi order history nahi mili. Pehle upar diye box mein number search karein.</p>
+                                        <p className="text-xs text-gray-500 text-center py-6">Koi order history nahi mili.</p>
                                     ) : (
                                         myOldOrders.map(ord => (
                                             <div key={ord.id} className="bg-white p-3 border rounded-xl shadow-sm text-xs space-y-2">
                                                 <div className="flex justify-between font-bold text-green-700 border-b pb-1">
-                                                    <span>Tarikh: {ord.date} ({ord.time})</span>
+                                                    <span>Tarikh: {ord.date}</span>
                                                     <span>₹{ord.total}</span>
                                                 </div>
-                                                <p className="text-gray-600">Lena tha samay: <span className="font-semibold">{ord.pickupTime}</span> | Mode: <span className="font-bold text-blue-600">{ord.paymentMode}</span></p>
                                                 <div className="bg-gray-50 p-2 rounded border space-y-1">
                                                     {ord.items.map((it, idx) => (
                                                         <div key={idx} className="flex justify-between text-gray-700">
@@ -407,7 +394,7 @@
                             </div>
                         )}
 
-                        {/* OWNER ORDERS DATA */}
+                        {/* OWNER ORDERS */}
                         {activeTab === 'orders' && isAdminAuthenticated && (
                             <div>
                                 <h2 className="text-lg font-bold mb-2 text-gray-800">Owner Data: Saare Orders</h2>
@@ -416,17 +403,15 @@
                                 ) : (
                                     <div className="space-y-3">
                                         {ordersList.map(ord => (
-                                            <div key={ord.id} className="bg-white p-3 border rounded-xl text-xs space-y-1 shadow-sm">
-                                                <div className="flex justify-between font-bold text-gray-800">
-                                                    <span>{ord.customerName} ({ord.customerPhone})</span>
-                                                    <span className="text-green-700">₹{ord.total}</span>
+                                            <div key={ord.id} className="bg-white p-3 border rounded-xl text-xs space-y-1 shadow-sm flex justify-between items-center">
+                                                <div>
+                                                    <p className="font-bold text-gray-800">{ord.customerName} ({ord.customerPhone})</p>
+                                                    <p className="text-gray-500">Samay: {ord.pickupTime} | Mode: {ord.paymentMode}</p>
+                                                    <p className="text-green-700 font-bold">₹{ord.total}</p>
                                                 </div>
-                                                <p className="text-gray-500">Samay: <span className="font-semibold text-gray-700">{ord.pickupTime}</span> | Mode: <span className="font-bold text-blue-600">{ord.paymentMode}</span></p>
-                                                <div className="border-t pt-1 text-gray-600">
-                                                    {ord.items.map((it, i) => (
-                                                        <span key={i}>{it.name} (x{it.qty}), </span>
-                                                    ))}
-                                                </div>
+                                                <button onClick={() => setOrdersList(ordersList.filter(o => o.id !== ord.id))} className="bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold">
+                                                    Delete Order
+                                                </button>
                                             </div>
                                         ))}
                                     </div>
@@ -434,25 +419,10 @@
                             </div>
                         )}
 
-                        {/* UDHARI KHATA */}
+                        {/* UDHARI */}
                         {activeTab === 'udhari' && isAdminAuthenticated && (
                             <div>
                                 <h2 className="text-lg font-bold mb-2 text-gray-800">Udhari Khata</h2>
-                                <div className="bg-white p-3 border rounded-xl space-y-2 mb-4 text-xs shadow-sm">
-                                    <h3 className="font-bold text-gray-700">Naya Udhari Jodein</h3>
-                                    <input type="text" placeholder="Grahak ka Naam" value={newUdhariName} onChange={(e) => setNewUdhariName(e.target.value)} className="w-full p-1.5 border rounded bg-gray-50"/>
-                                    <input type="text" placeholder="Mobile Number" value={newUdhariPhone} onChange={(e) => setNewUdhariPhone(e.target.value)} className="w-full p-1.5 border rounded bg-gray-50"/>
-                                    <input type="number" placeholder="Amount (₹)" value={newUdhariAmount} onChange={(e) => setNewUdhariAmount(e.target.value)} className="w-full p-1.5 border rounded bg-gray-50"/>
-                                    <input type="text" placeholder="Vivarann" value={newUdhariNote} onChange={(e) => setNewUdhariNote(e.target.value)} className="w-full p-1.5 border rounded bg-gray-50"/>
-                                    <button onClick={() => {
-                                        if(newUdhariName && newUdhariAmount) {
-                                            setUdhariList([...udhariList, { id: Date.now(), name: newUdhariName, phone: newUdhariPhone, amount: parseFloat(newUdhariAmount), note: newUdhariNote }]);
-                                            setNewUdhariName(""); setNewUdhariPhone(""); setNewUdhariAmount(""); setNewUdhariNote("");
-                                            alert("Udhari jud gayi!");
-                                        } else { alert("Naam aur Amount bharein."); }
-                                    }} className="w-full bg-red-600 text-white py-1.5 rounded font-bold">Udhari Darj Karein</button>
-                                </div>
-
                                 <div className="space-y-2">
                                     {udhariList.map(udh => (
                                         <div key={udh.id} className="bg-white p-3 border rounded-xl shadow-sm flex justify-between items-center text-xs">
@@ -464,7 +434,7 @@
                                                 <p className="text-red-600 font-bold text-sm">₹{udh.amount}</p>
                                                 <button onClick={() => {
                                                     setUdhariList(udhariList.filter(u => u.id !== udh.id));
-                                                }} className="text-green-700 underline text-[10px]">Chukta (Clear)</button>
+                                                }} className="bg-green-700 text-white px-2 py-1 rounded text-[10px] mt-1 font-bold">Chukta (Clear)</button>
                                             </div>
                                         </div>
                                     ))}
@@ -472,11 +442,11 @@
                             </div>
                         )}
 
-                        {/* RATE MANAGEMENT */}
+                        {/* RATE MANAGEMENT (WITH DELETE ITEM OPTION) */}
                         {activeTab === 'rate' && isAdminAuthenticated && (
                             <div>
-                                <h2 className="text-lg font-bold mb-2 text-gray-800">Rate & Items Management</h2>
-                                <div className="space-y-3 bg-white p-4 rounded-xl border text-xs shadow-sm">
+                                <h2 className="text-lg font-bold mb-2 text-gray-800">Rate & Items Management (Delete Option)</h2>
+                                <div className="space-y-3 bg-white p-4 rounded-xl border text-xs shadow-sm mb-4">
                                     <input type="text" placeholder="Item ka Naam" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
                                     <input type="number" placeholder="Rate (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
                                     <select value={newItemCat} onChange={(e) => setNewItemCat(e.target.value)} className="w-full p-2 border rounded bg-gray-50">
@@ -485,8 +455,6 @@
                                         <option value="Hardware">Hardware</option>
                                         <option value="Pattal & Glass">Pattal & Glass</option>
                                         <option value="Pashupalan">Pashupalan</option>
-                                        <option value="Household">Household</option>
-                                        <option value="Personal Care">Personal Care</option>
                                     </select>
                                     <input type="text" placeholder="Image URL" value={newItemImg} onChange={(e) => setNewItemImg(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
                                     <button onClick={() => {
@@ -497,6 +465,19 @@
                                             alert("Naya item jud gaya!");
                                         } else { alert("Naam aur price bharein."); }
                                     }} className="w-full bg-green-700 text-white py-2 rounded font-bold">Naya Item Jodein</button>
+                                </div>
+
+                                {/* List of items with Delete button for owner */}
+                                <div className="space-y-2">
+                                    <h3 className="font-bold text-gray-700 text-xs">Maujuda Items (Delete karne ke liye):</h3>
+                                    {items.map(item => (
+                                        <div key={item.id} className="flex justify-between items-center bg-white p-2 border rounded-lg text-xs">
+                                            <span>{item.name} - ₹{item.price}</span>
+                                            <button onClick={() => deleteItem(item.id)} className="bg-red-600 text-white px-2.5 py-1 rounded font-bold text-[10px]">
+                                                🗑️ Delete
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
