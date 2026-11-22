@@ -59,7 +59,7 @@
                 }
             };
 
-            // Shop Settings & UPI ID (`6200150688@ybl`)
+            // Shop Settings & UPI ID
             const [whatsappNo, setWhatsappNo] = React.useState("919876543210");
             const [upiId, setUpiId] = React.useState("6200150688@ybl");
             const [shopOpenTime, setShopOpenTime] = React.useState("08:00");
@@ -120,15 +120,12 @@
             const [customerTime, setCustomerTime] = React.useState("10:00");
             const [customerName, setCustomerName] = React.useState("");
             const [customerPhone, setCustomerPhone] = React.useState("");
-            const [paymentMode, setPaymentMode] = React.useState("Cash");
-            const [checkoutUtrPin, setCheckoutUtrPin] = React.useState("");
 
             // Parcha / Bulk Image & Text Order States
             const [parchaName, setParchaName] = React.useState("");
             const [parchaPhone, setParchaPhone] = React.useState("");
             const [parchaText, setParchaText] = React.useState("");
             const [parchaImage, setParchaImage] = React.useState(null);
-            const [parchaPaymentMode, setParchaPaymentMode] = React.useState("Cash");
             
             // Owner Price Update State for Parcha Order
             const [ownerUpdatedPrice, setOwnerUpdatedPrice] = React.useState("");
@@ -195,32 +192,13 @@
                 }
             };
 
-            // Trigger Direct UPI App Payment Intent (GPay, PhonePe, Paytm)
-            const openUpiApp = (appType, amount) => {
-                let upiLink = `upi://pay?pa=${upiId}&pn=Divya%20Kirana%20Store&am=${amount}&cu=INR`;
-                if (appType === 'gpay') {
-                    window.location.href = `tez://upi/pay?pa=${upiId}&pn=Divya%20Kirana%20Store&am=${amount}&cu=INR`;
-                } else if (appType === 'phonepe') {
-                    window.location.href = `phonepe://pay?pa=${upiId}&pn=Divya%20Kirana%20Store&am=${amount}&cu=INR`;
-                } else if (appType === 'paytm') {
-                    window.location.href = `paytmmp://pay?pa=${upiId}&pn=Divya%20Kirana%20Store&am=${amount}&cu=INR`;
-                } else {
-                    window.location.href = upiLink;
-                }
-            };
-
-            // Submit Cart Checkout Order
+            // Submit Cart Checkout Order (Without any payment required at placement)
             const placeOrder = () => {
                 if (!customerName || !customerPhone) {
                     alert("Kripya apna Naam aur Mobile Number likhein!");
                     return;
                 }
                 const totalAmt = getTotalAmount();
-                if (paymentMode === "UPI" && !checkoutUtrPin) {
-                    alert("Kripya Online Payment karne ke baad UTR / Transaction Reference Number dalein!");
-                    return;
-                }
-
                 const currentDate = new Date().toLocaleDateString('en-IN');
                 const currentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
@@ -230,8 +208,8 @@
                     customerName,
                     customerPhone,
                     pickupTime: customerTime,
-                    paymentMode: paymentMode === "UPI" ? `UPI Paid [Ref: ${checkoutUtrPin}]` : paymentMode,
-                    status: "Pending",
+                    paymentMode: "Pending Payment Selection",
+                    status: "Ready",
                     date: currentDate,
                     time: currentTime,
                     items: [],
@@ -251,45 +229,14 @@
                 });
 
                 setOrdersList([billDetails, ...ordersList]);
-                
-                if (paymentMode === "Udhari") {
-                    const existingIndex = udhariList.findIndex(u => u.phone === customerPhone);
-                    if (existingIndex !== -1) {
-                        const updated = [...udhariList];
-                        updated[existingIndex].amount += totalAmt;
-                        updated[existingIndex].history.unshift({
-                            date: currentDate,
-                            type: "Udhari Liya",
-                            amount: totalAmt,
-                            mode: "Udhari"
-                        });
-                        setUdhariList(updated);
-                    } else {
-                        setUdhariList([{
-                            id: Date.now(),
-                            name: customerName,
-                            phone: customerPhone,
-                            amount: totalAmt,
-                            note: "Store Order Udhari",
-                            history: [{
-                                date: currentDate,
-                                type: "Udhari Liya",
-                                amount: totalAmt,
-                                mode: "Udhari"
-                            }]
-                        }, ...udhariList]);
-                    }
-                }
-
                 setLastBill(billDetails);
                 setCart({});
-                setCheckoutUtrPin("");
                 setShowCheckoutModal(false);
                 setActiveTab('store');
-                alert("🎉 Order Successfully Placed & Saved!");
+                alert("🎉 Order Successfully Placed! Aap 'My Orders' se PDF Bill dekh sakte hain[cite: 1].");
             };
 
-            // Submit Parcha / Photo Bulk Order (Price Pending initially)
+            // Submit Parcha / Photo Bulk Order (Without any payment option at placement)[cite: 1]
             const placeParchaOrder = () => {
                 if (!parchaName || !parchaPhone) {
                     alert("Kripya apna Naam aur Mobile Number zaroor dalein!");
@@ -310,7 +257,7 @@
                     customerName: parchaName,
                     customerPhone: parchaPhone,
                     pickupTime: "As Soon As Ready",
-                    paymentMode: parchaPaymentMode,
+                    paymentMode: "Pending Payment Selection",
                     status: "Price Pending",
                     date: currentDate,
                     time: currentTime,
@@ -328,10 +275,10 @@
                 setParchaText("");
                 setParchaImage(null);
                 setShowParchaModal(false);
-                alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price update karne ke baad aapko 'My Orders' mein bill dikhega.");
+                alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price update karne ke baad aapko 'My Orders' mein bill dikhega[cite: 1].");
             };
 
-            // Owner Updates Price of Parcha Order -> Sends WhatsApp Alert to Customer
+            // Owner Updates Price of Parcha Order -> Sends WhatsApp Alert to Customer[cite: 1]
             const updateParchaOrderPrice = (orderId) => {
                 const amt = parseFloat(ownerUpdatedPrice);
                 if (isNaN(amt) || amt <= 0) {
@@ -356,31 +303,7 @@
                             ]
                         };
 
-                        if (ord.paymentMode === "Udhari") {
-                            const existingIndex = udhariList.findIndex(u => u.phone === ord.customerPhone);
-                            if (existingIndex !== -1) {
-                                const updatedUdh = [...udhariList];
-                                updatedUdh[existingIndex].amount += amt;
-                                updatedUdh[existingIndex].history.unshift({
-                                    date: currentDate,
-                                    type: "Parcha Order Udhari",
-                                    amount: amt,
-                                    mode: "Udhari"
-                                });
-                                setUdhariList(updatedUdh);
-                            } else {
-                                setUdhariList([{
-                                    id: Date.now(),
-                                    name: ord.customerName,
-                                    phone: ord.customerPhone,
-                                    amount: amt,
-                                    note: "Parcha Order Udhari",
-                                    history: [{ date: currentDate, type: "Parcha Order Udhari", amount: amt, mode: "Udhari" }]
-                                }, ...udhariList]);
-                            }
-                        }
-
-                        let msg = `📦 *Divya Kirana Store - Bill Updated & Ready*\n\nHello ${ord.customerName},\nAapke Parcha Order (${ord.invoiceNo}) ka bill aur saman tayyar hai!\n\n💰 *Kul Bill Rashi:* ₹${amt}\n💳 *Payment Mode:* ${ord.paymentMode}\n\nApna bill dekhne, payment karne aur PDF download karne ke liye website ke 'My Orders' tab mein apna mobile number dalein. 🙏`;
+                        let msg = `📦 *Divya Kirana Store - Bill Ready*\n\nHello ${ord.customerName},\nAapke Parcha Order (${ord.invoiceNo}) ka bill tayyar hai!\n\n💰 *Kul Bill Rashi:* ₹${amt}\n\nApna bill dekhne aur PDF download karne ke liye website ke 'My Orders' tab mein apna mobile number dalein. 🙏`;
                         let cleanPhone = ord.customerPhone.startsWith("91") ? ord.customerPhone : "91" + ord.customerPhone;
                         window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 
@@ -391,35 +314,7 @@
                 }));
                 setOwnerUpdatedPrice("");
                 setOwnerUpdatedNote("");
-                alert("✅ Price Updated & Customer ko WhatsApp par bill bhej diya gaya!");
-            };
-
-            const markOrderReady = (orderId) => {
-                setOrdersList(ordersList.map(ord => {
-                    if (ord.id === orderId) {
-                        const updatedOrd = { ...ord, status: "Ready" };
-                        let msg = `📦 *Divya Kirana Store Update*\n\nHello ${ord.customerName},\nAapka order (${ord.invoiceNo}) pack ho kar **READY** ho chuka hai!\n\nKripya dukan se aakar apna saman le jayein. 🙏\nKul Rashi: ₹${ord.total}`;
-                        let cleanPhone = ord.customerPhone.startsWith("91") ? ord.customerPhone : "91" + ord.customerPhone;
-                        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-                        return updatedOrd;
-                    }
-                    return ord;
-                }));
-                if (selectedOwnerOrder && selectedOwnerOrder.id === orderId) {
-                    setSelectedOwnerOrder(prev => ({ ...prev, status: "Ready" }));
-                }
-            };
-
-            const markOrderCompleted = (orderId) => {
-                setOrdersList(ordersList.map(ord => {
-                    if (ord.id === orderId) {
-                        return { ...ord, status: "Completed" };
-                    }
-                    return ord;
-                }));
-                if (selectedOwnerOrder && selectedOwnerOrder.id === orderId) {
-                    setSelectedOwnerOrder(prev => ({ ...prev, status: "Completed" }));
-                }
+                alert("✅ Price Updated & Customer ko WhatsApp par bill bhej diya gaya[cite: 1]!");
             };
 
             const checkMyOrders = () => {
@@ -429,6 +324,50 @@
                 }
                 const foundOrders = ordersList.filter(o => o.customerPhone === customerSearchPhone);
                 setMyOldOrders(foundOrders);
+            };
+
+            // Customer settles payment from My Orders (Cash, Online UPI, or Udhari)[cite: 1]
+            const settleCustomerPayment = (orderId, mode, amount) => {
+                const currentDate = new Date().toLocaleDateString('en-IN');
+                
+                if (mode === "Udhari") {
+                    const ord = ordersList.find(o => o.id === orderId);
+                    if (ord) {
+                        const existingIndex = udhariList.findIndex(u => u.phone === ord.customerPhone);
+                        if (existingIndex !== -1) {
+                            const updatedUdh = [...udhariList];
+                            updatedUdh[existingIndex].amount += amount;
+                            updatedUdh[existingIndex].history.unshift({
+                                date: currentDate,
+                                type: `Order Udhari (${ord.invoiceNo})`,
+                                amount: amount,
+                                mode: "Udhari"
+                            });
+                            setUdhariList(updatedUdh);
+                        } else {
+                            setUdhariList([{
+                                id: Date.now(),
+                                name: ord.customerName,
+                                phone: ord.customerPhone,
+                                amount: amount,
+                                note: `Order Udhari ${ord.invoiceNo}`,
+                                history: [{ date: currentDate, type: `Order Udhari (${ord.invoiceNo})`, amount: amount, mode: "Udhari" }]
+                            }, ...udhariList]);
+                        }
+                    }
+                }
+
+                let paymentText = mode === "Cash" ? "Cash Paid" : mode === "UPI" ? "Online UPI Paid" : "Udhari Khata";
+
+                setOrdersList(ordersList.map(ord => {
+                    if (ord.id === orderId) {
+                        return { ...ord, paymentMode: paymentText, status: "Completed" };
+                    }
+                    return ord;
+                }));
+
+                alert(`✅ Payment Mode Saved as '${paymentText}'! Ab aap PDF Bill download kar sakte hain.`);
+                checkMyOrders();
             };
 
             const categories = [
@@ -445,23 +384,6 @@
                 const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
                 return matchesSearch && matchesCat;
             });
-
-            // Customer pays Udhari or Parcha online from My Orders tab with UTR confirmation
-            const submitCustomerOrderOnlinePayment = (orderId, amount) => {
-                let utrPin = prompt(`💳 Owner UPI ID: ${upiId}\nGoogle Pay, PhonePe ya Paytm se ₹${amount} pay karne ke baad 12-digit UTR Reference Number yahan dalein:`);
-                if (utrPin) {
-                    setOrdersList(ordersList.map(ord => {
-                        if (ord.id === orderId) {
-                            return { ...ord, paymentMode: `UPI Paid [Ref: ${utrPin}]`, status: "Completed" };
-                        }
-                        return ord;
-                    }));
-                    alert(`✅ Payment Verified (Ref: ${utrPin})! Order Completed ho gaya aur ab aap Bill PDF download kar sakte hain.`);
-                    checkMyOrders();
-                } else {
-                    alert("⚠️ Transaction Reference Number nahi dala gaya.");
-                }
-            };
 
             return (
                 <div className="max-w-md mx-auto bg-gray-50 min-h-screen shadow-2xl flex flex-col relative pb-24">
@@ -639,7 +561,7 @@
                         {activeTab === 'myorders' && (
                             <div className="space-y-4">
                                 <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-                                    <h2 className="text-sm font-extrabold text-gray-900">Track Your Orders & Udhari Status</h2>
+                                    <h2 className="text-sm font-extrabold text-gray-900">Track Your Orders & Bill</h2>
                                     <div className="flex space-x-2">
                                         <input 
                                             type="tel" 
@@ -666,7 +588,6 @@
                                             <span className="text-green-800">{ord.invoiceNo} • {ord.date}</span>
                                             <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
                                                 ord.status === 'Price Pending' ? 'bg-orange-100 text-orange-800 animate-pulse' :
-                                                ord.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
                                                 ord.status === 'Ready' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'
                                             }`}>
                                                 Status: {ord.status}
@@ -674,25 +595,22 @@
                                         </div>
                                         
                                         {ord.status === 'Price Pending' ? (
-                                            <div className="bg-orange-50 p-3 rounded-xl border border-orange-200 text-orange-900 font-semibold space-y-1">
-                                                <p>⏳ Aapka Parcha / List order owner ke paas hai. Owner price update kar rahe hain.</p>
+                                            <div className="bg-orange-50 p-3 rounded-xl border border-orange-200 text-orange-900 font-semibold">
+                                                ⏳ Aapka Parcha order owner ke paas hai. Owner price update kar rahe hain[cite: 1].
                                             </div>
                                         ) : (
-                                            <div className="space-y-1">
-                                                <p className="text-gray-600">Payment: <strong className="text-green-700">{ord.paymentMode}</strong> | Total: <strong className="text-gray-900 text-sm">₹{ord.total}</strong></p>
+                                            <div className="space-y-2">
+                                                <p className="text-gray-600">Total Bill Rashi: <strong className="text-gray-900 text-sm">₹{ord.total}</strong> | Payment: <strong className="text-green-700">{ord.paymentMode}</strong></p>
                                                 
                                                 {ord.status === 'Ready' && (
-                                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-300 space-y-2 mt-2">
-                                                        <p className="font-bold text-blue-900 text-center">📦 Owner ne bill aur saman tayyar kar diya hai! Ab payment karein:</p>
-                                                        <p className="font-bold text-gray-800 text-center">Owner UPI ID: <span className="text-green-800 font-mono">{upiId}</span></p>
+                                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-300 space-y-2">
+                                                        <p className="font-bold text-blue-900 text-center">💳 Payment Mode Chunein aur Bill Download Karein[cite: 1]:</p>
+                                                        <p className="text-center font-bold text-gray-800">Owner UPI ID: <span className="text-green-800 font-mono">{upiId}</span>[cite: 1]</p>
                                                         <div className="grid grid-cols-3 gap-2">
-                                                            <button onClick={() => openUpiApp('gpay', ord.total)} className="bg-white border border-blue-400 text-blue-900 py-1.5 rounded-lg font-bold shadow text-center">Google Pay</button>
-                                                            <button onClick={() => openUpiApp('phonepe', ord.total)} className="bg-purple-700 text-white py-1.5 rounded-lg font-bold shadow text-center">PhonePe</button>
-                                                            <button onClick={() => openUpiApp('paytm', ord.total)} className="bg-blue-800 text-white py-1.5 rounded-lg font-bold shadow text-center">Paytm</button>
+                                                            <button onClick={() => settleCustomerPayment(ord.id, 'Cash', ord.total)} className="bg-green-700 text-white py-2 rounded-xl font-bold shadow text-center">Cash Pay</button>
+                                                            <button onClick={() => settleCustomerPayment(ord.id, 'UPI', ord.total)} className="bg-blue-700 text-white py-2 rounded-xl font-bold shadow text-center">Online UPI</button>
+                                                            <button onClick={() => settleCustomerPayment(ord.id, 'Udhari', ord.total)} className="bg-yellow-500 text-black py-2 rounded-xl font-bold shadow text-center">Udhari</button>
                                                         </div>
-                                                        <button onClick={() => submitCustomerOrderOnlinePayment(ord.id, ord.total)} className="w-full bg-blue-700 text-white py-2 rounded-xl font-bold shadow hover:bg-blue-800">
-                                                            ✅ Payment karne ke baad UTR Dalein & Bill Download Karein
-                                                        </button>
                                                     </div>
                                                 )}
                                             </div>
@@ -716,7 +634,7 @@
 
                                         {ord.status !== 'Price Pending' && (
                                             <button onClick={() => { setLastBill(ord); setActiveTab('store'); }} className="w-full bg-gray-900 text-white py-2 rounded-xl font-bold text-xs shadow">
-                                                📄 Download Official Bill PDF
+                                                📄 View & Download Official Bill PDF
                                             </button>
                                         )}
                                     </div>
@@ -752,7 +670,6 @@
                                                 </div>
                                                 <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
                                                     ord.status === 'Price Pending' ? 'bg-orange-100 text-orange-800 animate-pulse' :
-                                                    ord.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
                                                     ord.status === 'Ready' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'
                                                 }`}>
                                                     {ord.status}
@@ -761,20 +678,14 @@
 
                                             <div>
                                                 <p className="font-extrabold text-gray-900 text-sm">👤 {ord.customerName} <span className="text-green-700 font-mono">({ord.customerPhone})</span></p>
-                                                <p className="text-gray-600 mt-0.5">Mode: <strong className="text-green-800">{ord.paymentMode}</strong> | Total: <strong className="text-green-800">{ord.status === 'Price Pending' ? "Price Likhein ✍️" : `₹${ord.total}`}</strong></p>
+                                                <p className="text-gray-600 mt-0.5">Total: <strong className="text-green-800">{ord.status === 'Price Pending' ? "Price Likhein ✍️" : `₹${ord.total}`}</strong></p>
                                             </div>
 
                                             <div className="flex space-x-2 pt-1">
                                                 <button onClick={() => setSelectedOwnerOrder(ord)} className="flex-grow bg-blue-50 text-blue-700 border border-blue-200 py-2 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition">
-                                                    {ord.status === 'Price Pending' ? "✍️ Parcha Dekhein & Price Likhein" : "👁️ Khol Kar Dekhein"}
+                                                    {ord.status === 'Price Pending' ? "✍️ Parcha Dekhein & Price Likhein[cite: 1]" : "👁️ Khol Kar Dekhein"}
                                                 </button>
                                                 
-                                                {ord.status === 'Pending' && (
-                                                    <button onClick={() => markOrderReady(ord.id)} className="bg-green-700 text-white px-3 py-2 rounded-xl font-bold hover:bg-green-800 transition">
-                                                        📦 Ready
-                                                    </button>
-                                                )}
-
                                                 <button onClick={() => deleteOrder(ord.id)} className="bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-xl font-bold hover:bg-red-600 hover:text-white transition">
                                                     🗑️
                                                 </button>
@@ -864,7 +775,7 @@
                         )}
                     </main>
 
-                    {/* CUSTOMER PARCHA / PHOTO UPLOAD BULK ORDER MODAL */}
+                    {/* CUSTOMER PARCHA / PHOTO UPLOAD BULK ORDER MODAL (No Payment option at all) */}
                     {showParchaModal && (
                         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 no-print">
                             <div className="bg-white w-full max-w-sm rounded-3xl p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -884,7 +795,7 @@
                                         </div>
                                         <div>
                                             <label className="font-bold text-gray-700 block mb-1">Mobile Number *</label>
-                                            <input type="tel" placeholder="10-digit No." value={parchaPhone} onChange={(e) => setParshPhone(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"/>
+                                            <input type="tel" placeholder="10-digit No." value={parchaPhone} onChange={(e) => setParchaPhone(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"/>
                                         </div>
                                     </div>
 
@@ -911,18 +822,10 @@
                                             <img src={parchaImage} alt="Preview" className="w-full h-28 object-cover rounded-lg border mt-1" />
                                         )}
                                     </div>
-
-                                    <div>
-                                        <label className="font-bold text-gray-700 block mb-1">Payment Mode (भुगतान का तरीका)</label>
-                                        <select value={parchaPaymentMode} onChange={(e) => setParchaPaymentMode(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-bold text-green-800">
-                                            <option value="Cash">Cash on Pickup</option>
-                                            <option value="Udhari">Udhari Khata (उधार)</option>
-                                        </select>
-                                    </div>
                                 </div>
 
                                 <button onClick={placeParchaOrder} className="w-full bg-green-700 text-white py-3 rounded-xl font-extrabold shadow-lg text-xs hover:bg-green-800 transition mt-2">
-                                    🚀 Send Parcha Order to Store
+                                    🚀 Send Parcha Order to Store (Without Payment)
                                 </button>
                             </div>
                         </div>
@@ -943,7 +846,6 @@
                                 <div className="text-xs space-y-1 bg-gray-50 p-3 rounded-xl border">
                                     <p><strong>Customer:</strong> {selectedOwnerOrder.customerName}</p>
                                     <p><strong>Mobile:</strong> {selectedOwnerOrder.customerPhone}</p>
-                                    <p><strong>Payment Mode:</strong> {selectedOwnerOrder.paymentMode}</p>
                                     <p><strong>Order Status:</strong> <span className="font-bold uppercase text-green-700">{selectedOwnerOrder.status}</span></p>
                                 </div>
 
@@ -976,7 +878,7 @@
                                                 className="w-full p-2 border rounded-xl bg-white text-xs"
                                             />
                                             <button onClick={() => updateParchaOrderPrice(selectedOwnerOrder.id)} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-extrabold shadow hover:bg-green-800">
-                                                ✅ Save Price & Send Bill Alert to Customer WhatsApp
+                                                ✅ Save Price & Send Bill Alert to Customer WhatsApp[cite: 1]
                                             </button>
                                         </div>
                                     </div>
@@ -1033,7 +935,7 @@
                         </div>
                     )}
 
-                    {/* CHECKOUT MODAL */}
+                    {/* CHECKOUT MODAL (WITHOUT PAYMENT REQUIREMENT) */}
                     {showCheckoutModal && (
                         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-end justify-center max-w-md mx-auto no-print">
                             <div className="bg-white w-full rounded-t-3xl p-5 space-y-4 shadow-2xl max-h-[85vh] overflow-y-auto">
@@ -1055,40 +957,11 @@
                                         <label className="font-bold text-gray-700 block mb-1">Pickup Time</label>
                                         <input type="time" value={customerTime} onChange={(e) => setCustomerTime(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"/>
                                     </div>
-                                    <div>
-                                        <label className="font-bold text-gray-700 block mb-1">Payment Mode (भुगतान का तरीका)</label>
-                                        <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-bold text-green-800">
-                                            <option value="Cash">Cash on Pickup</option>
-                                            <option value="UPI">UPI Online Payment (Instant)</option>
-                                            <option value="Udhari">Udhari Khata (उधार)</option>
-                                        </select>
-                                    </div>
                                 </div>
-
-                                {paymentMode === "UPI" && (
-                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-300 space-y-2.5 text-xs">
-                                        <p className="font-bold text-blue-900 text-center">💳 Direct UPI Apps se Pay Karein (₹{getTotalAmount()}):</p>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <button onClick={() => openUpiApp('gpay', getTotalAmount())} className="bg-white border border-blue-400 text-blue-900 py-2 rounded-xl font-bold shadow text-center">Google Pay</button>
-                                            <button onClick={() => openUpiApp('phonepe', getTotalAmount())} className="bg-purple-700 text-white py-2 rounded-xl font-bold shadow text-center">PhonePe</button>
-                                            <button onClick={() => openUpiApp('paytm', getTotalAmount())} className="bg-blue-800 text-white py-2 rounded-xl font-bold shadow text-center">Paytm</button>
-                                        </div>
-                                        <div>
-                                            <label className="font-bold text-gray-700 block mb-1">12-digit UTR / Transaction Reference Number *</label>
-                                            <input 
-                                                type="text" 
-                                                placeholder="Payment ke baad UTR number yahan dalein" 
-                                                value={checkoutUtrPin} 
-                                                onChange={(e) => setCheckoutUtrPin(e.target.value)}
-                                                className="w-full p-2.5 border rounded-xl bg-white font-bold"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
 
                                 <div className="pt-2">
                                     <button onClick={placeOrder} className="w-full bg-green-700 text-white py-3.5 rounded-xl font-extrabold shadow-lg text-sm hover:bg-green-800 transition">
-                                        Place Order Now 🎉
+                                        Place Order Now 🎉 (No Payment Needed Yet)
                                     </button>
                                 </div>
                             </div>
