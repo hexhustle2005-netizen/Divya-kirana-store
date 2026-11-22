@@ -8,9 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Firebase SDKs for Cloud Sync -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -34,19 +31,6 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // Firebase Configuration with your Database URL
-        const firebaseConfig = {
-            databaseURL: "https://divya-store-2a4b0-default-rtdb.firebaseio.com/"
-        };
-        
-        let db = null;
-        if (firebaseConfig.databaseURL) {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-            db = firebase.database();
-        }
-
         function App() {
             const [activeTab, setActiveTab] = React.useState('store');
             const [showCheckoutModal, setShowCheckoutModal] = React.useState(false);
@@ -54,6 +38,7 @@
             const [isAdminAuthenticated, setIsAdminAuthenticated] = React.useState(false);
             const ADMIN_PIN = "728084";
 
+            // Secret Triple Tap Counter for Admin Access
             const [titleClicks, setTitleClicks] = React.useState(0);
             const handleTitleClick = () => {
                 const newClicks = titleClicks + 1;
@@ -74,56 +59,63 @@
                 }
             };
 
-            const defaultItems = [
-                { id: 1, name: "Aashirvaad Atta (10kg)", weight: "10 kg Pack", price: 420, category: "Groceries", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80" },
-                { id: 2, name: "Fortune Sunflower Oil", weight: "1 Litre Pouch", price: 135, category: "Groceries", image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=400&q=80" },
-                { id: 3, name: "Tata Iodized Salt", weight: "1 kg Pack", price: 28, category: "Groceries", image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=400&q=80" },
-                { id: 4, name: "DAP Khaad Fertilizer", weight: "50 kg Bag", price: 1350, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&w=400&q=80" },
-                { id: 5, name: "Urea Khaad Bag", weight: "45 kg Bag", price: 266, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=400&q=80" },
-                { id: 6, name: "Certified Wheat Seed", weight: "40 kg Bag", price: 1400, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=400&q=80" },
-                { id: 7, name: "Iron Nails (Lohe ki Kil)", weight: "1 kg Pack", price: 80, category: "Hardware", image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=400&q=80" },
-                { id: 8, name: "Heavy Claw Hammer", weight: "1 Piece", price: 180, category: "Hardware", image: "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=400&q=80" },
-                { id: 9, name: "Disposable Pattal Thali", weight: "Pack of 50", price: 110, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80" },
-                { id: 10, name: "Paper Tea/Water Glass", weight: "Pack of 100", price: 70, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1516594798947-e65505dbb29d?auto=format&fit=crop&w=400&q=80" },
-                { id: 11, name: "Pashu Aahar (Cattle Feed)", weight: "50 kg Bag", price: 1250, category: "Pashupalan", image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=400&q=80" },
-                { id: 12, name: "Cattle Mineral Mixture", weight: "1 kg Pack", price: 150, category: "Pashupalan", image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=400&q=80" }
-            ];
+            // Shop Settings & UPI ID
+            const [whatsappNo, setWhatsappNo] = React.useState("919876543210");
+            const [upiId, setUpiId] = React.useState("6200150688@ybl");
+            const [shopOpenTime, setShopOpenTime] = React.useState("08:00");
+            const [shopCloseTime, setShopCloseTime] = React.useState("20:00");
 
-            const [items, setItems] = React.useState(defaultItems);
-            const [ordersList, setOrdersList] = React.useState([]);
-            const [udhariList, setUdhariList] = React.useState([]);
+            // Store Inventory (Persistent with localStorage)
+            const [items, setItems] = React.useState(() => {
+                const saved = localStorage.getItem("divya_items");
+                if (saved) return JSON.parse(saved);
+                return [
+                    { id: 1, name: "Aashirvaad Atta (10kg)", weight: "10 kg Pack", price: 420, category: "Groceries", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80" },
+                    { id: 2, name: "Fortune Sunflower Oil", weight: "1 Litre Pouch", price: 135, category: "Groceries", image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=400&q=80" },
+                    { id: 3, name: "Tata Iodized Salt", weight: "1 kg Pack", price: 28, category: "Groceries", image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=400&q=80" },
+                    { id: 4, name: "DAP Khaad Fertilizer", weight: "50 kg Bag", price: 1350, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&w=400&q=80" },
+                    { id: 5, name: "Urea Khaad Bag", weight: "45 kg Bag", price: 266, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=400&q=80" },
+                    { id: 6, name: "Certified Wheat Seed", weight: "40 kg Bag", price: 1400, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=400&q=80" },
+                    { id: 7, name: "Iron Nails (Lohe ki Kil)", weight: "1 kg Pack", price: 80, category: "Hardware", image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=400&q=80" },
+                    { id: 8, name: "Heavy Claw Hammer", weight: "1 Piece", price: 180, category: "Hardware", image: "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=400&q=80" },
+                    { id: 9, name: "Disposable Pattal Thali", weight: "Pack of 50", price: 110, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80" },
+                    { id: 10, name: "Paper Tea/Water Glass", weight: "Pack of 100", price: 70, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1516594798947-e65505dbb29d?auto=format&fit=crop&w=400&q=80" },
+                    { id: 11, name: "Pashu Aahar (Cattle Feed)", weight: "50 kg Bag", price: 1250, category: "Pashupalan", image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=400&q=80" },
+                    { id: 12, name: "Cattle Mineral Mixture", weight: "1 kg Pack", price: 150, category: "Pashupalan", image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=400&q=80" }
+                ];
+            });
 
-            // Real-time Cloud Sync from Firebase
-            React.useEffect(() => {
-                if (db) {
-                    db.ref('divya_store/items').on('value', (snapshot) => {
-                        const val = snapshot.val();
-                        if (val) setItems(val);
-                        else db.ref('divya_store/items').set(defaultItems);
-                    });
-                    db.ref('divya_store/orders').on('value', (snapshot) => {
-                        const val = snapshot.val();
-                        if (val) setOrdersList(val);
-                    });
-                    db.ref('divya_store/udhari').on('value', (snapshot) => {
-                        const val = snapshot.val();
-                        if (val) setUdhariList(val);
-                        else {
-                            const initialUdhari = [{ id: 1, name: "Ramesh Kumar", phone: "9876543210", amount: 450, note: "Chawal aur Dal baki", history: [{ date: "24/11/2026", type: "Udhari Liya", amount: 450, mode: "Udhari" }] }];
-                            db.ref('divya_store/udhari').set(initialUdhari);
-                        }
-                    });
-                }
-            }, []);
+            // Orders List (Persistent)
+            const [ordersList, setOrdersList] = React.useState(() => {
+                const saved = localStorage.getItem("divya_orders");
+                return saved ? JSON.parse(saved) : [];
+            });
 
-            const updateCloudData = (path, data) => {
-                if (db) {
-                    db.ref(`divya_store/${path}`).set(data);
-                }
-            };
+            // Udhari Khata (Persistent)
+            const [udhariList, setUdhariList] = React.useState(() => {
+                const saved = localStorage.getItem("divya_udhari");
+                if (saved) return JSON.parse(saved);
+                return [
+                    { 
+                        id: 1, 
+                        name: "Ramesh Kumar", 
+                        phone: "9876543210", 
+                        amount: 450, 
+                        note: "Chawal aur Dal baki",
+                        history: [{ date: "24/11/2026", type: "Udhari Liya", amount: 450, mode: "Udhari" }]
+                    }
+                ];
+            });
+
+            // Save to localStorage automatically
+            React.useEffect(() => { localStorage.setItem("divya_items", JSON.stringify(items)); }, [items]);
+            React.useEffect(() => { localStorage.setItem("divya_orders", JSON.stringify(ordersList)); }, [ordersList]);
+            React.useEffect(() => { localStorage.setItem("divya_udhari", JSON.stringify(udhariList)); }, [udhariList]);
 
             const [searchTerm, setSearchTerm] = React.useState("");
             const [selectedCategory, setSelectedCategory] = React.useState("All");
+
+            // Cart & Customer States
             const [cart, setCart] = React.useState({});
             const [customerTime, setCustomerTime] = React.useState("10:00");
             const [customerName, setCustomerName] = React.useState("");
@@ -131,10 +123,33 @@
             const [paymentMode, setPaymentMode] = React.useState("Cash");
             const [checkoutUtrPin, setCheckoutUtrPin] = React.useState("");
 
+            // Parcha / Bulk Image & Text Order States
             const [parchaName, setParchaName] = React.useState("");
             const [parchaPhone, setParchaPhone] = React.useState("");
             const [parchaText, setParchaText] = React.useState("");
-            const [parchaExpectedPrice, setParchaExpectedPrice] = React.useState("");
+            const [parchaImage, setParchaImage] = React.useState(null);
+            
+            // Owner Price Update State for Parcha Order
+            const [ownerUpdatedPrice, setOwnerUpdatedPrice] = React.useState("");
+            const [ownerUpdatedNote, setOwnerUpdatedNote] = React.useState("");
+            
+            // Search / History
+            const [customerSearchPhone, setCustomerSearchPhone] = React.useState("");
+            const [myOldOrders, setMyOldOrders] = React.useState(null);
+            const [lastBill, setLastBill] = React.useState(null);
+            const [selectedOwnerOrder, setSelectedOwnerOrder] = React.useState(null);
+
+            // New Udhari / Item input states
+            const [newUdhariName, setNewUdhariName] = React.useState("");
+            const [newUdhariPhone, setNewUdhariPhone] = React.useState("");
+            const [newUdhariAmount, setNewUdhariAmount] = React.useState("");
+            const [newUdhariNote, setNewUdhariNote] = React.useState("");
+
+            const [newItemName, setNewItemName] = React.useState("");
+            const [newItemWeight, setNewItemWeight] = React.useState("");
+            const [newItemPrice, setNewItemPrice] = React.useState("");
+            const [newItemCat, setNewItemCat] = React.useState("Groceries");
+            const [newItemImg, setNewItemImg] = React.useState("");
 
             const addToCart = (id) => setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
             const removeFromCart = (id) => {
@@ -146,6 +161,18 @@
                 });
             };
 
+            const deleteItem = (id) => {
+                if (confirm("Kya aap is item ko store se delete karna chahte hain?")) {
+                    setItems(items.filter(item => item.id !== id));
+                }
+            };
+
+            const deleteOrder = (id) => {
+                if (confirm("Kya aap is order record ko delete karna chahte hain?")) {
+                    setOrdersList(ordersList.filter(ord => ord.id !== id));
+                }
+            };
+
             const getTotalItems = () => Object.values(cart).reduce((a, b) => a + b, 0);
             const getTotalAmount = () => {
                 return Object.keys(cart).reduce((total, id) => {
@@ -154,12 +181,44 @@
                 }, 0);
             };
 
+            // Handle Image Upload to Base64 for LocalStorage
+            const handleImageUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setParchaImage(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // Trigger Direct UPI App Payment Intent (GPay, PhonePe, Paytm)
+            const openUpiApp = (appType, amount) => {
+                let upiLink = `upi://pay?pa=${upiId}&pn=Divya%20Kirana%20Store&am=${amount}&cu=INR`;
+                if (appType === 'gpay') {
+                    window.location.href = `tez://upi/pay?pa=${upiId}&pn=Divya%20Kirana%20Store&am=${amount}&cu=INR`;
+                } else if (appType === 'phonepe') {
+                    window.location.href = `phonepe://pay?pa=${upiId}&pn=Divya%20Kirana%20Store&am=${amount}&cu=INR`;
+                } else if (appType === 'paytm') {
+                    window.location.href = `paytmmp://pay?pa=${upiId}&pn=Divya%20Kirana%20Store&am=${amount}&cu=INR`;
+                } else {
+                    window.location.href = upiLink;
+                }
+            };
+
+            // Submit Cart Checkout Order (Starts as Pending so it shows in Orders queue)
             const placeOrder = () => {
                 if (!customerName || !customerPhone) {
                     alert("Kripya apna Naam aur Mobile Number likhein!");
                     return;
                 }
                 const totalAmt = getTotalAmount();
+                if (paymentMode === "UPI" && !checkoutUtrPin) {
+                    alert("Kripya Online Payment karne ke baad UTR / Transaction Reference Number dalein!");
+                    return;
+                }
+
                 const currentDate = new Date().toLocaleDateString('en-IN');
                 const currentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
@@ -169,9 +228,8 @@
                     customerName,
                     customerPhone,
                     pickupTime: customerTime,
-                    paymentMode: paymentMode,
-                    paymentDetails: checkoutUtrPin,
-                    status: "Completed",
+                    paymentMode: paymentMode === "UPI" ? `UPI Paid [Ref: ${checkoutUtrPin}]` : paymentMode,
+                    status: "Pending", // Starts as Pending so owner can click Ready & send WhatsApp
                     date: currentDate,
                     time: currentTime,
                     items: [],
@@ -190,27 +248,58 @@
                     }
                 });
 
-                const newOrders = [billDetails, ...ordersList];
-                setOrdersList(newOrders);
-                updateCloudData('orders', newOrders);
+                setOrdersList([billDetails, ...ordersList]);
                 
+                if (paymentMode === "Udhari") {
+                    const existingIndex = udhariList.findIndex(u => u.phone === customerPhone);
+                    if (existingIndex !== -1) {
+                        const updated = [...udhariList];
+                        updated[existingIndex].amount += totalAmt;
+                        updated[existingIndex].history.unshift({
+                            date: currentDate,
+                            type: "Udhari Liya",
+                            amount: totalAmt,
+                            mode: "Udhari"
+                        });
+                        setUdhariList(updated);
+                    } else {
+                        setUdhariList([{
+                            id: Date.now(),
+                            name: customerName,
+                            phone: customerPhone,
+                            amount: totalAmt,
+                            note: "Store Order Udhari",
+                            history: [{
+                                date: currentDate,
+                                type: "Udhari Liya",
+                                amount: totalAmt,
+                                mode: "Udhari"
+                            }]
+                        }, ...udhariList]);
+                    }
+                }
+
+                setLastBill(billDetails);
                 setCart({});
-                setCustomerName("");
-                setCustomerPhone("");
                 setCheckoutUtrPin("");
                 setShowCheckoutModal(false);
                 setActiveTab('store');
-                alert("🎉 Order Successfully Placed & Saved to Cloud!");
+                alert("🎉 Order Successfully Placed!");
             };
 
+            // Submit Parcha / Photo Bulk Order (Price Pending initially)
             const placeParchaOrder = () => {
                 if (!parchaName || !parchaPhone) {
                     alert("Kripya apna Naam aur Mobile Number zaroor dalein!");
                     return;
                 }
+                if (!parchaText && !parchaImage) {
+                    alert("Kripya saman ki list likhein ya parche ki photo upload karein!");
+                    return;
+                }
+
                 const currentDate = new Date().toLocaleDateString('en-IN');
                 const currentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                const expPrice = parseFloat(parchaExpectedPrice) || 0;
 
                 let parchaOrderDetails = {
                     id: Date.now(),
@@ -219,186 +308,726 @@
                     customerName: parchaName,
                     customerPhone: parchaPhone,
                     pickupTime: "As Soon As Ready",
-                    paymentMode: "Payment Pending",
+                    paymentMode: "Cash",
                     status: "Price Pending",
                     date: currentDate,
                     time: currentTime,
-                    parchaText: parchaText || "Parcha Photo Uploaded",
-                    parchaExpectedPrice: expPrice,
-                    items: [{ name: parchaText || "Parcha Photo", qty: 1, price: expPrice, subtotal: expPrice }],
-                    total: expPrice
+                    parchaText: parchaText || "Photo Parcha Uploaded",
+                    parchaImage: parchaImage,
+                    items: [
+                        { name: parchaText ? `Parcha List: ${parchaText.substring(0, 40)}...` : "Uploaded Parcha Photo Items", qty: 1, price: 0, subtotal: 0 }
+                    ],
+                    total: 0
                 };
 
-                const newOrders = [parchaOrderDetails, ...ordersList];
-                setOrdersList(newOrders);
-                updateCloudData('orders', newOrders);
-
+                setOrdersList([parchaOrderDetails, ...ordersList]);
                 setParchaName("");
                 setParchaPhone("");
                 setParchaText("");
-                setParchaExpectedPrice("");
+                setParchaImage(null);
                 setShowParchaModal(false);
-                alert("🎉 Parcha Order bhej diya gaya hai!");
+                alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price update karne ke baad aapko 'My Orders' mein bill dikhega.");
             };
 
-            const filteredItems = selectedCategory === "All" 
-                ? items.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                : items.filter(item => item.category === selectedCategory && item.name.toLowerCase().includes(searchTerm.toLowerCase()));
+            // Owner Updates Price of Parcha Order -> Sends WhatsApp Alert to Customer
+            const updateParchaOrderPrice = (orderId) => {
+                const amt = parseFloat(ownerUpdatedPrice);
+                if (isNaN(amt) || amt <= 0) {
+                    alert("Kripya sahi Total Amount (₹) dalein!");
+                    return;
+                }
+                const currentDate = new Date().toLocaleDateString('en-IN');
+
+                setOrdersList(ordersList.map(ord => {
+                    if (ord.id === orderId) {
+                        const updatedOrd = {
+                            ...ord,
+                            total: amt,
+                            status: "Ready",
+                            items: [
+                                {
+                                    name: ownerUpdatedNote ? `Parcha Saman (${ownerUpdatedNote})` : `Parcha List: ${ord.parchaText}`,
+                                    qty: 1,
+                                    price: amt,
+                                    subtotal: amt
+                                }
+                            ]
+                        };
+
+                        let msg = `📦 *Divya Kirana Store - Bill Ready*\n\nHello ${ord.customerName},\nAapke Parcha Order (${ord.invoiceNo}) ka bill tayyar hai!\n\n💰 *Kul Bill Rashi:* ₹${amt}\n\nApna bill dekhne aur PDF download karne ke liye website ke 'My Orders' tab mein apna mobile number dalein. 🙏`;
+                        let cleanPhone = ord.customerPhone.startsWith("91") ? ord.customerPhone : "91" + ord.customerPhone;
+                        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+
+                        setSelectedOwnerOrder(updatedOrd);
+                        return updatedOrd;
+                    }
+                    return ord;
+                }));
+                setOwnerUpdatedPrice("");
+                setOwnerUpdatedNote("");
+                alert("✅ Price Updated & Customer ko WhatsApp par bill bhej diya gaya!");
+            };
+
+            // Mark Order Ready -> Sends WhatsApp message to Customer
+            const markOrderReady = (orderId) => {
+                setOrdersList(ordersList.map(ord => {
+                    if (ord.id === orderId) {
+                        const updatedOrd = { ...ord, status: "Ready" };
+                        let msg = `📦 *Divya Kirana Store Update*\n\nHello ${ord.customerName},\nAapka order (${ord.invoiceNo}) pack ho kar **READY** ho chuka hai!\n\nKripya dukan se aakar apna saman le jayein. 🙏\nKul Rashi: ₹${ord.total}`;
+                        let cleanPhone = ord.customerPhone.startsWith("91") ? ord.customerPhone : "91" + ord.customerPhone;
+                        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                        return updatedOrd;
+                    }
+                    return ord;
+                }));
+                if (selectedOwnerOrder && selectedOwnerOrder.id === orderId) {
+                    setSelectedOwnerOrder(prev => ({ ...prev, status: "Ready" }));
+                }
+            };
+
+            // Mark Order Completed / Done
+            const markOrderCompleted = (orderId) => {
+                setOrdersList(ordersList.map(ord => {
+                    if (ord.id === orderId) {
+                        return { ...ord, status: "Completed" };
+                    }
+                    return ord;
+                }));
+                if (selectedOwnerOrder && selectedOwnerOrder.id === orderId) {
+                    setSelectedOwnerOrder(prev => ({ ...prev, status: "Completed" }));
+                }
+            };
+
+            const checkMyOrders = () => {
+                if (!customerSearchPhone || customerSearchPhone.length < 10) {
+                    alert("Kripya 10-digit valid mobile number dalein.");
+                    return;
+                }
+                const foundOrders = ordersList.filter(o => o.customerPhone === customerSearchPhone);
+                setMyOldOrders(foundOrders);
+            };
+
+            const categories = [
+                { name: 'All', icon: '🏪' },
+                { name: 'Groceries', icon: '🌾' },
+                { name: 'Khad & Beej', icon: '🌱' },
+                { name: 'Hardware', icon: '🛠️' },
+                { name: 'Pattal & Glass', icon: '🍽️' },
+                { name: 'Pashupalan', icon: '🐄' }
+            ];
+
+            const filteredItems = items.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
+                return matchesSearch && matchesCat;
+            });
 
             return (
-                <div className="min-h-screen pb-12">
-                    <header className="bg-green-700 text-white p-4 shadow-md sticky top-0 z-50">
-                        <div className="max-w-4xl mx-auto flex justify-between items-center">
-                            <h1 onClick={handleTitleClick} className="text-xl font-bold cursor-pointer select-none">
-                                🛒 Divya Kirana Store <span className="text-xs bg-green-800 px-2 py-0.5 rounded ml-2">Cloud Synced</span>
-                            </h1>
-                            <div className="flex gap-2">
-                                <button onClick={() => setActiveTab('store')} className={`px-3 py-1 rounded text-sm ${activeTab === 'store' ? 'bg-white text-green-700 font-bold' : 'bg-green-600'}`}>Store</button>
-                                <button onClick={() => setActiveTab('orders')} className={`px-3 py-1 rounded text-sm ${activeTab === 'orders' ? 'bg-white text-green-700 font-bold' : 'bg-green-600'}`}>Orders</button>
-                                {isAdminAuthenticated && (
-                                    <button onClick={() => setActiveTab('admin')} className={`px-3 py-1 rounded text-sm bg-yellow-500 text-black font-bold`}>Admin Dashboard</button>
-                                )}
+                <div className="max-w-md mx-auto bg-gray-50 min-h-screen shadow-2xl flex flex-col relative pb-24">
+                    {/* Top Modern App Header */}
+                    <header onClick={handleTitleClick} className="bg-green-800 text-white px-4 pt-4 pb-5 rounded-b-3xl shadow-lg cursor-pointer select-none no-print">
+                        <div className="flex justify-between items-center mb-3">
+                            <div>
+                                <div className="flex items-center space-x-1.5">
+                                    <span className="text-xl">🛒</span>
+                                    <h1 className="text-lg font-black tracking-tight text-white">Divya Kirana Store</h1>
+                                </div>
+                                <p className="text-xs text-green-200 mt-0.5">Open: {shopOpenTime} – {shopCloseTime} • Direct Order System</p>
                             </div>
+                            <span className="text-xs bg-green-700 border border-green-500 px-2.5 py-1 rounded-full font-bold text-white shadow-sm">
+                                ⚡ Live Store
+                            </span>
                         </div>
+
+                        {activeTab === 'store' && (
+                            <div className="space-y-2 mt-2">
+                                <div className="relative">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search 'Atta', 'DAP Khad', 'Hammer', 'Pattal'..." 
+                                        value={searchTerm} 
+                                        onChange={(e) => setSearchTerm(e.target.value)} 
+                                        className="w-full py-2.5 pl-9 pr-4 rounded-xl text-xs text-gray-900 bg-white shadow-inner focus:outline-none font-medium"
+                                    />
+                                    <span className="absolute left-3 top-2.5 text-gray-400 text-sm">🔍</span>
+                                </div>
+
+                                {/* Parcha / Photo Bulk Order Banner Button */}
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setShowParchaModal(true); }}
+                                    className="w-full bg-yellow-400 text-gray-900 py-2.5 px-3 rounded-xl font-black text-xs shadow-md flex items-center justify-center space-x-2 hover:bg-yellow-300 transition border border-yellow-500"
+                                >
+                                    <span>📸</span>
+                                    <span>Bahut Saman Hai? Parcha Photo / List Upload Karein</span>
+                                </button>
+                            </div>
+                        )}
                     </header>
 
-                    <main className="max-w-4xl mx-auto p-4">
+                    {/* Navigation Pills */}
+                    <nav className="flex px-3 pt-3 pb-1 space-x-2 overflow-x-auto no-scrollbar no-print">
+                        <button onClick={() => setActiveTab('store')} className={`px-4 py-1.5 rounded-full text-xs font-extrabold transition ${activeTab === 'store' ? 'bg-green-700 text-white shadow' : 'bg-white text-gray-700 border border-gray-200'}`}>
+                            🛍️ Store
+                        </button>
+                        <button onClick={() => setActiveTab('myorders')} className={`px-4 py-1.5 rounded-full text-xs font-extrabold transition ${activeTab === 'myorders' ? 'bg-green-700 text-white shadow' : 'bg-white text-gray-700 border border-gray-200'}`}>
+                            🧾 My Orders
+                        </button>
+                        {isAdminAuthenticated && (
+                            <>
+                                <button onClick={() => setActiveTab('orders')} className={`px-3 py-1.5 rounded-full text-xs font-extrabold ${activeTab === 'orders' ? 'bg-yellow-500 text-black shadow' : 'bg-yellow-100 text-yellow-900 border border-yellow-300'}`}>Orders ({ordersList.filter(o => o.status === 'Pending' || o.status === 'Price Pending' || o.status === 'Ready').length})</button>
+                                <button onClick={() => setActiveTab('udhari')} className={`px-3 py-1.5 rounded-full text-xs font-extrabold ${activeTab === 'udhari' ? 'bg-yellow-500 text-black shadow' : 'bg-yellow-100 text-yellow-900 border border-yellow-300'}`}>Udhari</button>
+                                <button onClick={() => setActiveTab('rate')} className={`px-3 py-1.5 rounded-full text-xs font-extrabold ${activeTab === 'rate' ? 'bg-yellow-500 text-black shadow' : 'bg-yellow-100 text-yellow-900 border border-yellow-300'}`}>Manage</button>
+                                <button onClick={() => setActiveTab('settings')} className={`px-3 py-1.5 rounded-full text-xs font-extrabold ${activeTab === 'settings' ? 'bg-yellow-500 text-black shadow' : 'bg-yellow-100 text-yellow-900 border border-yellow-300'}`}>Settings</button>
+                            </>
+                        )}
+                    </nav>
+
+                    {/* Main Content Area */}
+                    <main className="p-3 flex-grow">
                         {activeTab === 'store' && (
                             <div>
-                                <div className="bg-white p-4 rounded-lg shadow mb-4 flex justify-between items-center">
-                                    <div>
-                                        <h2 className="font-bold text-lg text-green-800">Welcome to Divya Kirana Store!</h2>
-                                        <p className="text-sm text-gray-600">Order groceries, hardware, khad beej & cattle feed online.</p>
-                                    </div>
-                                    <button onClick={() => setShowParchaModal(true)} className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-orange-600">
-                                        📝 Upload Parcha
-                                    </button>
-                                </div>
-
-                                <div className="mb-4">
-                                    <input type="text" placeholder="🔍 Search items (Atta, Oil, DAP...)" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full border p-2.5 rounded-lg shadow-sm" />
-                                </div>
-
-                                <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
-                                    {["All", "Groceries", "Khad & Beej", "Hardware", "Pattal & Glass", "Pashupalan"].map(cat => (
-                                        <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap font-semibold ${selectedCategory === cat ? 'bg-green-700 text-white' : 'bg-white text-gray-700 shadow'}`}>
-                                            {cat}
+                                <div className="flex space-x-2 overflow-x-auto py-2 mb-2 no-scrollbar no-print">
+                                    {categories.map(cat => (
+                                        <button 
+                                            key={cat.name} 
+                                            onClick={() => setSelectedCategory(cat.name)}
+                                            className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${selectedCategory === cat.name ? 'bg-green-100 text-green-900 border-2 border-green-600 shadow-sm' : 'bg-white text-gray-700 border border-gray-200'}`}
+                                        >
+                                            <span>{cat.icon}</span>
+                                            <span>{cat.name}</span>
                                         </button>
                                     ))}
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-2 gap-3 no-print">
                                     {filteredItems.map(item => (
-                                        <div key={item.id} className="bg-white p-3 rounded-lg shadow flex flex-col justify-between">
+                                        <div key={item.id} className="bg-white rounded-2xl p-2.5 border border-gray-200 shadow-sm flex flex-col justify-between hover:shadow-md transition">
                                             <div>
-                                                <img src={item.image} alt={item.name} className="w-full h-32 object-cover rounded mb-2" />
-                                                <h3 className="font-bold text-gray-800">{item.name}</h3>
-                                                <p className="text-xs text-gray-500">{item.weight}</p>
-                                                <p className="text-green-700 font-bold mt-1">₹{item.price}</p>
+                                                <div className="relative w-full h-28 bg-gray-50 rounded-xl overflow-hidden mb-2 border border-gray-100">
+                                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                                    <span className="absolute top-1.5 left-1.5 bg-white bg-opacity-90 text-green-800 text-[10px] font-extrabold px-1.5 py-0.5 rounded shadow-sm">
+                                                        {item.category}
+                                                    </span>
+                                                </div>
+                                                <h3 className="font-bold text-gray-900 text-xs leading-snug line-clamp-2">{item.name}</h3>
+                                                <p className="text-[11px] text-gray-500 mt-0.5">{item.weight || "Standard Pack"}</p>
                                             </div>
-                                            <div className="mt-3">
+
+                                            <div className="flex justify-between items-center mt-3 pt-2 border-t border-gray-100">
+                                                <span className="font-black text-gray-900 text-sm">₹{item.price}</span>
+                                                
                                                 {cart[item.id] ? (
-                                                    <div className="flex justify-between items-center bg-green-50 p-1 rounded">
-                                                        <button onClick={() => removeFromCart(item.id)} className="bg-red-500 text-white px-2 py-0.5 rounded font-bold">-</button>
-                                                        <span className="font-bold">{cart[item.id]}</span>
-                                                        <button onClick={() => addToCart(item.id)} className="bg-green-600 text-white px-2 py-0.5 rounded font-bold">+</button>
+                                                    <div className="flex items-center bg-green-700 text-white rounded-lg px-1.5 py-1 space-x-2 shadow">
+                                                        <button onClick={() => removeFromCart(item.id)} className="font-black text-xs px-1">-</button>
+                                                        <span className="font-extrabold text-xs">{cart[item.id]}</span>
+                                                        <button onClick={() => addToCart(item.id)} className="font-black text-xs px-1">+</button>
                                                     </div>
                                                 ) : (
-                                                    <button onClick={() => addToCart(item.id)} className="w-full bg-green-600 text-white py-1.5 rounded font-bold hover:bg-green-700">Add to Cart</button>
+                                                    <button onClick={() => addToCart(item.id)} className="bg-green-50 text-green-800 border border-green-600 hover:bg-green-700 hover:text-white px-3.5 py-1 rounded-lg text-xs font-extrabold transition">
+                                                        ADD
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
 
-                                {getTotalItems() > 0 && (
-                                    <div className="fixed bottom-0 left-0 right-0 bg-green-800 text-white p-3 shadow-lg flex justify-between items-center max-w-4xl mx-auto rounded-t-lg z-40">
-                                        <div>
-                                            <span className="font-bold">{getTotalItems()} Items</span> | <span className="font-bold">Total: ₹{getTotalAmount()}</span>
+                                {lastBill && (
+                                    <div id="printable-invoice" className="mt-6 bg-white p-5 border-2 border-green-700 rounded-2xl shadow-xl space-y-4">
+                                        <div className="text-center border-b-2 border-green-700 pb-3">
+                                            <h2 className="font-black text-lg text-green-800 uppercase tracking-wider">DIVYA KIRANA STORE</h2>
+                                            <p className="text-[11px] text-gray-600">General Merchant, Khad-Beej, Hardware & Pashupalan</p>
+                                            <span className="inline-block mt-1.5 bg-green-100 text-green-900 px-3 py-0.5 rounded-full text-[10px] font-extrabold">
+                                                OFFICIAL BILL / INVOICE 🎉
+                                            </span>
                                         </div>
-                                        <button onClick={() => setShowCheckoutModal(true)} className="bg-white text-green-800 px-6 py-2 rounded font-bold shadow">
-                                            Checkout Now ➔
+
+                                        <div className="flex justify-between text-xs bg-gray-50 p-3 rounded-xl border border-gray-200">
+                                            <div className="space-y-0.5">
+                                                <p><strong>Invoice:</strong> {lastBill.invoiceNo}</p>
+                                                <p><strong>Customer:</strong> {lastBill.customerName}</p>
+                                                <p><strong>Mobile:</strong> {lastBill.customerPhone}</p>
+                                            </div>
+                                            <div className="text-right space-y-0.5">
+                                                <p><strong>Date:</strong> {lastBill.date}</p>
+                                                <p><strong>Time:</strong> {lastBill.time}</p>
+                                                <p><strong>Pickup:</strong> {lastBill.pickupTime}</p>
+                                            </div>
+                                        </div>
+
+                                        <table className="w-full text-left border-collapse text-xs border border-gray-200 rounded-lg overflow-hidden">
+                                            <thead>
+                                                <tr className="bg-green-800 text-white">
+                                                    <th className="p-2">Item (विवरण)</th>
+                                                    <th className="p-2 text-center">Qty</th>
+                                                    <th className="p-2 text-right">Price</th>
+                                                    <th className="p-2 text-right">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200">
+                                                {lastBill.items.map((bi, idx) => (
+                                                    <tr key={idx}>
+                                                        <td className="p-2 font-semibold">{bi.name}</td>
+                                                        <td className="p-2 text-center font-bold">{bi.qty}</td>
+                                                        <td className="p-2 text-right">₹{bi.price}</td>
+                                                        <td className="p-2 text-right font-bold">₹{bi.subtotal}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+
+                                        <div className="bg-green-50 p-3 rounded-xl border border-green-300 flex justify-between items-center text-xs">
+                                            <div>
+                                                <span className="text-gray-600 block">Payment Mode:</span>
+                                                <span className="text-green-900 font-extrabold text-sm">{lastBill.paymentMode}</span>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-gray-600 block">Grand Total:</span>
+                                                <span className="font-black text-green-800 text-lg">₹{lastBill.total}</span>
+                                            </div>
+                                        </div>
+
+                                        <button onClick={() => window.print()} className="w-full bg-gray-900 text-white py-3 rounded-xl font-extrabold text-xs shadow-lg hover:bg-black no-print">
+                                            🖨️ Download Bill PDF / Print Invoice
                                         </button>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {activeTab === 'orders' && (
-                            <div className="bg-white p-4 rounded-lg shadow">
-                                <h2 className="text-xl font-bold mb-4 text-green-800">📦 Customer Orders & Tracking</h2>
-                                {ordersList.length === 0 ? (
-                                    <p className="text-gray-500">Koi order nahi mila.</p>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {ordersList.map(ord => (
-                                            <div key={ord.id} className="border p-3 rounded bg-gray-50 flex justify-between items-center">
-                                                <div>
-                                                    <p className="font-bold text-green-800">{ord.invoiceNo} - {ord.customerName} ({ord.customerPhone})</p>
-                                                    <p className="text-xs text-gray-500">Date: {ord.date} | Time: {ord.time}</p>
-                                                    <p className="text-sm font-semibold mt-1">Total: ₹{ord.total} | Status: <span className="text-blue-600">{ord.status}</span></p>
-                                                </div>
-                                            </div>
-                                        ))}
+                        {activeTab === 'myorders' && (
+                            <div className="space-y-4">
+                                <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
+                                    <h2 className="text-sm font-extrabold text-gray-900">Track Your Orders & Bill</h2>
+                                    <div className="flex space-x-2">
+                                        <input 
+                                            type="tel" 
+                                            placeholder="Enter 10-digit Mobile Number" 
+                                            value={customerSearchPhone} 
+                                            onChange={(e) => setCustomerSearchPhone(e.target.value)} 
+                                            className="flex-grow p-2.5 border border-gray-300 rounded-xl text-xs bg-gray-50 font-medium focus:outline-none"
+                                        />
+                                        <button onClick={checkMyOrders} className="bg-green-700 text-white px-4 py-2.5 rounded-xl text-xs font-extrabold shadow">
+                                            Search
+                                        </button>
                                     </div>
+                                </div>
+
+                                {myOldOrders && myOldOrders.length === 0 && (
+                                    <div className="bg-white p-6 rounded-2xl border text-center text-xs text-gray-500">
+                                        Is number par koi order record nahi mila.
+                                    </div>
+                                )}
+
+                                {myOldOrders && myOldOrders.map(ord => (
+                                    <div key={ord.id} className="bg-white p-4 border border-gray-200 rounded-2xl shadow-sm text-xs space-y-2">
+                                        <div className="flex justify-between items-center font-bold border-b pb-1.5">
+                                            <span className="text-green-800">{ord.invoiceNo} • {ord.date}</span>
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                                                ord.status === 'Price Pending' ? 'bg-orange-100 text-orange-800 animate-pulse' :
+                                                ord.status === 'Ready' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'
+                                            }`}>
+                                                Status: {ord.status}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="space-y-1">
+                                            <p className="text-gray-600">Total Bill Rashi: <strong className="text-gray-900 text-sm">₹{ord.total}</strong> | Payment: <strong className="text-green-700">{ord.paymentMode}</strong></p>
+                                        </div>
+
+                                        {ord.parchaImage && (
+                                            <div className="pt-1">
+                                                <p className="text-[10px] text-gray-500 font-bold mb-1">Uploaded Parcha Photo:</p>
+                                                <img src={ord.parchaImage} alt="Parcha" className="w-full h-32 object-cover rounded-xl border" />
+                                            </div>
+                                        )}
+
+                                        <div className="bg-gray-50 p-2.5 rounded-xl space-y-1">
+                                            {ord.items.map((it, idx) => (
+                                                <div key={idx} className="flex justify-between">
+                                                    <span>{it.name} (x{it.qty})</span>
+                                                    <span className="font-bold">₹{it.subtotal}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {ord.status !== 'Price Pending' && (
+                                            <button onClick={() => { setLastBill(ord); setActiveTab('store'); }} className="w-full bg-gray-900 text-white py-2 rounded-xl font-bold text-xs shadow">
+                                                📄 View & Download Official Bill PDF
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {activeTab === 'orders' && isAdminAuthenticated && (
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center mb-1">
+                                    <h2 className="text-base font-extrabold text-gray-900">Live Orders Queue</h2>
+                                    <span className="bg-green-100 text-green-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full border border-green-300">
+                                        Total: {ordersList.filter(o => o.status === 'Pending' || o.status === 'Price Pending' || o.status === 'Ready').length}
+                                    </span>
+                                </div>
+
+                                {ordersList.filter(o => o.status === 'Pending' || o.status === 'Price Pending' || o.status === 'Ready').length === 0 ? (
+                                    <div className="bg-white p-8 rounded-2xl text-center border text-xs text-gray-500 shadow-sm">
+                                        📭 Abhi tak koi active order nahi hai.
+                                    </div>
+                                ) : (
+                                    ordersList.filter(o => o.status === 'Pending' || o.status === 'Price Pending' || o.status === 'Ready').map((ord, index) => (
+                                        <div key={ord.id} className="bg-white p-4 border border-gray-200 rounded-2xl text-xs space-y-2.5 shadow-sm">
+                                            <div className="flex justify-between items-center border-b pb-2">
+                                                <div className="flex items-center space-x-2">
+                                                    <span className="bg-green-800 text-white font-black px-2 py-0.5 rounded text-[10px]">
+                                                        #{index + 1}
+                                                    </span>
+                                                    <div>
+                                                        <span className="font-black text-green-800 text-sm">{ord.invoiceNo} {ord.isParcha && "📸 (Parcha)"}</span>
+                                                        <p className="text-[10px] text-gray-500">{ord.time}</p>
+                                                    </div>
+                                                </div>
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                                                    ord.status === 'Price Pending' ? 'bg-orange-100 text-orange-800 animate-pulse' :
+                                                    ord.status === 'Ready' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                    {ord.status}
+                                                </span>
+                                            </div>
+
+                                            <div>
+                                                <p className="font-extrabold text-gray-900 text-sm">👤 {ord.customerName} <span className="text-green-700 font-mono">({ord.customerPhone})</span></p>
+                                                <p className="text-gray-600 mt-0.5">Mode: <strong className="text-green-800">{ord.paymentMode}</strong> | Total: <strong className="text-green-800">₹{ord.total}</strong></p>
+                                            </div>
+
+                                            <div className="flex space-x-2 pt-1">
+                                                <button onClick={() => setSelectedOwnerOrder(ord)} className="flex-grow bg-blue-50 text-blue-700 border border-blue-200 py-2 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition">
+                                                    👁️ Khol Kar Dekhein
+                                                </button>
+                                                
+                                                {ord.status === 'Pending' && (
+                                                    <button onClick={() => markOrderReady(ord.id)} className="bg-green-700 text-white px-3 py-2 rounded-xl font-bold hover:bg-green-800 transition">
+                                                        📦 Ready & WhatsApp
+                                                    </button>
+                                                )}
+
+                                                <button onClick={() => markOrderCompleted(ord.id)} className="bg-purple-700 text-white px-3 py-2 rounded-xl font-bold hover:bg-purple-800 transition">
+                                                    ✅ Done
+                                                </button>
+
+                                                <button onClick={() => deleteOrder(ord.id)} className="bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-xl font-bold hover:bg-red-600 hover:text-white transition">
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
                                 )}
                             </div>
                         )}
 
-                        {activeTab === 'admin' && isAdminAuthenticated && (
-                            <div className="bg-white p-4 rounded-lg shadow">
-                                <h2 className="text-xl font-bold mb-4 text-yellow-600">🛠️ Owner Admin Dashboard (Live Cloud)</h2>
-                                <div className="space-y-4">
-                                    <div className="bg-gray-50 p-3 rounded border">
-                                        <h3 className="font-bold text-gray-700">Total Store Orders: {ordersList.length}</h3>
-                                        <h3 className="font-bold text-gray-700 mt-2">Total Udhari Accounts: {udhariList.length}</h3>
-                                    </div>
+                        {activeTab === 'udhari' && isAdminAuthenticated && (
+                            <div className="space-y-4">
+                                <div className="bg-white p-4 border border-gray-200 rounded-2xl space-y-2.5 text-xs shadow-sm">
+                                    <h3 className="font-extrabold text-gray-900 text-sm">Add New Udhari Entry</h3>
+                                    <input type="text" placeholder="Customer Name" value={newUdhariName} onChange={(e) => setNewUdhariName(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
+                                    <input type="tel" placeholder="Mobile Number" value={newUdhariPhone} onChange={(e) => setNewUdhariPhone(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
+                                    <input type="number" placeholder="Pending Amount (₹)" value={newUdhariAmount} onChange={(e) => setNewUdhariAmount(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
+                                    <input type="text" placeholder="Note (e.g. Khaad baki)" value={newUdhariNote} onChange={(e) => setNewUdhariNote(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
+                                    <button onClick={() => {
+                                        if(newUdhariName && newUdhariAmount) {
+                                            const amt = parseFloat(newUdhariAmount);
+                                            const curDate = new Date().toLocaleDateString('en-IN');
+                                            setUdhariList([{
+                                                id: Date.now(),
+                                                name: newUdhariName,
+                                                phone: newUdhariPhone,
+                                                amount: amt,
+                                                note: newUdhariNote || "Manual Entry",
+                                                history: [{ date: curDate, type: "Udhari Liya", amount: amt, mode: "Manual" }]
+                                            }, ...udhariList]);
+                                            setNewUdhariName(""); setNewUdhariPhone(""); setNewUdhariAmount(""); setNewUdhariNote("");
+                                            alert("Udhari saved successfully!");
+                                        } else { alert("Please enter Name and Amount."); }
+                                    }} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-bold">Save Udhari Entry</button>
                                 </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'rate' && isAdminAuthenticated && (
+                            <div className="space-y-4">
+                                <div className="bg-white p-4 border border-gray-200 rounded-2xl space-y-2.5 text-xs shadow-sm">
+                                    <h3 className="font-extrabold text-gray-900 text-sm">Add New Store Item</h3>
+                                    <input type="text" placeholder="Item Name" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
+                                    <input type="text" placeholder="Weight / Pack (e.g., 10kg, 1L)" value={newItemWeight} onChange={(e) => setNewItemWeight(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
+                                    <input type="number" placeholder="Price (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
+                                    <select value={newItemCat} onChange={(e) => setNewItemCat(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-bold">
+                                        <option value="Groceries">Groceries</option>
+                                        <option value="Khad & Beej">Khad & Beej</option>
+                                        <option value="Hardware">Hardware</option>
+                                        <option value="Pattal & Glass">Pattal & Glass</option>
+                                        <option value="Pashupalan">Pashupalan</option>
+                                    </select>
+                                    <input type="text" placeholder="Image URL" value={newItemImg} onChange={(e) => setNewItemImg(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
+                                    <button onClick={() => {
+                                        if(newItemName && newItemPrice) {
+                                            const imgUrl = newItemImg || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80";
+                                            setItems([{ id: Date.now(), name: newItemName, weight: newItemWeight, price: parseFloat(newItemPrice), category: newItemCat, image: imgUrl }, ...items]);
+                                            setNewItemName(""); setNewItemWeight(""); setNewItemPrice(""); setNewItemImg("");
+                                            alert("Item added successfully!");
+                                        } else { alert("Please enter Name and Price."); }
+                                    }} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-bold">Add Item</button>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'settings' && isAdminAuthenticated && (
+                            <div className="bg-white p-4 border border-gray-200 rounded-2xl space-y-3 text-xs shadow-sm">
+                                <h2 className="text-sm font-extrabold text-gray-900">Shop Settings</h2>
+                                <div>
+                                    <label className="font-bold text-gray-600 block mb-1">Opening Time</label>
+                                    <input type="time" value={shopOpenTime} onChange={(e) => setShopOpenTime(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
+                                </div>
+                                <div>
+                                    <label className="font-bold text-gray-600 block mb-1">Closing Time</label>
+                                    <input type="time" value={shopCloseTime} onChange={(e) => setShopCloseTime(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
+                                </div>
+                                <div>
+                                    <label className="font-bold text-gray-600 block mb-1">WhatsApp Number</label>
+                                    <input type="text" value={whatsappNo} onChange={(e) => setWhatsappNo(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
+                                </div>
+                                <div>
+                                    <label className="font-bold text-gray-600 block mb-1">UPI ID</label>
+                                    <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
+                                </div>
+                                <button onClick={() => alert("Settings Saved!")} className="w-full bg-green-700 text-white py-2.5 rounded-bold">Save Settings</button>
                             </div>
                         )}
                     </main>
 
-                    {/* Checkout Modal */}
-                    {showCheckoutModal && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-                            <div className="bg-white p-5 rounded-lg max-w-md w-full shadow-lg">
-                                <h3 className="text-lg font-bold mb-3 text-green-800">Complete Your Order</h3>
-                                <input type="text" placeholder="Aapka Naam" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full border p-2 rounded mb-3" />
-                                <input type="text" placeholder="Mobile Number (10 Digit)" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full border p-2 rounded mb-3" />
-                                <div className="mb-3">
-                                    <label className="text-sm font-semibold text-gray-700 block mb-1">Payment Mode:</label>
-                                    <select value={paymentMode} onChange={e => setPaymentMode(e.target.value)} className="w-full border p-2 rounded">
-                                        <option value="Cash">Cash on Delivery</option>
-                                        <option value="UPI">UPI / QR Code</option>
-                                        <option value="Udhari">Udhari (Khata)</option>
-                                    </select>
+                    {/* CUSTOMER PARCHA / PHOTO UPLOAD BULK ORDER MODAL */}
+                    {showParchaModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 no-print">
+                            <div className="bg-white w-full max-w-sm rounded-3xl p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
+                                <div className="flex justify-between items-center border-b pb-2.5">
+                                    <div>
+                                        <h3 className="font-black text-base text-green-800">📸 Parcha Photo / Bulk List Order</h3>
+                                        <p className="text-[11px] text-gray-500">Apne saman ki list likhein ya photo upload karein</p>
+                                    </div>
+                                    <button onClick={() => setShowParchaModal(false)} className="text-gray-400 font-bold text-lg px-2">✕</button>
                                 </div>
-                                {paymentMode === 'UPI' && (
-                                    <div className="mb-3 p-3 bg-green-50 rounded border border-green-200">
-                                        <p className="text-xs font-bold text-green-800 mb-1">Scan & Pay via UPI:</p>
-                                        <p className="text-xs text-gray-600 mb-2">UPI ID: <b>6200150688@ybl</b></p>
-                                        <input type="text" placeholder="Enter UPI UTR / Transaction ID" value={checkoutUtrPin} onChange={e => setCheckoutUtrPin(e.target.value)} className="w-full border p-2 rounded text-sm bg-white" />
+
+                                <div className="space-y-2.5 text-xs">
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label className="font-bold text-gray-700 block mb-1">Customer Name *</label>
+                                            <input type="text" placeholder="Apna Naam" value={parchaName} onChange={(e) => setParchaName(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"/>
+                                        </div>
+                                        <div>
+                                            <label className="font-bold text-gray-700 block mb-1">Mobile Number *</label>
+                                            <input type="tel" placeholder="10-digit No." value={parchaPhone} onChange={(e) => setParchaPhone(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"/>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="font-bold text-gray-700 block mb-1">✍️ Saman ki List Likhein (Optional):</label>
+                                        <textarea 
+                                            rows="2" 
+                                            placeholder="Jaise: 5kg Chawal, 2kg Dal, 1L Sarso Tel..." 
+                                            value={parchaText} 
+                                            onChange={(e) => setParchaText(e.target.value)}
+                                            className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"
+                                        ></textarea>
+                                    </div>
+
+                                    <div className="bg-green-50 p-2.5 rounded-xl border border-dashed border-green-600 text-center space-y-1">
+                                        <label className="font-bold text-green-900 block cursor-pointer">
+                                            📷 Ya Parche ki Photo Upload Karein:
+                                            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                                            <div className="mt-1.5 bg-white text-green-800 border border-green-600 py-2 px-3 rounded-lg font-extrabold text-xs shadow-sm">
+                                                {parchaImage ? "✅ Photo Selected (Change Karein)" : "📂 Choose Photo / Camera"}
+                                            </div>
+                                        </label>
+                                        {parchaImage && (
+                                            <img src={parchaImage} alt="Preview" className="w-full h-28 object-cover rounded-lg border mt-1" />
+                                        )}
+                                    </div>
+                                </div>
+
+                                <button onClick={placeParchaOrder} className="w-full bg-green-700 text-white py-3 rounded-xl font-extrabold shadow-lg text-xs hover:bg-green-800 transition mt-2">
+                                    🚀 Send Parcha Order to Store
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* OWNER INSPECT ORDER MODAL */}
+                    {selectedOwnerOrder && (
+                        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 no-print">
+                            <div className="bg-white w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                                <div className="flex justify-between items-center border-b pb-3">
+                                    <div>
+                                        <h3 className="font-black text-base text-gray-900">Order Details</h3>
+                                        <p className="text-xs text-green-700 font-bold">{selectedOwnerOrder.invoiceNo}</p>
+                                    </div>
+                                    <button onClick={() => setSelectedOwnerOrder(null)} className="text-gray-400 font-bold text-lg px-2">✕</button>
+                                </div>
+
+                                <div className="text-xs space-y-1 bg-gray-50 p-3 rounded-xl border">
+                                    <p><strong>Customer:</strong> {selectedOwnerOrder.customerName}</p>
+                                    <p><strong>Mobile:</strong> {selectedOwnerOrder.customerPhone}</p>
+                                    <p><strong>Payment Mode:</strong> {selectedOwnerOrder.paymentMode}</p>
+                                    <p><strong>Order Status:</strong> <span className="font-bold uppercase text-green-700">{selectedOwnerOrder.status}</span></p>
+                                </div>
+
+                                {selectedOwnerOrder.isParcha && (
+                                    <div className="bg-yellow-50 p-3 rounded-xl border border-yellow-300 space-y-2 text-xs">
+                                        <h4 className="font-black text-yellow-900">📋 Customer Parcha / Saman List:</h4>
+                                        <p className="bg-white p-2 rounded border text-gray-800 whitespace-pre-line">{selectedOwnerOrder.parchaText}</p>
+                                        
+                                        {selectedOwnerOrder.parchaImage && (
+                                            <div>
+                                                <p className="font-bold text-gray-700 mb-1">Uploaded Photo:</p>
+                                                <img src={selectedOwnerOrder.parchaImage} alt="Customer Parcha" className="w-full max-h-56 object-contain rounded-lg border bg-white" />
+                                            </div>
+                                        )}
+
+                                        <div className="pt-2 border-t border-yellow-300 space-y-2">
+                                            <label className="font-black text-green-900 block">✍️ Saman ka Kul Price Likhein (₹):</label>
+                                            <input 
+                                                type="number" 
+                                                placeholder="Total Bill Amount (e.g. 850)" 
+                                                value={ownerUpdatedPrice} 
+                                                onChange={(e) => setOwnerUpdatedPrice(e.target.value)}
+                                                className="w-full p-2.5 border border-green-600 rounded-xl bg-white font-black text-sm"
+                                            />
+                                            <input 
+                                                type="text" 
+                                                placeholder="Bill Note / Saman Details (Optional)" 
+                                                value={ownerUpdatedNote} 
+                                                onChange={(e) => setOwnerUpdatedNote(e.target.value)}
+                                                className="w-full p-2 border rounded-xl bg-white text-xs"
+                                            />
+                                            <button onClick={() => updateParchaOrderPrice(selectedOwnerOrder.id)} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-extrabold shadow hover:bg-green-800">
+                                                ✅ Save Price & Send Bill Alert to Customer WhatsApp
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
-                                <div className="flex justify-end gap-2 mt-4">
-                                    <button onClick={() => setShowCheckoutModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
-                                    <button onClick={placeOrder} className="bg-green-600 text-white px-4 py-2 rounded font-bold">Place Order</button>
+
+                                <div className="space-y-1 text-xs">
+                                    <h4 className="font-extrabold text-gray-800">Bill Items List:</h4>
+                                    <div className="border rounded-xl overflow-hidden">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="bg-green-800 text-white">
+                                                    <th className="p-2">Item</th>
+                                                    <th className="p-2 text-center">Qty</th>
+                                                    <th className="p-2 text-right">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200">
+                                                {selectedOwnerOrder.items.map((it, idx) => (
+                                                    <tr key={idx}>
+                                                        <td className="p-2 font-medium">{it.name}</td>
+                                                        <td className="p-2 text-center font-bold">{it.qty}</td>
+                                                        <td className="p-2 text-right font-bold">₹{it.subtotal}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-between items-center pt-2 border-t font-bold text-sm">
+                                    <span>Grand Total:</span>
+                                    <span className="text-green-800 text-base font-black">₹{selectedOwnerOrder.total}</span>
+                                </div>
+
+                                <div className="space-y-2 pt-2">
+                                    {selectedOwnerOrder.status === 'Pending' && (
+                                        <button onClick={() => markOrderReady(selectedOwnerOrder.id)} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-extrabold shadow text-xs">
+                                            📦 Mark Ready & Send WhatsApp Message
+                                        </button>
+                                    )}
+                                    <button onClick={() => { setLastBill(selectedOwnerOrder); setSelectedOwnerOrder(null); setActiveTab('store'); }} className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-bold text-xs">
+                                        🖨️ Print / Download Official Bill PDF
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Parcha Modal */}
-                    {showParchaModal && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-                            <div className="bg-white p-5 rounded-lg max-w-md w-full shadow-lg">
-                                <h3 className="text-lg font-bold mb-3 text-orange-600">📝 Upload Parcha Order</h3>
-                                <input type="text" placeholder="Aapka Naam" value={parchaName} onChange={e => setParchaName(e.target.value)} className="w-full border p-2 rounded mb-3" />
-                                <input type="text" placeholder="Mobile Number" value={parchaPhone} onChange={e => setParchaPhone(e.target.value)} className="w-full border p-2 rounded mb-3" />
-                                <textarea placeholder="Parcha ki list yahan likhein..." value={parchaText} onChange={e => setParchaText(e.target.value)} className="w-full border p-2 rounded mb-3"></textarea>
-                                <div className="flex justify-end gap-2 mt-4">
-                                    <button onClick={() => setShowParchaModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
-                                    <button onClick={placeParchaOrder} className="bg-orange-500 text-white px-4 py-2 rounded font-bold">Send Parcha</button>
+                    {/* FLOATING BOTTOM CART BAR */}
+                    {getTotalItems() > 0 && activeTab === 'store' && (
+                        <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-green-800 text-white p-3.5 px-4 flex justify-between items-center shadow-2xl rounded-t-2xl z-50 no-print border-t border-green-600">
+                            <div>
+                                <p className="text-[11px] text-green-200 font-semibold">{getTotalItems()} Item(s) Selected</p>
+                                <p className="text-base font-black">₹{getTotalAmount()}</p>
+                            </div>
+                            <button onClick={() => setShowCheckoutModal(true)} className="bg-white text-green-900 px-6 py-2.5 rounded-xl font-black text-xs shadow-lg hover:bg-green-50 transition">
+                                View Cart & Pay ➡️
+                            </button>
+                        </div>
+                    )}
+
+                    {/* CHECKOUT MODAL WITH PAYMENT OPTIONS */}
+                    {showCheckoutModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-end justify-center max-w-md mx-auto no-print">
+                            <div className="bg-white w-full rounded-t-3xl p-5 space-y-4 shadow-2xl max-h-[85vh] overflow-y-auto">
+                                <div className="flex justify-between items-center border-b pb-3">
+                                    <h3 className="font-extrabold text-base text-gray-900">Complete Order & Payment</h3>
+                                    <button onClick={() => setShowCheckoutModal(false)} className="text-gray-400 font-bold text-lg px-2">✕</button>
+                                </div>
+
+                                <div className="space-y-3 text-xs">
+                                    <div>
+                                        <label className="font-bold text-gray-700 block mb-1">Customer Name *</label>
+                                        <input type="text" placeholder="Enter full name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"/>
+                                    </div>
+                                    <div>
+                                        <label className="font-bold text-gray-700 block mb-1">Mobile Number *</label>
+                                        <input type="tel" placeholder="10-digit mobile number" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"/>
+                                    </div>
+                                    <div>
+                                        <label className="font-bold text-gray-700 block mb-1">Pickup Time</label>
+                                        <input type="time" value={customerTime} onChange={(e) => setCustomerTime(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"/>
+                                    </div>
+                                    <div>
+                                        <label className="font-bold text-gray-700 block mb-1">Payment Mode (भुगतान का तरीका)</label>
+                                        <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-bold text-green-800">
+                                            <option value="Cash">Cash on Pickup</option>
+                                            <option value="UPI">UPI Online Payment (Google Pay, PhonePe, Paytm)</option>
+                                            <option value="Udhari">Udhari Khata (उधार)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {paymentMode === "UPI" && (
+                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-300 space-y-2.5 text-xs">
+                                        <p className="font-bold text-blue-900 text-center">💳 Direct UPI Apps se Pay Karein (₹{getTotalAmount()}):</p>
+                                        <p className="text-center font-bold text-gray-800">Owner UPI ID: <span className="text-green-800 font-mono">{upiId}</span></p>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <button onClick={() => openUpiApp('gpay', getTotalAmount())} className="bg-white border border-blue-400 text-blue-900 py-2 rounded-xl font-bold shadow text-center">Google Pay</button>
+                                            <button onClick={() => openUpiApp('phonepe', getTotalAmount())} className="bg-purple-700 text-white py-2 rounded-xl font-bold shadow text-center">PhonePe</button>
+                                            <button onClick={() => openUpiApp('paytm', getTotalAmount())} className="bg-blue-800 text-white py-2 rounded-xl font-bold shadow text-center">Paytm</button>
+                                        </div>
+                                        <div>
+                                            <label className="font-bold text-gray-700 block mb-1">12-digit UTR / Transaction Reference Number *</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Payment ke baad UTR number yahan dalein" 
+                                                value={checkoutUtrPin} 
+                                                onChange={(e) => setCheckoutUtrPin(e.target.value)}
+                                                className="w-full p-2.5 border rounded-xl bg-white font-bold"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="pt-2">
+                                    <button onClick={placeOrder} className="w-full bg-green-700 text-white py-3.5 rounded-xl font-extrabold shadow-lg text-sm hover:bg-green-800 transition">
+                                        Place Order Now 🎉
+                                    </button>
                                 </div>
                             </div>
                         </div>
