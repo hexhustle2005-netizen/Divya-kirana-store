@@ -115,7 +115,7 @@
             const [searchTerm, setSearchTerm] = React.useState("");
             const [selectedCategory, setSelectedCategory] = React.useState("All");
 
-            // Cart & Customer States (No immediate payment required during order placement)
+            // Cart & Customer States
             const [cart, setCart] = React.useState({});
             const [customerTime, setCustomerTime] = React.useState("10:00");
             const [customerName, setCustomerName] = React.useState("");
@@ -192,7 +192,7 @@
                 }
             };
 
-            // Submit Cart Checkout Order (Without online payment restriction)
+            // Submit Cart Checkout Order (Without any payment required at placement)
             const placeOrder = () => {
                 if (!customerName || !customerPhone) {
                     alert("Kripya apna Naam aur Mobile Number likhein!");
@@ -233,10 +233,10 @@
                 setCart({});
                 setShowCheckoutModal(false);
                 setActiveTab('store');
-                alert("🎉 Order Successfully Placed! Aap 'My Orders' se PDF Bill dekh sakte hain.");
+                alert("🎉 Order Successfully Placed! Aap 'My Orders' se PDF Bill dekh sakte hain[cite: 1].");
             };
 
-            // Submit Parcha / Photo Bulk Order (Price Pending initially)
+            // Submit Parcha / Photo Bulk Order (Without any payment option at placement)[cite: 1]
             const placeParchaOrder = () => {
                 if (!parchaName || !parchaPhone) {
                     alert("Kripya apna Naam aur Mobile Number zaroor dalein!");
@@ -275,10 +275,10 @@
                 setParchaText("");
                 setParchaImage(null);
                 setShowParchaModal(false);
-                alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price update karne ke baad aapko 'My Orders' mein bill dikhega.");
+                alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price update karne ke baad aapko 'My Orders' mein bill dikhega[cite: 1].");
             };
 
-            // Owner Updates Price of Parcha Order -> Sends WhatsApp Alert to Customer
+            // Owner Updates Price of Parcha Order -> Sends WhatsApp Alert to Customer[cite: 1]
             const updateParchaOrderPrice = (orderId) => {
                 const amt = parseFloat(ownerUpdatedPrice);
                 if (isNaN(amt) || amt <= 0) {
@@ -314,7 +314,7 @@
                 }));
                 setOwnerUpdatedPrice("");
                 setOwnerUpdatedNote("");
-                alert("✅ Price Updated & Customer ko WhatsApp par bill bhej diya gaya!");
+                alert("✅ Price Updated & Customer ko WhatsApp par bill bhej diya gaya[cite: 1]!");
             };
 
             const checkMyOrders = () => {
@@ -326,7 +326,7 @@
                 setMyOldOrders(foundOrders);
             };
 
-            // Customer settles payment from My Orders (Cash, Online UPI, or Udhari)
+            // Customer settles payment from My Orders (Cash, Online UPI, or Udhari)[cite: 1]
             const settleCustomerPayment = (orderId, mode, amount) => {
                 const currentDate = new Date().toLocaleDateString('en-IN');
                 
@@ -596,7 +596,7 @@
                                         
                                         {ord.status === 'Price Pending' ? (
                                             <div className="bg-orange-50 p-3 rounded-xl border border-orange-200 text-orange-900 font-semibold">
-                                                ⏳ Aapka Parcha order owner ke paas hai. Owner price update kar rahe hain.
+                                                ⏳ Aapka Parcha order owner ke paas hai. Owner price update kar rahe hain[cite: 1].
                                             </div>
                                         ) : (
                                             <div className="space-y-2">
@@ -604,8 +604,8 @@
                                                 
                                                 {ord.status === 'Ready' && (
                                                     <div className="bg-blue-50 p-3 rounded-xl border border-blue-300 space-y-2">
-                                                        <p className="font-bold text-blue-900 text-center">💳 Payment Mode Chunein aur Bill Download Karein:</p>
-                                                        <p className="text-center font-bold text-gray-800">Owner UPI ID: <span className="text-green-800 font-mono">{upiId}</span></p>
+                                                        <p className="font-bold text-blue-900 text-center">💳 Payment Mode Chunein aur Bill Download Karein[cite: 1]:</p>
+                                                        <p className="text-center font-bold text-gray-800">Owner UPI ID: <span className="text-green-800 font-mono">{upiId}</span>[cite: 1]</p>
                                                         <div className="grid grid-cols-3 gap-2">
                                                             <button onClick={() => settleCustomerPayment(ord.id, 'Cash', ord.total)} className="bg-green-700 text-white py-2 rounded-xl font-bold shadow text-center">Cash Pay</button>
                                                             <button onClick={() => settleCustomerPayment(ord.id, 'UPI', ord.total)} className="bg-blue-700 text-white py-2 rounded-xl font-bold shadow text-center">Online UPI</button>
@@ -683,7 +683,7 @@
 
                                             <div className="flex space-x-2 pt-1">
                                                 <button onClick={() => setSelectedOwnerOrder(ord)} className="flex-grow bg-blue-50 text-blue-700 border border-blue-200 py-2 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition">
-                                                    {ord.status === 'Price Pending' ? "✍️ Parcha Dekhein & Price Likhein" : "👁️ Khol Kar Dekhein"}
+                                                    {ord.status === 'Price Pending' ? "✍️ Parcha Dekhein & Price Likhein[cite: 1]" : "👁️ Khol Kar Dekhein"}
                                                 </button>
                                                 
                                                 <button onClick={() => deleteOrder(ord.id)} className="bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-xl font-bold hover:bg-red-600 hover:text-white transition">
@@ -775,7 +775,7 @@
                         )}
                     </main>
 
-                    {/* CUSTOMER PARCHA / PHOTO UPLOAD BULK ORDER MODAL */}
+                    {/* CUSTOMER PARCHA / PHOTO UPLOAD BULK ORDER MODAL (No Payment option at all) */}
                     {showParchaModal && (
                         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 no-print">
                             <div className="bg-white w-full max-w-sm rounded-3xl p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -878,7 +878,7 @@
                                                 className="w-full p-2 border rounded-xl bg-white text-xs"
                                             />
                                             <button onClick={() => updateParchaOrderPrice(selectedOwnerOrder.id)} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-extrabold shadow hover:bg-green-800">
-                                                ✅ Save Price & Send Bill Alert to Customer WhatsApp
+                                                ✅ Save Price & Send Bill Alert to Customer WhatsApp[cite: 1]
                                             </button>
                                         </div>
                                     </div>
