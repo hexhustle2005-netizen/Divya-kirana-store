@@ -427,7 +427,7 @@
                 setMyOldOrders(foundOrders);
             };
 
-            // Customer settles payment for Parcha / Ready orders from My Orders tab
+            // Customer settles payment for Parcha / Ready orders from My Orders tab (Updates automatically)
             const settleCustomerPayment = (orderId, mode, amount) => {
                 const currentDate = new Date().toLocaleDateString('en-IN');
                 
@@ -460,15 +460,20 @@
 
                 let paymentText = mode === "Cash" ? "Cash Paid" : mode === "UPI" ? "Online UPI Paid" : "Udhari Khata";
 
-                setOrdersList(ordersList.map(ord => {
+                const updatedOrders = ordersList.map(ord => {
                     if (ord.id === orderId) {
                         return { ...ord, paymentMode: paymentText, status: "Completed" };
                     }
                     return ord;
-                }));
+                });
 
-                alert(`✅ Payment Mode Saved as '${paymentText}'! Ab aap PDF Bill download kar sakte hain.`);
-                checkMyOrders();
+                setOrdersList(updatedOrders);
+                
+                // Automatically refresh My Orders view instantly
+                const foundOrders = updatedOrders.filter(o => o.customerPhone === customerSearchPhone);
+                setMyOldOrders(foundOrders);
+
+                alert(`✅ Payment Mode Saved as '${paymentText}'! Order status updated to Completed.`);
             };
 
             const categories = [
