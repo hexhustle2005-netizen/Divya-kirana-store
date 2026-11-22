@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Firebase SDKs for Cloud Sync -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -33,6 +34,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        // Firebase Configuration with your Database URL
         const firebaseConfig = {
             databaseURL: "https://divya-store-2a4b0-default-rtdb.firebaseio.com/"
         };
@@ -91,6 +93,7 @@
             const [ordersList, setOrdersList] = React.useState([]);
             const [udhariList, setUdhariList] = React.useState([]);
 
+            // Real-time Cloud Sync from Firebase
             React.useEffect(() => {
                 if (db) {
                     db.ref('divya_store/items').on('value', (snapshot) => {
@@ -238,10 +241,6 @@
                 alert("🎉 Parcha Order bhej diya gaya hai!");
             };
 
-            const filteredItems = selectedCategory === "All" 
-                ? items.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                : items.filter(item => item.category === selectedCategory && item.name.toLowerCase().includes(searchTerm.toLowerCase()));
-
             return (
                 <div className="min-h-screen pb-12">
                     <header className="bg-green-700 text-white p-4 shadow-md sticky top-0 z-50">
@@ -272,20 +271,8 @@
                                     </button>
                                 </div>
 
-                                <div className="mb-4">
-                                    <input type="text" placeholder="🔍 Search items (Atta, Oil, DAP...)" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full border p-2.5 rounded-lg shadow-sm" />
-                                </div>
-
-                                <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
-                                    {["All", "Groceries", "Khad & Beej", "Hardware", "Pattal & Glass", "Pashupalan"].map(cat => (
-                                        <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap font-semibold ${selectedCategory === cat ? 'bg-green-700 text-white' : 'bg-white text-gray-700 shadow'}`}>
-                                            {cat}
-                                        </button>
-                                    ))}
-                                </div>
-
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                    {filteredItems.map(item => (
+                                    {items.map(item => (
                                         <div key={item.id} className="bg-white p-3 rounded-lg shadow flex flex-col justify-between">
                                             <div>
                                                 <img src={item.image} alt={item.name} className="w-full h-32 object-cover rounded mb-2" />
@@ -391,7 +378,7 @@
                             <div className="bg-white p-5 rounded-lg max-w-md w-full shadow-lg">
                                 <h3 className="text-lg font-bold mb-3 text-orange-600">📝 Upload Parcha Order</h3>
                                 <input type="text" placeholder="Aapka Naam" value={parchaName} onChange={e => setParchaName(e.target.value)} className="w-full border p-2 rounded mb-3" />
-                                <input type="text" placeholder="Mobile Number" value={parchaPhone} onChange={e => setParcahPhone ? setParchaPhone(e.target.value) : setParchaPhone(e.target.value)} className="w-full border p-2 rounded mb-3" />
+                                <input type="text" placeholder="Mobile Number" value={parchaPhone} onChange={e => setParchaPhone(e.target.value)} className="w-full border p-2 rounded mb-3" />
                                 <textarea placeholder="Parcha ki list yahan likhein..." value={parchaText} onChange={e => setParchaText(e.target.value)} className="w-full border p-2 rounded mb-3"></textarea>
                                 <div className="flex justify-end gap-2 mt-4">
                                     <button onClick={() => setShowParchaModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
@@ -402,10 +389,7 @@
                     )}
                 </div>
             );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
+            ReactDOM.render(<App />, document.getElementById('root'));
+        </script>
+    </body>
 </html>
