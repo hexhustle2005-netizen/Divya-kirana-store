@@ -8,53 +8,19 @@
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Firebase SDKs for Cloud Sync -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <style>
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @media print {
-            body * { visibility: hidden; }
-            #printable-invoice, #printable-invoice *, #printable-statement, #printable-statement * { visibility: visible; }
-            #printable-invoice, #printable-statement {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                border: none !important;
-                box-shadow: none !important;
-                background: white !important;
-            }
-            .no-print { display: none !important; }
-        }
-    </style>
 </head>
-<body class="bg-gray-200 font-sans text-gray-900">
+<body class="bg-gray-100 font-sans text-gray-900">
     <div id="root"></div>
 
     <script type="text/babel">
-        // Firebase Configuration with your Database URL
-        const firebaseConfig = {
-            databaseURL: "https://divya-store-2a4b0-default-rtdb.firebaseio.com/"
-        };
-        
-        let db = null;
-        if (firebaseConfig.databaseURL) {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-            db = firebase.database();
-        }
-
         function App() {
             const [activeTab, setActiveTab] = React.useState('store');
-            const [showCheckoutModal, setShowCheckoutModal] = React.useState(false);
-            const [showParchaModal, setShowParchaModal] = React.useState(false);
             const [isAdminAuthenticated, setIsAdminAuthenticated] = React.useState(false);
             const ADMIN_PIN = "728084";
 
+            // Secret Triple Tap Counter for Admin Access
             const [titleClicks, setTitleClicks] = React.useState(0);
+
             const handleTitleClick = () => {
                 const newClicks = titleClicks + 1;
                 setTitleClicks(newClicks);
@@ -74,79 +40,85 @@
                 }
             };
 
-            const defaultItems = [
-                { id: 1, name: "Aashirvaad Atta (10kg)", weight: "10 kg Pack", price: 420, category: "Groceries", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80" },
-                { id: 2, name: "Fortune Sunflower Oil", weight: "1 Litre Pouch", price: 135, category: "Groceries", image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=400&q=80" },
-                { id: 3, name: "Tata Iodized Salt", weight: "1 kg Pack", price: 28, category: "Groceries", image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=400&q=80" },
-                { id: 4, name: "DAP Khaad Fertilizer", weight: "50 kg Bag", price: 1350, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&w=400&q=80" },
-                { id: 5, name: "Urea Khaad Bag", weight: "45 kg Bag", price: 266, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=400&q=80" },
-                { id: 6, name: "Certified Wheat Seed", weight: "40 kg Bag", price: 1400, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=400&q=80" },
-                { id: 7, name: "Iron Nails (Lohe ki Kil)", weight: "1 kg Pack", price: 80, category: "Hardware", image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=400&q=80" },
-                { id: 8, name: "Heavy Claw Hammer", weight: "1 Piece", price: 180, category: "Hardware", image: "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=400&q=80" },
-                { id: 9, name: "Disposable Pattal Thali", weight: "Pack of 50", price: 110, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80" },
-                { id: 10, name: "Paper Tea/Water Glass", weight: "Pack of 100", price: 70, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1516594798947-e65505dbb29d?auto=format&fit=crop&w=400&q=80" },
-                { id: 11, name: "Pashu Aahar (Cattle Feed)", weight: "50 kg Bag", price: 1250, category: "Pashupalan", image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=400&q=80" },
-                { id: 12, name: "Cattle Mineral Mixture", weight: "1 kg Pack", price: 150, category: "Pashupalan", image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=400&q=80" }
-            ];
+            // Shop Settings & Timing state
+            const [whatsappNo, setWhatsappNo] = React.useState("919876543210");
+            const [upiId, setUpiId] = React.useState("divyakirana@upi");
+            const [shopOpenTime, setShopOpenTime] = React.useState("08:00");
+            const [shopCloseTime, setShopCloseTime] = React.useState("20:00");
 
-            const [items, setItems] = React.useState(defaultItems);
-            const [ordersList, setOrdersList] = React.useState([]);
-            const [udhariList, setUdhariList] = React.useState([]);
-
-            // Real-time Cloud Sync from Firebase
-            React.useEffect(() => {
-                if (db) {
-                    db.ref('divya_store/items').on('value', (snapshot) => {
-                        const val = snapshot.val();
-                        if (val) setItems(val);
-                        else db.ref('divya_store/items').set(defaultItems);
-                    });
-                    db.ref('divya_store/orders').on('value', (snapshot) => {
-                        const val = snapshot.val();
-                        if (val) setOrdersList(val);
-                    });
-                    db.ref('divya_store/udhari').on('value', (snapshot) => {
-                        const val = snapshot.val();
-                        if (val) setUdhariList(val);
-                        else {
-                            const initialUdhari = [{ id: 1, name: "Ramesh Kumar", phone: "9876543210", amount: 450, note: "Chawal aur Dal baki", history: [{ date: "24/11/2026", type: "Udhari Liya", amount: 450, mode: "Udhari" }] }];
-                            db.ref('divya_store/udhari').set(initialUdhari);
-                        }
-                    });
-                }
-            }, []);
-
-            const updateCloudData = (path, data) => {
-                if (db) {
-                    db.ref(`divya_store/${path}`).set(data);
-                }
-            };
+            // Items list with Categories and Images
+            const [items, setItems] = React.useState([
+                { id: 1, name: "Aashirvaad Atta (10kg)", price: 420, category: "Groceries", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80" },
+                { id: 2, name: "Fortune Sunflower Oil (1L)", price: 135, category: "Groceries", image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80" },
+                { id: 3, name: "Tata Salt (1kg)", price: 28, category: "Groceries", image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=300&q=80" },
+                { id: 4, name: "DAP Khaad (50kg Bag)", price: 1350, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&w=300&q=80" },
+                { id: 5, name: "Urea Khaad (45kg Bag)", price: 266, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=300&q=80" },
+                { id: 6, name: "Gehu ka Beej (40kg)", price: 1400, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=300&q=80" },
+                { id: 7, name: "Lohe ki Kil (1kg)", price: 80, category: "Hardware", image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80" },
+                { id: 8, name: "Hathoda (Hammer)", price: 180, category: "Hardware", image: "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=300&q=80" },
+                { id: 9, name: "Disposable Thali (Pack of 50)", price: 110, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=300&q=80" },
+                { id: 10, name: "Pashu Aahar (50kg)", price: 1250, category: "Pashupalan", image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=300&q=80" }
+            ]);
 
             const [searchTerm, setSearchTerm] = React.useState("");
             const [selectedCategory, setSelectedCategory] = React.useState("All");
+
             const [cart, setCart] = React.useState({});
             const [customerTime, setCustomerTime] = React.useState("10:00");
             const [customerName, setCustomerName] = React.useState("");
             const [customerPhone, setCustomerPhone] = React.useState("");
-            const [paymentMode, setPaymentMode] = React.useState("Cash");
-            const [checkoutUtrPin, setCheckoutUtrPin] = React.useState("");
+            const [paymentMode, setPaymentMode] = React.useState("Cash"); 
+            
+            // Orders & History
+            const [ordersList, setOrdersList] = React.useState([]);
+            const [customerSearchPhone, setCustomerSearchPhone] = React.useState("");
+            const [myOldOrders, setMyOldOrders] = React.useState([]);
+            const [lastBill, setLastBill] = React.useState(null);
 
-            const [parchaName, setParchaName] = React.useState("");
-            const [parchaPhone, setParchaPhone] = React.useState("");
-            const [parchaText, setParchaText] = React.useState("");
-            const [parchaExpectedPrice, setParchaExpectedPrice] = React.useState("");
+            // Udhari Khata
+            const [udhariList, setUdhariList] = React.useState([
+                { id: 1, name: "Ramesh Kumar", phone: "9876543210", amount: 450, note: "Chawal aur Dal baki" },
+                { id: 2, name: "Suresh Sharma", phone: "9123456789", amount: 1200, note: "Mahine ka rashan" }
+            ]);
+            const [newUdhariName, setNewUdhariName] = React.useState("");
+            const [newUdhariPhone, setNewUdhariPhone] = React.useState("");
+            const [newUdhariAmount, setNewUdhariAmount] = React.useState("");
+            const [newUdhariNote, setNewUdhariNote] = React.useState("");
 
-            const addToCart = (id) => setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+            // Rate management inputs
+            const [newItemName, setNewItemName] = React.useState("");
+            const [newItemPrice, setNewItemPrice] = React.useState("");
+            const [newItemCat, setNewItemCat] = React.useState("Groceries");
+            const [newItemImg, setNewItemImg] = React.useState("");
+
+            const addToCart = (id) => {
+                setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+            };
+
             const removeFromCart = (id) => {
                 setCart(prev => {
                     const updated = { ...prev };
-                    if (updated[id] > 1) updated[id] -= 1;
-                    else delete updated[id];
+                    if (updated[id] > 1) {
+                        updated[id] -= 1;
+                    } else {
+                        delete updated[id];
+                    }
                     return updated;
                 });
             };
 
-            const getTotalItems = () => Object.values(cart).reduce((a, b) => a + b, 0);
+            const deleteItem = (id) => {
+                if (confirm("Kya aap sach mein is item ko delete karna chahte hain?")) {
+                    setItems(items.filter(item => item.id !== id));
+                }
+            };
+
+            const deleteOrder = (id) => {
+                if (confirm("Kya aap is order ko delete karna chahte hain?")) {
+                    setOrdersList(ordersList.filter(ord => ord.id !== id));
+                }
+            };
+
             const getTotalAmount = () => {
                 return Object.keys(cart).reduce((total, id) => {
                     const item = items.find(i => i.id === parseInt(id));
@@ -159,21 +131,17 @@
                     alert("Kripya apna Naam aur Mobile Number likhein!");
                     return;
                 }
+
                 const totalAmt = getTotalAmount();
-                const currentDate = new Date().toLocaleDateString('en-IN');
-                const currentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
                 let billDetails = {
                     id: Date.now(),
-                    invoiceNo: "INV-" + Math.floor(1000 + Math.random() * 9000),
                     customerName,
                     customerPhone,
                     pickupTime: customerTime,
-                    paymentMode: paymentMode,
-                    paymentDetails: checkoutUtrPin,
-                    status: "Completed",
-                    date: currentDate,
-                    time: currentTime,
+                    paymentMode,
+                    date: new Date().toLocaleDateString(),
+                    time: new Date().toLocaleTimeString(),
                     items: [],
                     total: totalAmt
                 };
@@ -190,138 +158,300 @@
                     }
                 });
 
-                const newOrders = [billDetails, ...ordersList];
-                setOrdersList(newOrders);
-                updateCloudData('orders', newOrders);
-                
+                setOrdersList([billDetails, ...ordersList]);
+
+                if (paymentMode === "Udhari") {
+                    setUdhariList([
+                        { 
+                            id: Date.now(), 
+                            name: customerName, 
+                            phone: customerPhone, 
+                            amount: totalAmt, 
+                            note: "Store Order Udhari" 
+                        },
+                        ...udhariList
+                    ]);
+                }
+
+                setLastBill(billDetails);
                 setCart({});
-                setCustomerName("");
-                setCustomerPhone("");
-                setCheckoutUtrPin("");
-                setShowCheckoutModal(false);
-                setActiveTab('store');
-                alert("🎉 Order Successfully Placed & Saved to Cloud!");
+
+                let message = `🛒 *Naya Order - Divya Kirana Store*\n\n`;
+                message += `👤 *Grahak:* ${customerName} (${customerPhone})\n`;
+                message += `⏰ *Lena hai Samay:* ${customerTime}\n`;
+                message += `💳 *Payment Type:* ${paymentMode}\n\n`;
+                billDetails.items.forEach(bi => {
+                    message += `- ${bi.name} x ${bi.qty} = ₹${bi.subtotal}\n`;
+                });
+                message += `\n*Kul Rashi: ₹${totalAmt}*`;
+
+                const url = `https://wa.me/${whatsappNo}?text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
+                alert("✅ Order submit ho gaya! Professional Tax Invoice niche taiyar hai.");
             };
 
-            const placeParchaOrder = () => {
-                if (!parchaName || !parchaPhone) {
-                    alert("Kripya apna Naam aur Mobile Number zaroor dalein!");
+            const checkMyOrders = () => {
+                if (!customerSearchPhone) {
+                    alert("Kripya apna mobile number dalein.");
                     return;
                 }
-                const currentDate = new Date().toLocaleDateString('en-IN');
-                const currentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                const expPrice = parseFloat(parchaExpectedPrice) || 0;
-
-                let parchaOrderDetails = {
-                    id: Date.now(),
-                    invoiceNo: "PRC-" + Math.floor(1000 + Math.random() * 9000),
-                    isParcha: true,
-                    customerName: parchaName,
-                    customerPhone: parchaPhone,
-                    pickupTime: "As Soon As Ready",
-                    paymentMode: "Payment Pending",
-                    status: "Price Pending",
-                    date: currentDate,
-                    time: currentTime,
-                    parchaText: parchaText || "Parcha Photo Uploaded",
-                    parchaExpectedPrice: expPrice,
-                    items: [{ name: parchaText || "Parcha Photo", qty: 1, price: expPrice, subtotal: expPrice }],
-                    total: expPrice
-                };
-
-                const newOrders = [parchaOrderDetails, ...ordersList];
-                setOrdersList(newOrders);
-                updateCloudData('orders', newOrders);
-
-                setParchaName("");
-                setParchaPhone("");
-                setParchaText("");
-                setParchaExpectedPrice("");
-                setShowParchaModal(false);
-                alert("🎉 Parcha Order bhej diya gaya hai!");
+                const found = ordersList.filter(o => o.customerPhone === customerSearchPhone);
+                setMyOldOrders(found);
+                if (found.length === 0) {
+                    alert("Is number se koi purana order nahi mila.");
+                }
             };
 
+            const filteredItems = items.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
+                return matchesSearch && matchesCat;
+            });
+
             return (
-                <div className="min-h-screen pb-12">
-                    <header className="bg-green-700 text-white p-4 shadow-md sticky top-0 z-50">
-                        <div className="max-w-4xl mx-auto flex justify-between items-center">
-                            <h1 onClick={handleTitleClick} className="text-xl font-bold cursor-pointer select-none">
-                                🛒 Divya Kirana Store <span className="text-xs bg-green-800 px-2 py-0.5 rounded ml-2">Cloud Synced</span>
-                            </h1>
-                            <div className="flex gap-2">
-                                <button onClick={() => setActiveTab('store')} className={`px-3 py-1 rounded text-sm ${activeTab === 'store' ? 'bg-white text-green-700 font-bold' : 'bg-green-600'}`}>Store</button>
-                                <button onClick={() => setActiveTab('orders')} className={`px-3 py-1 rounded text-sm ${activeTab === 'orders' ? 'bg-white text-green-700 font-bold' : 'bg-green-600'}`}>Orders</button>
-                                {isAdminAuthenticated && (
-                                    <button onClick={() => setActiveTab('admin')} className={`px-3 py-1 rounded text-sm bg-yellow-500 text-black font-bold`}>Admin Dashboard</button>
-                                )}
+                <div className="max-w-md mx-auto bg-white min-h-screen shadow-2xl flex flex-col">
+                    {/* Header - Triple click for Secret Admin Access */}
+                    <header onClick={handleTitleClick} className="bg-emerald-700 text-white p-4 shadow-md cursor-pointer select-none">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h1 className="text-lg font-bold text-white">🛒 Divya Kirana Store</h1>
+                                <p className="text-xs text-emerald-100 mt-0.5">Samay: {shopOpenTime} se {shopCloseTime} | General & Agri</p>
                             </div>
+                            <span className="text-[10px] bg-emerald-900 px-2 py-1 rounded text-white font-semibold">Quick Store</span>
                         </div>
                     </header>
 
-                    <main className="max-w-4xl mx-auto p-4">
+                    {/* Navigation Bar */}
+                    <nav className="flex bg-emerald-900 text-white p-2.5 justify-around text-xs font-bold shadow-inner">
+                        <button onClick={() => setActiveTab('store')} className={`px-3 py-1 rounded ${activeTab === 'store' ? 'bg-emerald-600 shadow' : 'text-emerald-200'}`}>Store</button>
+                        <button onClick={() => setActiveTab('myorders')} className={`px-3 py-1 rounded ${activeTab === 'myorders' ? 'bg-emerald-600 shadow' : 'text-emerald-200'}`}>My Orders</button>
+                        
+                        {isAdminAuthenticated && (
+                            <>
+                                <button onClick={() => setActiveTab('orders')} className="px-2 py-1 rounded bg-amber-600 text-white font-bold text-[11px]">Orders</button>
+                                <button onClick={() => setActiveTab('udhari')} className="px-2 py-1 rounded bg-amber-600 text-white font-bold text-[11px]">Udhari</button>
+                                <button onClick={() => setActiveTab('rate')} className="px-2 py-1 rounded bg-amber-600 text-white font-bold text-[11px]">Rate</button>
+                                <button onClick={() => setActiveTab('settings')} className="px-2 py-1 rounded bg-amber-600 text-white font-bold text-[11px]">Settings</button>
+                            </>
+                        )}
+                    </nav>
+
+                    <main className="p-4 flex-grow mb-16 bg-gray-50">
+                        {/* STORE TAB */}
                         {activeTab === 'store' && (
                             <div>
-                                <div className="bg-white p-4 rounded-lg shadow mb-4 flex justify-between items-center">
-                                    <div>
-                                        <h2 className="font-bold text-lg text-green-800">Welcome to Divya Kirana Store!</h2>
-                                        <p className="text-sm text-gray-600">Order groceries, hardware, khad beej & cattle feed online.</p>
-                                    </div>
-                                    <button onClick={() => setShowParchaModal(true)} className="bg-orange-500 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-orange-600">
-                                        📝 Upload Parcha
-                                    </button>
+                                <div className="mb-4">
+                                    <input 
+                                        type="text" 
+                                        placeholder="🔍 Saman khojein (Atta, Khad, Hardware...)" 
+                                        value={searchTerm} 
+                                        onChange={(e) => setSearchTerm(e.target.value)} 
+                                        className="w-full p-3 border border-gray-300 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                                    />
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                    {items.map(item => (
-                                        <div key={item.id} className="bg-white p-3 rounded-lg shadow flex flex-col justify-between">
-                                            <div>
-                                                <img src={item.image} alt={item.name} className="w-full h-32 object-cover rounded mb-2" />
-                                                <h3 className="font-bold text-gray-800">{item.name}</h3>
-                                                <p className="text-xs text-gray-500">{item.weight}</p>
-                                                <p className="text-green-700 font-bold mt-1">₹{item.price}</p>
-                                            </div>
-                                            <div className="mt-3">
-                                                {cart[item.id] ? (
-                                                    <div className="flex justify-between items-center bg-green-50 p-1 rounded">
-                                                        <button onClick={() => removeFromCart(item.id)} className="bg-red-500 text-white px-2 py-0.5 rounded font-bold">-</button>
-                                                        <span className="font-bold">{cart[item.id]}</span>
-                                                        <button onClick={() => addToCart(item.id)} className="bg-green-600 text-white px-2 py-0.5 rounded font-bold">+</button>
-                                                    </div>
-                                                ) : (
-                                                    <button onClick={() => addToCart(item.id)} className="w-full bg-green-600 text-white py-1.5 rounded font-bold hover:bg-green-700">Add to Cart</button>
-                                                )}
-                                            </div>
-                                        </div>
+                                <div className="flex space-x-2 overflow-x-auto pb-2 mb-4 text-xs">
+                                    {['All', 'Groceries', 'Khad & Beej', 'Hardware', 'Pattal & Glass', 'Pashupalan'].map(cat => (
+                                        <button 
+                                            key={cat} 
+                                            onClick={() => setSelectedCategory(cat)}
+                                            className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap shadow-sm transition ${selectedCategory === cat ? 'bg-emerald-700 text-white font-bold' : 'bg-white text-gray-800 border border-gray-300'}`}
+                                        >
+                                            {cat}
+                                        </button>
                                     ))}
                                 </div>
 
-                                {getTotalItems() > 0 && (
-                                    <div className="fixed bottom-0 left-0 right-0 bg-green-800 text-white p-3 shadow-lg flex justify-between items-center max-w-4xl mx-auto rounded-t-lg z-40">
-                                        <div>
-                                            <span className="font-bold">{getTotalItems()} Items</span> | <span className="font-bold">Total: ₹{getTotalAmount()}</span>
+                                <div className="space-y-3">
+                                    {filteredItems.length === 0 ? (
+                                        <p className="text-center text-gray-500 py-8 text-sm">Koi saman nahi mila.</p>
+                                    ) : (
+                                        filteredItems.map(item => (
+                                            <div key={item.id} className="flex justify-between items-center p-3.5 border border-gray-200 rounded-2xl shadow-sm bg-white">
+                                                <div className="flex items-center space-x-3">
+                                                    <img src={item.image} alt={item.name} className="w-14 h-14 object-cover rounded-xl border bg-gray-50" />
+                                                    <div>
+                                                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold">{item.category}</span>
+                                                        <h3 className="font-bold text-gray-900 text-sm mt-1">{item.name}</h3>
+                                                        <p className="text-emerald-600 font-extrabold text-sm mt-0.5">₹{item.price}</p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    {cart[item.id] ? (
+                                                        <div className="flex items-center space-x-2 bg-emerald-50 p-1.5 rounded-xl border border-emerald-200">
+                                                            <button onClick={() => removeFromCart(item.id)} className="bg-red-500 text-white w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs">-</button>
+                                                            <span className="text-sm font-bold text-emerald-900 px-1">{cart[item.id]}</span>
+                                                            <button onClick={() => addToCart(item.id)} className="bg-emerald-600 text-white w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs">+</button>
+                                                        </div>
+                                                    ) : (
+                                                        <button onClick={() => addToCart(item.id)} className="bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow hover:bg-emerald-800">ADD</button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {Object.keys(cart).length > 0 && (
+                                    <div className="mt-6 p-5 bg-white border border-emerald-300 rounded-2xl shadow-xl space-y-3">
+                                        <div className="flex justify-between items-center border-b pb-2">
+                                            <h3 className="font-extrabold text-emerald-900 text-base">Aapka Cart</h3>
+                                            <span className="font-extrabold text-emerald-700 text-sm">Total: ₹{getTotalAmount()}</span>
                                         </div>
-                                        <button onClick={() => setShowCheckoutModal(true)} className="bg-white text-green-800 px-6 py-2 rounded font-bold shadow">
-                                            Checkout Now ➔
+                                        
+                                        <div className="space-y-2 text-xs">
+                                            <div>
+                                                <label className="font-bold text-gray-700 block mb-1">Grahak ka Naam</label>
+                                                <input type="text" placeholder="Naam likhein" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                            </div>
+                                            <div>
+                                                <label className="font-bold text-gray-700 block mb-1">Mobile Number</label>
+                                                <input type="text" placeholder="Mobile number" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                            </div>
+                                            <div>
+                                                <label className="font-bold text-gray-700 block mb-1">Kis Samay Saman Lena Hai?</label>
+                                                <input type="time" value={customerTime} onChange={(e) => setCustomerTime(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                            </div>
+                                            <div>
+                                                <label className="font-bold text-gray-700 block mb-1">Payment Ka Tarika</label>
+                                                <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50 font-bold text-emerald-800">
+                                                    <option value="Cash">Cash (Nagad dukan par)</option>
+                                                    <option value="UPI">Online UPI Payment</option>
+                                                    <option value="Udhari">Udhari Khata (Baad mein denge)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {paymentMode === "UPI" && (
+                                            <div className="text-xs bg-emerald-50 p-3 rounded-xl border border-emerald-200 text-center space-y-1">
+                                                <p className="font-bold text-gray-700">💳 Scan & Pay via UPI:</p>
+                                                <p className="text-emerald-800 font-mono font-extrabold text-sm">{upiId}</p>
+                                            </div>
+                                        )}
+
+                                        <button onClick={placeOrder} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-extrabold shadow-md text-sm hover:bg-emerald-700">
+                                            WhatsApp par Order Bhejein & Bill Banayein 📲
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Professional Invoice Format */}
+                                {lastBill && (
+                                    <div className="mt-6 bg-white p-5 border border-gray-300 rounded-2xl shadow-xl space-y-4">
+                                        <div className="text-center border-b-2 border-emerald-700 pb-3">
+                                            <h2 className="font-black text-lg text-emerald-800 uppercase">DIVYA KIRANA STORE</h2>
+                                            <p className="text-xs text-gray-500">General Merchant, Khad-Beej, Hardware & Pashupalan</p>
+                                            <p className="text-[10px] text-gray-400 mt-0.5">Official Tax Invoice / Cash Memo</p>
+                                        </div>
+
+                                        <div className="flex justify-between text-xs text-gray-800 bg-gray-50 p-3 rounded-xl border">
+                                            <div>
+                                                <p><strong>Grahak:</strong> {lastBill.customerName}</p>
+                                                <p><strong>Mobile:</strong> {lastBill.customerPhone}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p><strong>Tarikh:</strong> {lastBill.date}</p>
+                                                <p><strong>Samay:</strong> {lastBill.pickupTime}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="border rounded-xl overflow-hidden text-xs">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="bg-emerald-800 text-white">
+                                                        <th className="p-2 font-bold">Item Description</th>
+                                                        <th className="p-2 font-bold text-center">Qty</th>
+                                                        <th className="p-2 font-bold text-right">Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-200">
+                                                    {lastBill.items.map((bi, idx) => (
+                                                        <tr key={idx}>
+                                                            <td className="p-2 font-medium text-gray-900">{bi.name}</td>
+                                                            <td className="p-2 text-center text-gray-700">{bi.qty}</td>
+                                                            <td className="p-2 text-right font-bold text-gray-900">₹{bi.subtotal}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-200 flex justify-between items-center text-xs">
+                                            <span className="font-bold text-gray-700">Payment: <span className="text-emerald-800 font-bold">{lastBill.paymentMode}</span></span>
+                                            <div className="text-right">
+                                                <span className="text-gray-500 text-[10px] block">Grand Total</span>
+                                                <span className="font-black text-emerald-800 text-base">₹{lastBill.total}</span>
+                                            </div>
+                                        </div>
+
+                                        <button onClick={() => window.print()} className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold text-xs shadow hover:bg-black">
+                                            🖨️ Download Professional Bill / Print PDF
                                         </button>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {activeTab === 'orders' && (
-                            <div className="bg-white p-4 rounded-lg shadow">
-                                <h2 className="text-xl font-bold mb-4 text-green-800">📦 Customer Orders & Tracking</h2>
+                        {/* CUSTOMER ORDER HISTORY */}
+                        {activeTab === 'myorders' && (
+                            <div className="space-y-4">
+                                <h2 className="text-base font-extrabold text-gray-900">Mere Purane Orders</h2>
+                                <div className="flex space-x-2">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Mobile Number Dalein" 
+                                        value={customerSearchPhone} 
+                                        onChange={(e) => setCustomerSearchPhone(e.target.value)} 
+                                        className="flex-grow p-3 border border-gray-300 rounded-xl text-xs bg-white"
+                                    />
+                                    <button onClick={checkMyOrders} className="bg-emerald-700 text-white px-4 py-3 rounded-xl text-xs font-bold shadow hover:bg-emerald-800">
+                                        Khojein
+                                    </button>
+                                </div>
+
+                                <div className="space-y-3 mt-4">
+                                    {myOldOrders.length === 0 ? (
+                                        <p className="text-xs text-gray-500 text-center py-6">Koi order history nahi mili.</p>
+                                    ) : (
+                                        myOldOrders.map(ord => (
+                                            <div key={ord.id} className="bg-white p-4 border rounded-2xl shadow-sm text-xs space-y-2">
+                                                <div className="flex justify-between font-bold text-emerald-800 border-b pb-1">
+                                                    <span>Tarikh: {ord.date}</span>
+                                                    <span className="text-sm font-black text-gray-900">₹{ord.total}</span>
+                                                </div>
+                                                <div className="bg-gray-50 p-2.5 rounded-xl border space-y-1">
+                                                    {ord.items.map((it, idx) => (
+                                                        <div key={idx} className="flex justify-between text-gray-800">
+                                                            <span>{it.name} (x{it.qty})</span>
+                                                            <span>₹{it.subtotal}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* OWNER ORDERS */}
+                        {activeTab === 'orders' && isAdminAuthenticated && (
+                            <div>
+                                <h2 className="text-lg font-bold mb-3 text-gray-900">Owner Data: Saare Orders</h2>
                                 {ordersList.length === 0 ? (
-                                    <p className="text-gray-500">Koi order nahi mila.</p>
+                                    <p className="text-sm text-gray-500 py-6 text-center">Abhi tak koi order nahi aaya hai.</p>
                                 ) : (
                                     <div className="space-y-3">
                                         {ordersList.map(ord => (
-                                            <div key={ord.id} className="border p-3 rounded bg-gray-50 flex justify-between items-center">
+                                            <div key={ord.id} className="bg-white p-4 border rounded-2xl text-xs space-y-2 shadow-sm flex justify-between items-center">
                                                 <div>
-                                                    <p className="font-bold text-green-800">{ord.invoiceNo} - {ord.customerName} ({ord.customerPhone})</p>
-                                                    <p className="text-xs text-gray-500">Date: {ord.date} | Time: {ord.time}</p>
-                                                    <p className="text-sm font-semibold mt-1">Total: ₹{ord.total} | Status: <span className="text-blue-600">{ord.status}</span></p>
+                                                    <p className="font-bold text-gray-900 text-sm">{ord.customerName} ({ord.customerPhone})</p>
+                                                    <p className="text-gray-500 mt-0.5">Samay: {ord.pickupTime} | Mode: {ord.paymentMode}</p>
+                                                    <p className="text-emerald-700 font-black text-sm mt-1">₹{ord.total}</p>
                                                 </div>
+                                                <button onClick={() => deleteOrder(ord.id)} className="bg-red-600 text-white px-3 py-2 rounded-xl font-bold text-xs shadow hover:bg-red-700">
+                                                    🗑️ Delete
+                                                </button>
                                             </div>
                                         ))}
                                     </div>
@@ -329,67 +459,106 @@
                             </div>
                         )}
 
-                        {activeTab === 'admin' && isAdminAuthenticated && (
-                            <div className="bg-white p-4 rounded-lg shadow">
-                                <h2 className="text-xl font-bold mb-4 text-yellow-600">🛠️ Owner Admin Dashboard (Live Cloud)</h2>
-                                <div className="space-y-4">
-                                    <div className="bg-gray-50 p-3 rounded border">
-                                        <h3 className="font-bold text-gray-700">Total Store Orders: {ordersList.length}</h3>
-                                        <h3 className="font-bold text-gray-700 mt-2">Total Udhari Accounts: {udhariList.length}</h3>
+                        {/* UDHARI */}
+                        {activeTab === 'udhari' && isAdminAuthenticated && (
+                            <div>
+                                <h2 className="text-lg font-bold mb-3 text-gray-900">Udhari Khata</h2>
+                                <div className="space-y-3">
+                                    {udhariList.map(udh => (
+                                        <div key={udh.id} className="bg-white p-4 border rounded-2xl shadow-sm flex justify-between items-center text-xs">
+                                            <div>
+                                                <h3 className="font-bold text-gray-900 text-sm">{udh.name} ({udh.phone})</h3>
+                                                <p className="text-gray-500 mt-0.5">{udh.note}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-red-600 font-black text-sm">₹{udh.amount}</p>
+                                                <button onClick={() => {
+                                                    setUdhariList(udhariList.filter(u => u.id !== udh.id));
+                                                }} className="bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-[11px] mt-2 font-bold shadow">Chukta (Clear)</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* RATE MANAGEMENT */}
+                        {activeTab === 'rate' && isAdminAuthenticated && (
+                            <div>
+                                <h2 className="text-lg font-bold mb-3 text-gray-900">Rate & Items Management</h2>
+                                <div className="space-y-3 bg-white p-5 rounded-2xl border text-xs shadow-sm mb-6">
+                                    <h3 className="font-extrabold text-gray-800 text-sm">Naya Item Jodein</h3>
+                                    <input type="text" placeholder="Item ka Naam" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                    <input type="number" placeholder="Rate (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                    <select value={newItemCat} onChange={(e) => setNewItemCat(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50 font-medium">
+                                        <option value="Groceries">Groceries</option>
+                                        <option value="Khad & Beej">Khad & Beej</option>
+                                        <option value="Hardware">Hardware</option>
+                                        <option value="Pattal & Glass">Pattal & Glass</option>
+                                        <option value="Pashupalan">Pashupalan</option>
+                                    </select>
+                                    <input type="text" placeholder="Image URL" value={newItemImg} onChange={(e) => setNewItemImg(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                    <button onClick={() => {
+                                        if(newItemName && newItemPrice) {
+                                            const imgUrl = newItemImg || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=80";
+                                            setItems([...items, { id: Date.now(), name: newItemName, price: parseFloat(newItemPrice), category: newItemCat, image: imgUrl }]);
+                                            setNewItemName(""); setNewItemPrice(""); setNewItemImg("");
+                                            alert("Naya item jud gaya!");
+                                        } else { alert("Naam aur price bharein."); }
+                                    }} className="w-full bg-emerald-700 text-white py-2.5 rounded-xl font-bold text-xs shadow hover:bg-emerald-800">Naya Item Jodein</button>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <h3 className="font-extrabold text-gray-900 text-sm border-b pb-1">Maujuda Items (Delete karne ke liye):</h3>
+                                    {items.map(item => (
+                                        <div key={item.id} className="flex justify-between items-center bg-white p-3.5 border rounded-2xl shadow-sm text-xs">
+                                            <div className="flex items-center space-x-3">
+                                                <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-xl border" />
+                                                <div>
+                                                    <p className="font-bold text-gray-900 text-sm">{item.name}</p>
+                                                    <p className="text-emerald-700 font-extrabold text-xs mt-0.5">₹{item.price} <span className="text-gray-500 font-normal">({item.category})</span></p>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => deleteItem(item.id)} className="bg-red-600 text-white px-3 py-2 rounded-xl font-bold text-xs shadow hover:bg-red-700">
+                                                🗑️ Delete
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* SETTINGS */}
+                        {activeTab === 'settings' && isAdminAuthenticated && (
+                            <div>
+                                <h2 className="text-lg font-bold mb-3 text-gray-900">Dukaan ki Settings</h2>
+                                <div className="space-y-3 bg-white p-5 rounded-2xl border text-xs shadow-sm">
+                                    <div>
+                                        <label className="font-bold text-gray-700 block mb-1">Dukaan Khulne ka Samay</label>
+                                        <input type="time" value={shopOpenTime} onChange={(e) => setShopOpenTime(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
                                     </div>
+                                    <div>
+                                        <label className="font-bold text-gray-700 block mb-1">Dukaan Band Hone ka Samay</label>
+                                        <input type="time" value={shopCloseTime} onChange={(e) => setShopCloseTime(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                    </div>
+                                    <div>
+                                        <label className="font-bold text-gray-700 block mb-1">Owner WhatsApp Number</label>
+                                        <input type="text" value={whatsappNo} onChange={(e) => setWhatsappNo(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                    </div>
+                                    <div>
+                                        <label className="font-bold text-gray-700 block mb-1">UPI ID</label>
+                                        <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                    </div>
+                                    <button onClick={() => alert("Settings Save Ho Gayi!")} className="w-full bg-emerald-700 text-white py-3 rounded-xl font-bold shadow hover:bg-emerald-800">Save Settings</button>
                                 </div>
                             </div>
                         )}
                     </main>
-
-                    {/* Checkout Modal */}
-                    {showCheckoutModal && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-                            <div className="bg-white p-5 rounded-lg max-w-md w-full shadow-lg">
-                                <h3 className="text-lg font-bold mb-3 text-green-800">Complete Your Order</h3>
-                                <input type="text" placeholder="Aapka Naam" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full border p-2 rounded mb-3" />
-                                <input type="text" placeholder="Mobile Number (10 Digit)" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full border p-2 rounded mb-3" />
-                                <div className="mb-3">
-                                    <label className="text-sm font-semibold text-gray-700 block mb-1">Payment Mode:</label>
-                                    <select value={paymentMode} onChange={e => setPaymentMode(e.target.value)} className="w-full border p-2 rounded">
-                                        <option value="Cash">Cash on Delivery</option>
-                                        <option value="UPI">UPI / QR Code</option>
-                                        <option value="Udhari">Udhari (Khata)</option>
-                                    </select>
-                                </div>
-                                {paymentMode === 'UPI' && (
-                                    <div className="mb-3 p-3 bg-green-50 rounded border border-green-200">
-                                        <p className="text-xs font-bold text-green-800 mb-1">Scan & Pay via UPI:</p>
-                                        <p className="text-xs text-gray-600 mb-2">UPI ID: <b>6200150688@ybl</b></p>
-                                        <input type="text" placeholder="Enter UPI UTR / Transaction ID" value={checkoutUtrPin} onChange={e => setCheckoutUtrPin(e.target.value)} className="w-full border p-2 rounded text-sm bg-white" />
-                                    </div>
-                                )}
-                                <div className="flex justify-end gap-2 mt-4">
-                                    <button onClick={() => setShowCheckoutModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
-                                    <button onClick={placeOrder} className="bg-green-600 text-white px-4 py-2 rounded font-bold">Place Order</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Parcha Modal */}
-                    {showParchaModal && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-                            <div className="bg-white p-5 rounded-lg max-w-md w-full shadow-lg">
-                                <h3 className="text-lg font-bold mb-3 text-orange-600">📝 Upload Parcha Order</h3>
-                                <input type="text" placeholder="Aapka Naam" value={parchaName} onChange={e => setParchaName(e.target.value)} className="w-full border p-2 rounded mb-3" />
-                                <input type="text" placeholder="Mobile Number" value={parchaPhone} onChange={e => setParchaPhone(e.target.value)} className="w-full border p-2 rounded mb-3" />
-                                <textarea placeholder="Parcha ki list yahan likhein..." value={parchaText} onChange={e => setParchaText(e.target.value)} className="w-full border p-2 rounded mb-3"></textarea>
-                                <div className="flex justify-end gap-2 mt-4">
-                                    <button onClick={() => setShowParchaModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
-                                    <button onClick={placeParchaOrder} className="bg-orange-500 text-white px-4 py-2 rounded font-bold">Send Parcha</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
             );
-            ReactDOM.render(<App />, document.getElementById('root'));
-        </script>
-    </body>
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
 </html>
