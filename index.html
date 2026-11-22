@@ -121,6 +121,7 @@
             const [customerName, setCustomerName] = React.useState("");
             const [customerPhone, setCustomerPhone] = React.useState("");
             const [paymentMode, setPaymentMode] = React.useState("Cash");
+            const [checkoutUtrPin, setCheckoutUtrPin] = React.useState("");
 
             // Parcha / Bulk Image & Text Order States
             const [parchaName, setParchaName] = React.useState("");
@@ -128,6 +129,7 @@
             const [parchaText, setParchaText] = React.useState("");
             const [parchaImage, setParchaImage] = React.useState(null);
             const [parchaPaymentMode, setParchaPaymentMode] = React.useState("Cash");
+            const [parchaUtrPin, setParchaUtrPin] = React.useState("");
             
             // Owner Price Update State for Parcha Order
             const [ownerUpdatedPrice, setOwnerUpdatedPrice] = React.useState("");
@@ -194,119 +196,32 @@
                 }
             };
 
-            // Submit Parcha / Photo Bulk Order
-            const placeParchaOrder = () => {
-                if (!parchaName || !parchaPhone) {
-                    alert("Kripya apna Naam aur Mobile Number zaroor dalein!");
-                    return;
+            // Trigger Direct UPI App Payment Intent (GPay, PhonePe, Paytm)
+            const openUpiApp = (appType, amount) => {
+                let upiLink = `upi://pay?pa=${upiId}&pn=Divya%20Kirana%20Store&am=${amount}&cu=INR`;
+                if (appType === 'gpay') {
+                    window.location.href = `tez://upi/pay?pa=${upiId}&pn=Divya%20Kirana%20Store&am=${amount}&cu=INR`;
+                } else if (appType === 'phonepe') {
+                    window.location.href = `phonepe://pay?pa=${upiId}&pn=Divya%20Kirana%20Store&am=${amount}&cu=INR`;
+                } else if (appType === 'paytm') {
+                    window.location.href = `paytmmp://pay?pa=${upiId}&pn=Divya%20Kirana%20Store&am=${amount}&cu=INR`;
+                } else {
+                    window.location.href = upiLink;
                 }
-                if (!parchaText && !parchaImage) {
-                    alert("Kripya saman ki list likhein ya parche ki photo upload karein!");
-                    return;
-                }
-
-                const currentDate = new Date().toLocaleDateString('en-IN');
-                const currentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-
-                let parchaOrderDetails = {
-                    id: Date.now(),
-                    invoiceNo: "PRC-" + Math.floor(1000 + Math.random() * 9000),
-                    isParcha: true,
-                    customerName: parchaName,
-                    customerPhone: parchaPhone,
-                    pickupTime: "As Soon As Ready",
-                    paymentMode: parchaPaymentMode,
-                    status: "Price Pending",
-                    date: currentDate,
-                    time: currentTime,
-                    parchaText: parchaText || "Photo Parcha Uploaded",
-                    parchaImage: parchaImage,
-                    items: [
-                        { name: parchaText ? `Parcha List: ${parchaText.substring(0, 40)}...` : "Uploaded Parcha Photo Items", qty: 1, price: 0, subtotal: 0 }
-                    ],
-                    total: 0
-                };
-
-                setOrdersList([parchaOrderDetails, ...ordersList]);
-                setParchaName("");
-                setParchaPhone("");
-                setParchaText("");
-                setParchaImage(null);
-                setShowParchaModal(false);
-                alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price update karne ke baad aapko 'My Orders' mein bill dikhega.");
             };
 
-            // Owner Updates Price of Parcha Order
-            const updateParchaOrderPrice = (orderId) => {
-                const amt = parseFloat(ownerUpdatedPrice);
-                if (isNaN(amt) || amt <= 0) {
-                    alert("Kripya sahi Total Amount (₹) dalein!");
-                    return;
-                }
-                const currentDate = new Date().toLocaleDateString('en-IN');
-
-                setOrdersList(ordersList.map(ord => {
-                    if (ord.id === orderId) {
-                        const updatedOrd = {
-                            ...ord,
-                            total: amt,
-                            status: "Ready",
-                            items: [
-                                {
-                                    name: ownerUpdatedNote ? `Parcha Saman (${ownerUpdatedNote})` : `Parcha List: ${ord.parchaText}`,
-                                    qty: 1,
-                                    price: amt,
-                                    subtotal: amt
-                                }
-                            ]
-                        };
-
-                        // Add to Udhari if Payment Mode is Udhari
-                        if (ord.paymentMode === "Udhari") {
-                            const existingIndex = udhariList.findIndex(u => u.phone === ord.customerPhone);
-                            if (existingIndex !== -1) {
-                                const updatedUdh = [...udhariList];
-                                updatedUdh[existingIndex].amount += amt;
-                                updatedUdh[existingIndex].history.unshift({
-                                    date: currentDate,
-                                    type: "Parcha Order Udhari",
-                                    amount: amt,
-                                    mode: "Udhari"
-                                });
-                                setUdhariList(updatedUdh);
-                            } else {
-                                setUdhariList([{
-                                    id: Date.now(),
-                                    name: ord.customerName,
-                                    phone: ord.customerPhone,
-                                    amount: amt,
-                                    note: "Parcha Order Udhari",
-                                    history: [{ date: currentDate, type: "Parcha Order Udhari", amount: amt, mode: "Udhari" }]
-                                }, ...udhariList]);
-                            }
-                        }
-
-                        // WhatsApp Alert to Customer with Updated Price
-                        let msg = `📦 *Divya Kirana Store - Bill Updated*\n\nHello ${ord.customerName},\nAapke Parcha Order (${ord.invoiceNo}) ka saman pack ho kar **READY** hai!\n\n💰 *Kul Bill Rashi:* ₹${amt}\n💳 *Payment Mode:* ${ord.paymentMode}\n\nApna bill dekhne aur download karne ke liye website ke 'My Orders' tab mein apna mobile number dalein. 🙏`;
-                        let cleanPhone = ord.customerPhone.startsWith("91") ? ord.customerPhone : "91" + ord.customerPhone;
-                        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-
-                        setSelectedOwnerOrder(updatedOrd);
-                        return updatedOrd;
-                    }
-                    return ord;
-                }));
-                setOwnerUpdatedPrice("");
-                setOwnerUpdatedNote("");
-                alert("✅ Price Updated & Customer ko WhatsApp par bill bhej diya gaya!");
-            };
-
+            // Submit Cart Checkout Order
             const placeOrder = () => {
                 if (!customerName || !customerPhone) {
                     alert("Kripya apna Naam aur Mobile Number likhein!");
                     return;
                 }
                 const totalAmt = getTotalAmount();
+                if (paymentMode === "UPI" && !checkoutUtrPin) {
+                    alert("Kripya Online Payment karne ke baad UTR / Transaction Reference Number dalein!");
+                    return;
+                }
+
                 const currentDate = new Date().toLocaleDateString('en-IN');
                 const currentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
@@ -316,7 +231,7 @@
                     customerName,
                     customerPhone,
                     pickupTime: customerTime,
-                    paymentMode,
+                    paymentMode: paymentMode === "UPI" ? `UPI Paid [Ref: ${checkoutUtrPin}]` : paymentMode,
                     status: "Pending",
                     date: currentDate,
                     time: currentTime,
@@ -369,9 +284,120 @@
 
                 setLastBill(billDetails);
                 setCart({});
+                setCheckoutUtrPin("");
                 setShowCheckoutModal(false);
                 setActiveTab('store');
                 alert("🎉 Order Successfully Placed & Saved!");
+            };
+
+            // Submit Parcha / Photo Bulk Order
+            const placeParchaOrder = () => {
+                if (!parchaName || !parchaPhone) {
+                    alert("Kripya apna Naam aur Mobile Number zaroor dalein!");
+                    return;
+                }
+                if (!parchaText && !parchaImage) {
+                    alert("Kripya saman ki list likhein ya parche ki photo upload karein!");
+                    return;
+                }
+                if (parchaPaymentMode === "UPI" && !parchaUtrPin) {
+                    alert("Kripya online payment karne ke baad UTR / Transaction Reference Number dalein!");
+                    return;
+                }
+
+                const currentDate = new Date().toLocaleDateString('en-IN');
+                const currentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+                let parchaOrderDetails = {
+                    id: Date.now(),
+                    invoiceNo: "PRC-" + Math.floor(1000 + Math.random() * 9000),
+                    isParcha: true,
+                    customerName: parchaName,
+                    customerPhone: parchaPhone,
+                    pickupTime: "As Soon As Ready",
+                    paymentMode: parchaPaymentMode === "UPI" ? `UPI Paid [Ref: ${parchaUtrPin}]` : parchaPaymentMode,
+                    status: "Price Pending",
+                    date: currentDate,
+                    time: currentTime,
+                    parchaText: parchaText || "Photo Parcha Uploaded",
+                    parchaImage: parchaImage,
+                    items: [
+                        { name: parchaText ? `Parcha List: ${parchaText.substring(0, 40)}...` : "Uploaded Parcha Photo Items", qty: 1, price: 0, subtotal: 0 }
+                    ],
+                    total: 0
+                };
+
+                setOrdersList([parchaOrderDetails, ...ordersList]);
+                setParchaName("");
+                setParchaPhone("");
+                setParchaText("");
+                setParchaImage(null);
+                setParchaUtrPin("");
+                setShowParchaModal(false);
+                alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price update karne ke baad aapko 'My Orders' mein bill dikhega.");
+            };
+
+            // Owner Updates Price of Parcha Order
+            const updateParchaOrderPrice = (orderId) => {
+                const amt = parseFloat(ownerUpdatedPrice);
+                if (isNaN(amt) || amt <= 0) {
+                    alert("Kripya sahi Total Amount (₹) dalein!");
+                    return;
+                }
+                const currentDate = new Date().toLocaleDateString('en-IN');
+
+                setOrdersList(ordersList.map(ord => {
+                    if (ord.id === orderId) {
+                        const updatedOrd = {
+                            ...ord,
+                            total: amt,
+                            status: "Ready",
+                            items: [
+                                {
+                                    name: ownerUpdatedNote ? `Parcha Saman (${ownerUpdatedNote})` : `Parcha List: ${ord.parchaText}`,
+                                    qty: 1,
+                                    price: amt,
+                                    subtotal: amt
+                                }
+                            ]
+                        };
+
+                        if (ord.paymentMode.includes("Udhari")) {
+                            const existingIndex = udhariList.findIndex(u => u.phone === ord.customerPhone);
+                            if (existingIndex !== -1) {
+                                const updatedUdh = [...udhariList];
+                                updatedUdh[existingIndex].amount += amt;
+                                updatedUdh[existingIndex].history.unshift({
+                                    date: currentDate,
+                                    type: "Parcha Order Udhari",
+                                    amount: amt,
+                                    mode: "Udhari"
+                                });
+                                setUdhariList(updatedUdh);
+                            } else {
+                                setUdhariList([{
+                                    id: Date.now(),
+                                    name: ord.customerName,
+                                    phone: ord.customerPhone,
+                                    amount: amt,
+                                    note: "Parcha Order Udhari",
+                                    history: [{ date: currentDate, type: "Parcha Order Udhari", amount: amt, mode: "Udhari" }]
+                                }, ...udhariList]);
+                            }
+                        }
+
+                        let msg = `📦 *Divya Kirana Store - Bill Updated*\n\nHello ${ord.customerName},\nAapke Parcha Order (${ord.invoiceNo}) ka saman pack ho kar **READY** hai!\n\n💰 *Kul Bill Rashi:* ₹${amt}\n💳 *Payment Mode:* ${ord.paymentMode}\n\nApna bill dekhne aur download karne ke liye website ke 'My Orders' tab mein apna mobile number dalein. 🙏`;
+                        let cleanPhone = ord.customerPhone.startsWith("91") ? ord.customerPhone : "91" + ord.customerPhone;
+                        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+
+                        setSelectedOwnerOrder(updatedOrd);
+                        return updatedOrd;
+                    }
+                    return ord;
+                }));
+                setOwnerUpdatedPrice("");
+                setOwnerUpdatedNote("");
+                alert("✅ Price Updated & Customer ko WhatsApp par bill bhej diya gaya!");
             };
 
             const markOrderReady = (orderId) => {
@@ -426,32 +452,32 @@
                 return matchesSearch && matchesCat;
             });
 
-            // Customer self online payment with UPI Reference / PIN Generation
+            // Customer self online payment for Udhari from My Orders tab
             const handleCustomerUdhariPay = (phone) => {
                 const udhRecord = udhariList.find(u => u.phone === phone);
                 if (!udhRecord) {
                     alert("Aapka koi baki Udhari Khata nahi hai!");
                     return;
                 }
-                let payAmt = prompt(`💳 Owner UPI ID: ${upiId}\nAapka kul baki udhari ₹${udhRecord.amount} hai. Aap kitna Online (UPI) payment karna chahte hain?`, udhRecord.amount);
+                let payAmt = prompt(`💳 Owner UPI ID: ${upiId}\nAapka kul baki udhari ₹${udhRecord.amount} hai. Aap kitna Online payment karna chahte hain?`, udhRecord.amount);
                 if (payAmt !== null) {
                     let paid = parseFloat(payAmt);
                     if (!isNaN(paid) && paid > 0) {
-                        let utrPin = prompt(`Apne payment app (Google Pay / PhonePe / Paytm) se payment karne ke baad 12-digit UTR / UPI Transaction Reference Number (PIN) yahan dalein:`);
+                        let utrPin = prompt(`Apne payment app (GPay / PhonePe / Paytm) se payment karne ke baad 12-digit UTR Reference Number yahan dalein:`);
                         if (utrPin) {
                             const curDate = new Date().toLocaleDateString('en-IN');
                             const updatedHistory = [{ date: curDate, type: `Online UPI Diya [Ref: ${utrPin}]`, amount: paid, mode: "UPI" }, ...udhRecord.history];
 
                             if (paid >= udhRecord.amount) {
                                 setUdhariList(udhariList.filter(u => u.phone !== phone));
-                                alert(`✅ ₹${paid} Online Payment Verified (Ref: ${utrPin})! Aapka Udhari poori tarah CLEAR ho gaya hai.`);
+                                alert(`✅ ₹${paid} Online Payment Verified (Ref: ${utrPin})! Udhari poori tarah CLEAR ho gayi.`);
                             } else {
                                 let remaining = udhRecord.amount - paid;
                                 setUdhariList(udhariList.map(u => u.phone === phone ? {...u, amount: remaining, history: updatedHistory} : u));
-                                alert(`✅ ₹${paid} Online Payment Verified (Ref: ${utrPin})! Baki ₹${remaining} udhari mein bacha hai.`);
+                                alert(`✅ ₹${paid} Online Payment Verified (Ref: ${utrPin})! Baki ₹${remaining} udhari bachi hai.`);
                             }
                         } else {
-                            alert("⚠️ Transaction Reference / PIN nahi dala gaya, payment cancel ho gaya.");
+                            alert("⚠️ Transaction Reference Number nahi dala gaya.");
                         }
                     }
                 }
@@ -661,7 +687,7 @@
                                                 </div>
 
                                                 <button onClick={() => handleCustomerUdhariPay(customerSearchPhone)} className="w-full bg-blue-700 text-white py-2.5 rounded-xl font-bold shadow hover:bg-blue-800">
-                                                    📲 Pay Online & Generate UTR/PIN Reference
+                                                    📲 Pay Udhari Online & Update Khata
                                                 </button>
                                             </div>
                                         ) : (
@@ -691,7 +717,7 @@
                                         
                                         {ord.status === 'Price Pending' ? (
                                             <div className="bg-orange-50 p-2.5 rounded-xl border border-orange-200 text-orange-900 font-semibold">
-                                                ⏳ Aapka Parcha / List Owner ke paas pahunch gaya hai. Owner saman check karke jaldi hi Total Price update karenge.
+                                                ⏳ Aapka Parcha / List Owner ke paas hai. Owner price update kar rahe hain.
                                             </div>
                                         ) : (
                                             <p className="text-gray-600">Payment: <strong className="text-green-700">{ord.paymentMode}</strong> | Total: <strong className="text-gray-900 text-sm">₹{ord.total}</strong></p>
@@ -848,11 +874,11 @@
                                                                 
                                                                 if (paid >= udh.amount) {
                                                                     setUdhariList(udhariList.filter(u => u.id !== udh.id));
-                                                                    alert(`✅ ₹${paid} Cash received! Udhari fully CLEARED.`);
+                                                                    alert(`✅ ₹${paid} Cash received! Udhari CLEARED.`);
                                                                 } else {
                                                                     let remaining = udh.amount - paid;
                                                                     setUdhariList(udhariList.map(u => u.id === udh.id ? {...u, amount: remaining, history: updatedHistory} : u));
-                                                                    alert(`✅ ₹${paid} Cash received! Baki ₹${remaining} udhari mein bacha hai.`);
+                                                                    alert(`✅ ₹${paid} Cash received! Baki ₹${remaining} bachi hai.`);
                                                                 }
                                                             }
                                                         }
@@ -861,21 +887,21 @@
                                                     </button>
 
                                                     <button onClick={() => {
-                                                        let payAmt = prompt(`Kitna payment Online (UPI) mila hai? (Total Baki: ₹${udh.amount})`, udh.amount);
+                                                        let payAmt = prompt(`Kitna payment Online mila hai? (Total Baki: ₹${udh.amount})`, udh.amount);
                                                         if (payAmt !== null) {
                                                             let paid = parseFloat(payAmt);
                                                             if (!isNaN(paid) && paid > 0) {
-                                                                let utrPin = prompt("Enter UPI Transaction Reference / PIN:");
+                                                                let utrPin = prompt("Enter UPI Transaction Reference / UTR Number:");
                                                                 const curDate = new Date().toLocaleDateString('en-IN');
                                                                 const updatedHistory = [{ date: curDate, type: `Online UPI Diya [Ref: ${utrPin || 'N/A'}]`, amount: paid, mode: "UPI" }, ...udh.history];
 
                                                                 if (paid >= udh.amount) {
                                                                     setUdhariList(udhariList.filter(u => u.id !== udh.id));
-                                                                    alert(`✅ ₹${paid} Online UPI received! Udhari fully CLEARED.`);
+                                                                    alert(`✅ ₹${paid} Online UPI received! Udhari CLEARED.`);
                                                                 } else {
                                                                     let remaining = udh.amount - paid;
                                                                     setUdhariList(udhariList.map(u => u.id === udh.id ? {...u, amount: remaining, history: updatedHistory} : u));
-                                                                    alert(`✅ ₹${paid} Online UPI received! Baki ₹${remaining} udhari mein bacha hai.`);
+                                                                    alert(`✅ ₹${paid} Online UPI received! Baki ₹${remaining} bachi hai.`);
                                                                 }
                                                             }
                                                         }
@@ -988,15 +1014,15 @@
                                     <div>
                                         <label className="font-bold text-gray-700 block mb-1">✍️ Saman ki List Likhein (Optional):</label>
                                         <textarea 
-                                            rows="3" 
-                                            placeholder="Jaise: 5kg Chawal, 2kg Arhar Dal, 1L Sarso Tel, 1kg Chini..." 
+                                            rows="2" 
+                                            placeholder="Jaise: 5kg Chawal, 2kg Dal, 1L Sarso Tel..." 
                                             value={parchaText} 
                                             onChange={(e) => setParchaText(e.target.value)}
                                             className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"
                                         ></textarea>
                                     </div>
 
-                                    <div className="bg-green-50 p-3 rounded-xl border border-dashed border-green-600 text-center space-y-1.5">
+                                    <div className="bg-green-50 p-2.5 rounded-xl border border-dashed border-green-600 text-center space-y-1">
                                         <label className="font-bold text-green-900 block cursor-pointer">
                                             📷 Ya Parche ki Photo Upload Karein:
                                             <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
@@ -1005,18 +1031,36 @@
                                             </div>
                                         </label>
                                         {parchaImage && (
-                                            <img src={parchaImage} alt="Preview" className="w-full h-32 object-cover rounded-lg border mt-2" />
+                                            <img src={parchaImage} alt="Preview" className="w-full h-28 object-cover rounded-lg border mt-1" />
                                         )}
                                     </div>
 
                                     <div>
                                         <label className="font-bold text-gray-700 block mb-1">Payment Mode (भुगतान का तरीका)</label>
                                         <select value={parchaPaymentMode} onChange={(e) => setParchaPaymentMode(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-bold text-green-800">
-                                            <option value="Cash">Cash (नकद)</option>
-                                            <option value="UPI">UPI Online Payment</option>
+                                            <option value="Cash">Cash on Pickup</option>
+                                            <option value="UPI">UPI Online Payment (Instant)</option>
                                             <option value="Udhari">Udhari Khata (उधार)</option>
                                         </select>
                                     </div>
+
+                                    {parchaPaymentMode === "UPI" && (
+                                        <div className="bg-blue-50 p-3 rounded-xl border border-blue-300 space-y-2">
+                                            <p className="font-bold text-blue-900 text-center">💳 Direct UPI Apps se Pay Karein:</p>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <button onClick={() => openUpiApp('gpay', 500)} className="bg-white border border-blue-400 text-blue-900 py-1.5 rounded-lg font-bold text-[11px] shadow">Google Pay</button>
+                                                <button onClick={() => openUpiApp('phonepe', 500)} className="bg-purple-700 text-white py-1.5 rounded-lg font-bold text-[11px] shadow">PhonePe</button>
+                                                <button onClick={() => openUpiApp('paytm', 500)} className="bg-blue-800 text-white py-1.5 rounded-lg font-bold text-[11px] shadow">Paytm</button>
+                                            </div>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Payment ke baad 12-digit UTR No. dalein" 
+                                                value={parchaUtrPin} 
+                                                onChange={(e) => setParchaUtrPin(e.target.value)}
+                                                className="w-full p-2 border rounded-lg bg-white text-xs font-bold"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <button onClick={placeParchaOrder} className="w-full bg-green-700 text-white py-3 rounded-xl font-extrabold shadow-lg text-xs hover:bg-green-800 transition mt-2">
@@ -1231,17 +1275,31 @@
                                     <div>
                                         <label className="font-bold text-gray-700 block mb-1">Payment Mode (भुगतान का तरीका)</label>
                                         <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50 font-bold text-green-800">
-                                            <option value="Cash">Cash (नकद)</option>
-                                            <option value="UPI">UPI Online Payment</option>
+                                            <option value="Cash">Cash on Pickup</option>
+                                            <option value="UPI">UPI Online Payment (Instant)</option>
                                             <option value="Udhari">Udhari Khata (उधार)</option>
                                         </select>
                                     </div>
                                 </div>
 
                                 {paymentMode === "UPI" && (
-                                    <div className="text-xs bg-green-50 p-3 rounded-xl border text-center space-y-1">
-                                        <p className="font-bold text-gray-800">💳 Scan & Pay via UPI:</p>
-                                        <p className="text-green-800 font-mono font-black text-sm">{upiId}</p>
+                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-300 space-y-2.5 text-xs">
+                                        <p className="font-bold text-blue-900 text-center">💳 Direct UPI Apps se Pay Karein (₹{getTotalAmount()}):</p>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <button onClick={() => openUpiApp('gpay', getTotalAmount())} className="bg-white border border-blue-400 text-blue-900 py-2 rounded-xl font-bold shadow text-center">Google Pay</button>
+                                            <button onClick={() => openUpiApp('phonepe', getTotalAmount())} className="bg-purple-700 text-white py-2 rounded-xl font-bold shadow text-center">PhonePe</button>
+                                            <button onClick={() => openUpiApp('paytm', getTotalAmount())} className="bg-blue-800 text-white py-2 rounded-xl font-bold shadow text-center">Paytm</button>
+                                        </div>
+                                        <div>
+                                            <label className="font-bold text-gray-700 block mb-1">12-digit UTR / Transaction Reference Number *</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Payment ke baad UTR number yahan dalein" 
+                                                value={checkoutUtrPin} 
+                                                onChange={(e) => setCheckoutUtrPin(e.target.value)}
+                                                className="w-full p-2.5 border rounded-xl bg-white font-bold"
+                                            />
+                                        </div>
                                     </div>
                                 )}
 
