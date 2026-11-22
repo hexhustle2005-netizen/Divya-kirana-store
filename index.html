@@ -18,6 +18,28 @@
             const [isAdminAuthenticated, setIsAdminAuthenticated] = React.useState(false);
             const ADMIN_PIN = "728084";
 
+            // Secret Triple Tap Counter for Admin Access
+            const [titleClicks, setTitleClicks] = React.useState(0);
+
+            const handleTitleClick = () => {
+                const newClicks = titleClicks + 1;
+                setTitleClicks(newClicks);
+                if (newClicks >= 3) {
+                    setTitleClicks(0);
+                    if (isAdminAuthenticated) {
+                        alert("🔓 Aap pehle se Admin mode mein hain!");
+                    } else {
+                        const enteredPin = prompt("🔒 Admin PIN Dalein:");
+                        if (enteredPin === ADMIN_PIN) {
+                            setIsAdminAuthenticated(true);
+                            alert("✅ Admin Access Successful! Ab aap Orders, Udhari, Rate aur Settings dekh sakte hain.");
+                        } else if (enteredPin !== null) {
+                            alert("❌ Galat PIN!");
+                        }
+                    }
+                }
+            };
+
             // Shop Settings & Timing state
             const [whatsappNo, setWhatsappNo] = React.useState("919876543210");
             const [upiId, setUpiId] = React.useState("divyakirana@upi");
@@ -43,7 +65,7 @@
             const [ordersList, setOrdersList] = React.useState([]);
             const [lastBill, setLastBill] = React.useState(null);
 
-            // Udhari Khata Data (Protected)
+            // Udhari Khata Data
             const [udhariList, setUdhariList] = React.useState([
                 { id: 1, name: "Ramesh Kumar", phone: "9876543210", amount: 450, note: "Chawal aur Dal baki" },
                 { id: 2, name: "Suresh Sharma", phone: "9123456789", amount: 1200, note: "Mahine ka rashan" }
@@ -57,24 +79,6 @@
             const [newItemName, setNewItemName] = React.useState("");
             const [newItemPrice, setNewItemPrice] = React.useState("");
             const [newItemImg, setNewItemImg] = React.useState("");
-
-            const handleProtectedTab = (tabName) => {
-                if (tabName === 'rate' || tabName === 'settings' || tabName === 'udhari' || tabName === 'orders') {
-                    if (isAdminAuthenticated) {
-                        setActiveTab(tabName);
-                    } else {
-                        const enteredPin = prompt("🔒 Admin PIN Dalein (728084):");
-                        if (enteredPin === ADMIN_PIN) {
-                            setIsAdminAuthenticated(true);
-                            setActiveTab(tabName);
-                        } else if (enteredPin !== null) {
-                            alert("❌ Galat PIN! Access denied.");
-                        }
-                    }
-                } else {
-                    setActiveTab(tabName);
-                }
-            };
 
             const addToCart = (id) => {
                 setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
@@ -167,17 +171,25 @@
 
             return (
                 <div className="max-w-md mx-auto bg-white min-h-screen shadow-lg flex flex-col">
-                    <header className="bg-green-700 text-white p-4 shadow-md">
+                    {/* Header - Triple click here for Secret Admin Access */}
+                    <header onClick={handleTitleClick} className="bg-green-700 text-white p-4 shadow-md cursor-pointer select-none">
                         <h1 className="text-xl font-bold">🛒 Divya Kirana Store</h1>
-                        <p className="text-xs text-green-200">Dukaan Samay: {shopOpenTime} se {shopCloseTime}</p>
+                        <p className="text-xs text-green-200">Dukaan Samay: {shopOpenTime} se {shopCloseTime} (Order Karein)</p>
                     </header>
 
-                    <nav className="flex bg-green-800 text-white p-2 overflow-x-auto space-x-1 text-xs">
-                        <button onClick={() => setActiveTab('store')} className={`px-2.5 py-1.5 rounded ${activeTab === 'store' ? 'bg-green-600 font-bold' : ''}`}>Store</button>
-                        <button onClick={() => handleProtectedTab('orders')} className={`px-2.5 py-1.5 rounded ${activeTab === 'orders' ? 'bg-green-600 font-bold' : ''}`}>Orders 🔒</button>
-                        <button onClick={() => handleProtectedTab('udhari')} className={`px-2.5 py-1.5 rounded ${activeTab === 'udhari' ? 'bg-green-600 font-bold' : ''}`}>Udhari 🔒</button>
-                        <button onClick={() => handleProtectedTab('rate')} className={`px-2.5 py-1.5 rounded ${activeTab === 'rate' ? 'bg-green-600 font-bold' : ''}`}>Rate 🔒</button>
-                        <button onClick={() => handleProtectedTab('settings')} className={`px-2.5 py-1.5 rounded ${activeTab === 'settings' ? 'bg-green-600 font-bold' : ''}`}>Settings 🔒</button>
+                    {/* Clean Navigation for Customers */}
+                    <nav className="flex bg-green-800 text-white p-2 justify-around text-sm font-semibold">
+                        <button onClick={() => setActiveTab('store')} className={`px-4 py-1 rounded ${activeTab === 'store' ? 'bg-green-600' : ''}`}>Store</button>
+                        
+                        {/* Admin tabs appear only after successful PIN entry */}
+                        {isAdminAuthenticated && (
+                            <>
+                                <button onClick={() => setActiveTab('orders')} className={`px-2 py-1 rounded text-xs ${activeTab === 'orders' ? 'bg-green-600 font-bold' : ''}`}>Orders</button>
+                                <button onClick={() => setActiveTab('udhari')} className={`px-2 py-1 rounded text-xs ${activeTab === 'udhari' ? 'bg-green-600 font-bold' : ''}`}>Udhari</button>
+                                <button onClick={() => setActiveTab('rate')} className={`px-2 py-1 rounded text-xs ${activeTab === 'rate' ? 'bg-green-600 font-bold' : ''}`}>Rate</button>
+                                <button onClick={() => setActiveTab('settings')} className={`px-2 py-1 rounded text-xs ${activeTab === 'settings' ? 'bg-green-600 font-bold' : ''}`}>Settings</button>
+                            </>
+                        )}
                     </nav>
 
                     <main className="p-4 flex-grow mb-16">
@@ -275,10 +287,9 @@
                         )}
 
                         {/* ORDERS / OWNER DATA TAB (Protected) */}
-                        {activeTab === 'orders' && (
+                        {activeTab === 'orders' && isAdminAuthenticated && (
                             <div>
                                 <h2 className="text-lg font-bold mb-2 text-gray-800">Owner Data: Saare Orders</h2>
-                                <p className="text-xs text-gray-500 mb-4">Customer dwara kiye gaye saare orders aur payment mode yahan dikhenge.</p>
                                 {ordersList.length === 0 ? (
                                     <p className="text-sm text-gray-600">Abhi tak koi order nahi aaya hai.</p>
                                 ) : (
@@ -303,22 +314,20 @@
                         )}
 
                         {/* UDHARI KHATA TAB (Protected) */}
-                        {activeTab === 'udhari' && (
+                        {activeTab === 'udhari' && isAdminAuthenticated && (
                             <div>
                                 <h2 className="text-lg font-bold mb-2 text-gray-800">Udhari Khata (Hisab-Kitab)</h2>
-                                <p className="text-xs text-gray-500 mb-3">Customer dwara ki gayi udhari automatic yahan jud jati hai:</p>
-                                
                                 <div className="bg-gray-50 p-3 border rounded-lg space-y-2 mb-4 text-xs">
                                     <h3 className="font-bold text-gray-700">Naya Udhari Jodein</h3>
                                     <input type="text" placeholder="Grahak ka Naam" value={newUdhariName} onChange={(e) => setNewUdhariName(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
                                     <input type="text" placeholder="Mobile Number" value={newUdhariPhone} onChange={(e) => setNewUdhariPhone(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
                                     <input type="number" placeholder="Kitna Amount Baaki hai? (₹)" value={newUdhariAmount} onChange={(e) => setNewUdhariAmount(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
-                                    <input type="text" placeholder="Vivarann (Jaise: Cheeni aur Tel)" value={newUdhariNote} onChange={(e) => setNewUdhariNote(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
+                                    <input type="text" placeholder="Vivarann" value={newUdhariNote} onChange={(e) => setNewUdhariNote(e.target.value)} className="w-full p-1.5 border rounded bg-white"/>
                                     <button onClick={() => {
                                         if(newUdhariName && newUdhariAmount) {
                                             setUdhariList([...udhariList, { id: Date.now(), name: newUdhariName, phone: newUdhariPhone, amount: parseFloat(newUdhariAmount), note: newUdhariNote }]);
                                             setNewUdhariName(""); setNewUdhariPhone(""); setNewUdhariAmount(""); setNewUdhariNote("");
-                                            alert("Udhari safalpurvak jud gayi!");
+                                            alert("Udhari jud gayi!");
                                         } else { alert("Naam aur Amount bharein."); }
                                     }} className="w-full bg-red-600 text-white py-1.5 rounded font-bold">Udhari Darj Karein</button>
                                 </div>
@@ -343,7 +352,7 @@
                         )}
 
                         {/* RATE MANAGEMENT TAB (Protected) */}
-                        {activeTab === 'rate' && (
+                        {activeTab === 'rate' && isAdminAuthenticated && (
                             <div>
                                 <h2 className="text-lg font-bold mb-2 text-gray-800">Rate & Items Management</h2>
                                 <div className="space-y-3 bg-gray-50 p-4 rounded-lg border text-xs">
@@ -355,7 +364,7 @@
                                             const imgUrl = newItemImg || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=80";
                                             setItems([...items, { id: items.length + 1, name: newItemName, price: parseFloat(newItemPrice), image: imgUrl }]);
                                             setNewItemName(""); setNewItemPrice(""); setNewItemImg("");
-                                            alert("Naya item image ke sath jud gaya!");
+                                            alert("Naya item jud gaya!");
                                         } else { alert("Naam aur price bharein."); }
                                     }} className="w-full bg-green-700 text-white py-2 rounded font-bold">Naya Item Jodein</button>
                                 </div>
@@ -363,7 +372,7 @@
                         )}
 
                         {/* SETTINGS TAB (Protected) */}
-                        {activeTab === 'settings' && (
+                        {activeTab === 'settings' && isAdminAuthenticated && (
                             <div>
                                 <h2 className="text-lg font-bold mb-2 text-gray-800">Dukaan ki Settings</h2>
                                 <div className="space-y-3 bg-gray-50 p-4 rounded-lg border text-xs">
@@ -372,7 +381,7 @@
                                         <input type="time" value={shopOpenTime} onChange={(e) => setShopOpenTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold text-gray-600">Dukaan Band Hone ka Samay</label>
+                                        <label className="font-semibold text-gray-600">Dukaan Band Hone ka Samay</label>
                                         <input type="time" value={shopCloseTime} onChange={(e) => setShopCloseTime(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
                                     </div>
                                     <div>
@@ -380,7 +389,7 @@
                                         <input type="text" value={whatsappNo} onChange={(e) => setWhatsappNo(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
                                     </div>
                                     <div>
-                                        <label className="font-semibold text-gray-600">UPI ID (Payment ke liye)</label>
+                                        <label className="font-semibold text-gray-600">UPI ID</label>
                                         <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} className="w-full p-2 border rounded mt-1 bg-white"/>
                                     </div>
                                     <button onClick={() => alert("Settings Save Ho Gayi!")} className="w-full bg-green-700 text-white py-2 rounded font-bold">Save Settings</button>
