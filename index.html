@@ -39,7 +39,7 @@
             const ADMIN_PIN = "728084";
 
             // Customer Session State
-            const [customerSession, setCustomerSession] = React.useState(null); // {name, phone}
+            const [customerSession, setCustomerSession] = React.useState(null);
             const [showCustomerLoginModal, setShowCustomerLoginModal] = React.useState(false);
             const [loginNameInput, setLoginNameInput] = React.useState("");
             const [loginPhoneInput, setLoginPhoneInput] = React.useState("");
@@ -83,7 +83,6 @@
                         if (val) setUdhariList(val);
                     });
                 }
-                // Check saved customer session
                 const savedCust = localStorage.getItem("divya_customer_session");
                 if (savedCust) {
                     setCustomerSession(JSON.parse(savedCust));
