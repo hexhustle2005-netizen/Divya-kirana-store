@@ -207,7 +207,7 @@
                 }
             };
 
-            // Submit Cart Checkout Order (Starts as Pending so it shows in Orders queue)
+            // Submit Cart Checkout Order
             const placeOrder = () => {
                 if (!customerName || !customerPhone) {
                     alert("Kripya apna Naam aur Mobile Number likhein!");
@@ -287,7 +287,7 @@
                 alert("🎉 Order Successfully Placed!");
             };
 
-            // Submit Parcha / Photo Bulk Order (Price Pending initially)
+            // Submit Parcha / Photo Bulk Order (Starts as Price Pending)
             const placeParchaOrder = () => {
                 if (!parchaName || !parchaPhone) {
                     alert("Kripya apna Naam aur Mobile Number zaroor dalein!");
@@ -309,7 +309,7 @@
                     customerPhone: parchaPhone,
                     pickupTime: "As Soon As Ready",
                     paymentMode: "Cash",
-                    status: "Price Pending",
+                    status: "Price Pending", // Owner needs to update price
                     date: currentDate,
                     time: currentTime,
                     parchaText: parchaText || "Photo Parcha Uploaded",
@@ -774,7 +774,7 @@
                                             setNewItemName(""); setNewItemWeight(""); setNewItemPrice(""); setNewItemImg("");
                                             alert("Item added successfully!");
                                         } else { alert("Please enter Name and Price."); }
-                                    }} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-bold">Add Item</button>
+                                    }} className="w-full bg-green-700 text-white py-2.5 rounded-bold">Add Item</button>
                                 </div>
                             </div>
                         )}
