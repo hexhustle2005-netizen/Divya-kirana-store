@@ -229,7 +229,7 @@
                     customerPhone,
                     pickupTime: customerTime,
                     paymentMode: paymentMode === "UPI" ? `UPI Paid [Ref: ${checkoutUtrPin}]` : paymentMode,
-                    status: "Pending", // Starts as Pending so owner can click Ready & send WhatsApp
+                    status: "Pending",
                     date: currentDate,
                     time: currentTime,
                     items: [],
@@ -336,7 +336,6 @@
                     alert("Kripya sahi Total Amount (₹) dalein!");
                     return;
                 }
-                const currentDate = new Date().toLocaleDateString('en-IN');
 
                 setOrdersList(ordersList.map(ord => {
                     if (ord.id === orderId) {
@@ -697,7 +696,7 @@
 
                                             <div>
                                                 <p className="font-extrabold text-gray-900 text-sm">👤 {ord.customerName} <span className="text-green-700 font-mono">({ord.customerPhone})</span></p>
-                                                <p className="text-gray-600 mt-0.5">Mode: <strong className="text-green-800">{ord.paymentMode}</strong> | Total: <strong className="text-green-800">₹{ord.total}</strong></p>
+                                                <p className="text-gray-600 mt-0.5">Mode: <strong className="text-green-800">{ord.paymentMode}</strong> | Total: <strong className="text-green-800">{ord.status === 'Price Pending' ? "Price Likhein ✍️" : `₹${ord.total}`}</strong></p>
                                             </div>
 
                                             <div className="flex space-x-2 pt-1">
@@ -949,7 +948,7 @@
                                             📦 Mark Ready & Send WhatsApp Message
                                         </button>
                                     )}
-                                    <button onClick={() => { setLastBill(selectedOwnerOrder); setSelectedOwnerOrder(null); setActiveTab('store'); }} className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-bold text-xs">
+                                    <button onClick={() => { setLastBill(selectedOwnerOrder); setSelectedOwnerOrder(null); setActiveTab('store'); }} className="w-full bg-gray-900 text-white py-2.5 rounded-bold text-xs">
                                         🖨️ Print / Download Official Bill PDF
                                     </button>
                                 </div>
