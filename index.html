@@ -13,8 +13,8 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @media print {
             body * { visibility: hidden; }
-            #printable-invoice, #printable-invoice * { visibility: visible; }
-            #printable-invoice {
+            #printable-invoice, #printable-invoice *, #printable-statement, #printable-statement * { visibility: visible; }
+            #printable-invoice, #printable-statement {
                 position: absolute;
                 left: 0;
                 top: 0;
@@ -91,7 +91,7 @@
                 return saved ? JSON.parse(saved) : [];
             });
 
-            // Udhari Khata (Persistent)
+            // Udhari Khata (Persistent) with full ledger history
             const [udhariList, setUdhariList] = React.useState(() => {
                 const saved = localStorage.getItem("divya_udhari");
                 if (saved) return JSON.parse(saved);
@@ -140,6 +140,7 @@
             const [myOldOrders, setMyOldOrders] = React.useState(null);
             const [lastBill, setLastBill] = React.useState(null);
             const [selectedOwnerOrder, setSelectedOwnerOrder] = React.useState(null);
+            const [selectedUdhariCustomer, setSelectedUdhariCustomer] = React.useState(null);
 
             // New Udhari / Item input states
             const [newUdhariName, setNewUdhariName] = React.useState("");
@@ -825,6 +826,7 @@
 
                         {activeTab === 'udhari' && isAdminAuthenticated && (
                             <div className="space-y-4">
+                                {/* Add New Udhari Entry Box */}
                                 <div className="bg-white p-4 border border-gray-200 rounded-2xl space-y-2.5 text-xs shadow-sm">
                                     <h3 className="font-extrabold text-gray-900 text-sm">Add New Udhari Entry</h3>
                                     <input type="text" placeholder="Customer Name" value={newUdhariName} onChange={(e) => setNewUdhariName(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
@@ -835,18 +837,97 @@
                                         if(newUdhariName && newUdhariAmount) {
                                             const amt = parseFloat(newUdhariAmount);
                                             const curDate = new Date().toLocaleDateString('en-IN');
-                                            setUdhariList([{
-                                                id: Date.now(),
-                                                name: newUdhariName,
-                                                phone: newUdhariPhone,
-                                                amount: amt,
-                                                note: newUdhariNote || "Manual Entry",
-                                                history: [{ date: curDate, type: "Udhari Liya", amount: amt, mode: "Manual" }]
-                                            }, ...udhariList]);
+                                            const existingIndex = udhariList.findIndex(u => u.phone === newUdhariPhone && newUdhariPhone);
+                                            if(existingIndex !== -1) {
+                                                const updated = [...udhariList];
+                                                updated[existingIndex].amount += amt;
+                                                updated[existingIndex].history.unshift({
+                                                    date: curDate,
+                                                    type: "Udhari Added",
+                                                    amount: amt,
+                                                    mode: "Manual"
+                                                });
+                                                setUdhariList(updated);
+                                            } else {
+                                                setUdhariList([{
+                                                    id: Date.now(),
+                                                    name: newUdhariName,
+                                                    phone: newUdhariPhone || "9876543210",
+                                                    amount: amt,
+                                                    note: newUdhariNote || "Manual Entry",
+                                                    history: [{ date: curDate, type: "Udhari Added", amount: amt, mode: "Manual" }]
+                                                }, ...udhariList]);
+                                            }
                                             setNewUdhariName(""); setNewUdhariPhone(""); setNewUdhariAmount(""); setNewUdhariNote("");
-                                            alert("Udhari saved successfully!");
-                                        } else { alert("Please enter Name and Amount."); }
+                                            alert("✅ Udhari Entry Saved Successfully!");
+                                        } else { alert("Kripya Name aur Amount dalein."); }
                                     }} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-bold">Save Udhari Entry</button>
+                                </div>
+
+                                {/* Udhari Customer List */}
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="font-extrabold text-gray-900 text-sm">Udhari Customers Khata</h3>
+                                        <span className="bg-red-100 text-red-800 font-bold px-2.5 py-0.5 rounded-full text-xs">
+                                            Total: ₹{udhariList.reduce((sum, u) => sum + u.amount, 0)}
+                                        </span>
+                                    </div>
+
+                                    {udhariList.length === 0 ? (
+                                        <div className="bg-white p-6 rounded-2xl text-center text-xs text-gray-500 border">
+                                            Koi udhari record nahi hai.
+                                        </div>
+                                    ) : (
+                                        udhariList.map(cust => (
+                                            <div key={cust.id} className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm text-xs space-y-2">
+                                                <div className="flex justify-between items-center font-bold">
+                                                    <div>
+                                                        <span className="text-gray-900 text-sm font-black">{cust.name}</span>
+                                                        <p className="text-[10px] text-gray-500 font-mono">{cust.phone}</p>
+                                                    </div>
+                                                    <span className="text-red-600 font-black text-sm">₹{cust.amount}</span>
+                                                </div>
+                                                <p className="text-gray-600 bg-gray-50 p-2 rounded-lg">Note: {cust.note}</p>
+
+                                                <div className="flex space-x-2 pt-1">
+                                                    <button onClick={() => setSelectedUdhariCustomer(cust)} className="flex-grow bg-blue-50 text-blue-700 border border-blue-200 py-2 rounded-xl font-bold text-center">
+                                                        📜 Ledger History
+                                                    </button>
+                                                    <button onClick={() => {
+                                                        let cleanPhone = cust.phone.startsWith("91") ? cust.phone : "91" + cust.phone;
+                                                        let msg = `📢 *Divya Kirana Store - Udhari Reminder*\n\nHello ${cust.name},\nAapka total udhari baki amount ₹${cust.amount} hai.\n\nKripya samay par dukan par aakar bhugtan karein. Dhanyawad! 🙏`;
+                                                        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                                                    }} className="bg-green-600 text-white px-3 py-2 rounded-xl font-bold">
+                                                        💬 WhatsApp Reminder
+                                                    </button>
+                                                    <button onClick={() => {
+                                                        let paidAmt = prompt(`Kitna payment mil gaya? (Total Baki: ₹${cust.amount})`);
+                                                        if(paidAmt) {
+                                                            let amt = parseFloat(paidAmt);
+                                                            if(!isNaN(amt) && amt > 0) {
+                                                                const updated = udhariList.map(u => {
+                                                                    if(u.id === cust.id) {
+                                                                        let newAmt = Math.max(0, u.amount - amt);
+                                                                        let curDate = new Date().toLocaleDateString('en-IN');
+                                                                        return {
+                                                                            ...u,
+                                                                            amount: newAmt,
+                                                                            history: [{ date: curDate, type: "Payment Received", amount: amt, mode: "Cash/UPI" }, ...u.history]
+                                                                        };
+                                                                    }
+                                                                    return u;
+                                                                });
+                                                                setUdhariList(updated);
+                                                                alert("✅ Payment received & Udhari updated!");
+                                                            }
+                                                        }
+                                                    }} className="bg-purple-700 text-white px-3 py-2 rounded-xl font-bold">
+                                                        💰 Payment Vasool
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -901,6 +982,47 @@
                             </div>
                         )}
                     </main>
+
+                    {/* UDHARI LEDGER HISTORY MODAL */}
+                    {selectedUdhariCustomer && (
+                        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 no-print">
+                            <div id="printable-statement" className="bg-white w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                                <div className="flex justify-between items-center border-b pb-3">
+                                    <div>
+                                        <h3 className="font-black text-base text-gray-900">Udhari Ledger History</h3>
+                                        <p className="text-xs text-green-700 font-bold">{selectedUdhariCustomer.name} ({selectedUdhariCustomer.phone})</p>
+                                    </div>
+                                    <button onClick={() => setSelectedUdhariCustomer(null)} className="text-gray-400 font-bold text-lg px-2 no-print">✕</button>
+                                </div>
+
+                                <div className="bg-red-50 p-3 rounded-xl border border-red-200 flex justify-between items-center text-xs">
+                                    <span className="font-bold text-red-900">Current Pending Baki:</span>
+                                    <span className="font-black text-red-700 text-sm">₹{selectedUdhariCustomer.amount}</span>
+                                </div>
+
+                                <div className="space-y-2 text-xs">
+                                    <h4 className="font-extrabold text-gray-800">Transaction History:</h4>
+                                    <div className="space-y-1.5">
+                                        {selectedUdhariCustomer.history.map((hist, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-2.5 bg-gray-50 rounded-xl border">
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{hist.type}</p>
+                                                    <p className="text-[10px] text-gray-500">{hist.date} • {hist.mode}</p>
+                                                </div>
+                                                <span className={`font-black ${hist.type.includes('Received') ? 'text-green-700' : 'text-red-600'}`}>
+                                                    {hist.type.includes('Received') ? `-₹${hist.amount}` : `+₹${hist.amount}`}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <button onClick={() => window.print()} className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-bold text-xs shadow no-print">
+                                    🖨️ Print Udhari Statement PDF
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* CUSTOMER PARCHA / PHOTO UPLOAD BULK ORDER MODAL */}
                     {showParchaModal && (
