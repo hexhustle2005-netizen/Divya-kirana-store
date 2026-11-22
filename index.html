@@ -91,7 +91,7 @@
                 return saved ? JSON.parse(saved) : [];
             });
 
-            // Udhari Khata (Persistent)
+            // Udhari Khata (Persistent) with full ledger history
             const [udhariList, setUdhariList] = React.useState(() => {
                 const saved = localStorage.getItem("divya_udhari");
                 if (saved) return JSON.parse(saved);
@@ -127,17 +127,20 @@
             const [parchaName, setParchaName] = React.useState("");
             const [parchaPhone, setParchaPhone] = React.useState("");
             const [parchaText, setParchaText] = React.useState("");
+            const [parchaExpectedPrice, setParchaExpectedPrice] = React.useState("");
             const [parchaImage, setParchaImage] = React.useState(null);
             
-            // Owner Price Update State for Parcha Order
+            // Owner Price & Detailed Saman Photo/Note State for Parcha Order
             const [ownerUpdatedPrice, setOwnerUpdatedPrice] = React.useState("");
-            const [ownerUpdatedNote, setOwnerUpdatedNote] = React.useState("");
+            const [ownerDetailedBillText, setOwnerDetailedBillText] = React.useState("");
+            const [ownerBillImage, setOwnerBillImage] = React.useState(null);
             
             // Search / History
             const [customerSearchPhone, setCustomerSearchPhone] = React.useState("");
             const [myOldOrders, setMyOldOrders] = React.useState(null);
             const [lastBill, setLastBill] = React.useState(null);
             const [selectedOwnerOrder, setSelectedOwnerOrder] = React.useState(null);
+            const [selectedUdhariCustomer, setSelectedUdhariCustomer] = React.useState(null);
 
             // New Udhari / Item input states
             const [newUdhariName, setNewUdhariName] = React.useState("");
@@ -181,13 +184,25 @@
                 }, 0);
             };
 
-            // Handle Image Upload to Base64 for LocalStorage
+            // Handle Customer Image Upload to Base64
             const handleImageUpload = (e) => {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onloadend = () => {
                         setParchaImage(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // Handle Owner Bill Image Upload to Base64
+            const handleOwnerBillImageUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setOwnerBillImage(reader.result);
                     };
                     reader.readAsDataURL(file);
                 }
@@ -207,7 +222,7 @@
                 }
             };
 
-            // Submit Cart Checkout Order (Starts as Pending so it shows in Orders queue)
+            // Submit Cart Checkout Order
             const placeOrder = () => {
                 if (!customerName || !customerPhone) {
                     alert("Kripya apna Naam aur Mobile Number likhein!");
@@ -229,7 +244,7 @@
                     customerPhone,
                     pickupTime: customerTime,
                     paymentMode: paymentMode === "UPI" ? `UPI Paid [Ref: ${checkoutUtrPin}]` : paymentMode,
-                    status: "Pending", // Starts as Pending so owner can click Ready & send WhatsApp
+                    status: "Pending",
                     date: currentDate,
                     time: currentTime,
                     items: [],
@@ -287,7 +302,7 @@
                 alert("🎉 Order Successfully Placed!");
             };
 
-            // Submit Parcha / Photo Bulk Order (Price Pending initially)
+            // Submit Parcha / Photo Bulk Order with Expected Items & Price
             const placeParchaOrder = () => {
                 if (!parchaName || !parchaPhone) {
                     alert("Kripya apna Naam aur Mobile Number zaroor dalein!");
@@ -300,6 +315,7 @@
 
                 const currentDate = new Date().toLocaleDateString('en-IN');
                 const currentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                const expPrice = parseFloat(parchaExpectedPrice) || 0;
 
                 let parchaOrderDetails = {
                     id: Date.now(),
@@ -308,45 +324,48 @@
                     customerName: parchaName,
                     customerPhone: parchaPhone,
                     pickupTime: "As Soon As Ready",
-                    paymentMode: "Cash",
+                    paymentMode: "Pending Payment",
                     status: "Price Pending",
                     date: currentDate,
                     time: currentTime,
                     parchaText: parchaText || "Photo Parcha Uploaded",
+                    parchaExpectedPrice: expPrice,
                     parchaImage: parchaImage,
                     items: [
-                        { name: parchaText ? `Parcha List: ${parchaText.substring(0, 40)}...` : "Uploaded Parcha Photo Items", qty: 1, price: 0, subtotal: 0 }
+                        { name: parchaText ? `Parcha List: ${parchaText}` : "Uploaded Parcha Photo Items", qty: 1, price: expPrice, subtotal: expPrice }
                     ],
-                    total: 0
+                    total: expPrice
                 };
 
                 setOrdersList([parchaOrderDetails, ...ordersList]);
                 setParchaName("");
                 setParchaPhone("");
                 setParchaText("");
+                setParchaExpectedPrice("");
                 setParchaImage(null);
                 setShowParchaModal(false);
-                alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price update karne ke baad aapko 'My Orders' mein bill dikhega.");
+                alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price confirm karke bill ready karega.");
             };
 
-            // Owner Updates Price of Parcha Order -> Sends WhatsApp Alert to Customer
+            // Owner Updates Detailed Saman, Bill Photo & Price -> Sends WhatsApp Alert to Customer
             const updateParchaOrderPrice = (orderId) => {
                 const amt = parseFloat(ownerUpdatedPrice);
                 if (isNaN(amt) || amt <= 0) {
                     alert("Kripya sahi Total Amount (₹) dalein!");
                     return;
                 }
-                const currentDate = new Date().toLocaleDateString('en-IN');
 
                 setOrdersList(ordersList.map(ord => {
                     if (ord.id === orderId) {
+                        const detailedDescription = ownerDetailedBillText || ord.parchaText;
                         const updatedOrd = {
                             ...ord,
                             total: amt,
                             status: "Ready",
+                            ownerBillImage: ownerBillImage,
                             items: [
                                 {
-                                    name: ownerUpdatedNote ? `Parcha Saman (${ownerUpdatedNote})` : `Parcha List: ${ord.parchaText}`,
+                                    name: detailedDescription,
                                     qty: 1,
                                     price: amt,
                                     subtotal: amt
@@ -354,7 +373,7 @@
                             ]
                         };
 
-                        let msg = `📦 *Divya Kirana Store - Bill Ready*\n\nHello ${ord.customerName},\nAapke Parcha Order (${ord.invoiceNo}) ka bill tayyar hai!\n\n💰 *Kul Bill Rashi:* ₹${amt}\n\nApna bill dekhne aur PDF download karne ke liye website ke 'My Orders' tab mein apna mobile number dalein. 🙏`;
+                        let msg = `📦 *Divya Kirana Store - Bill Ready*\n\nHello ${ord.customerName},\nAapke Parcha Order (${ord.invoiceNo}) ka bill tayyar hai!\n\n📝 *Saman:* ${detailedDescription}\n💰 *Kul Bill Rashi:* ₹${amt}\n\nApna bill dekhne, payment karne aur PDF download karne ke liye website ke 'My Orders' tab mein apna mobile number dalein. 🙏`;
                         let cleanPhone = ord.customerPhone.startsWith("91") ? ord.customerPhone : "91" + ord.customerPhone;
                         window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 
@@ -364,8 +383,9 @@
                     return ord;
                 }));
                 setOwnerUpdatedPrice("");
-                setOwnerUpdatedNote("");
-                alert("✅ Price Updated & Customer ko WhatsApp par bill bhej diya gaya!");
+                setOwnerDetailedBillText("");
+                setOwnerBillImage(null);
+                alert("✅ Saman, Bill Photo & Price Update karke Customer ko WhatsApp par bill bhej diya gaya!");
             };
 
             // Mark Order Ready -> Sends WhatsApp message to Customer
@@ -405,6 +425,50 @@
                 }
                 const foundOrders = ordersList.filter(o => o.customerPhone === customerSearchPhone);
                 setMyOldOrders(foundOrders);
+            };
+
+            // Customer settles payment for Parcha / Ready orders from My Orders tab
+            const settleCustomerPayment = (orderId, mode, amount) => {
+                const currentDate = new Date().toLocaleDateString('en-IN');
+                
+                if (mode === "Udhari") {
+                    const ord = ordersList.find(o => o.id === orderId);
+                    if (ord) {
+                        const existingIndex = udhariList.findIndex(u => u.phone === ord.customerPhone);
+                        if (existingIndex !== -1) {
+                            const updatedUdh = [...udhariList];
+                            updatedUdh[existingIndex].amount += amount;
+                            updatedUdh[existingIndex].history.unshift({
+                                date: currentDate,
+                                type: `Order Udhari (${ord.invoiceNo})`,
+                                amount: amount,
+                                mode: "Udhari"
+                            });
+                            setUdhariList(updatedUdh);
+                        } else {
+                            setUdhariList([{
+                                id: Date.now(),
+                                name: ord.customerName,
+                                phone: ord.customerPhone,
+                                amount: amount,
+                                note: `Order Udhari ${ord.invoiceNo}`,
+                                history: [{ date: currentDate, type: `Order Udhari (${ord.invoiceNo})`, amount: amount, mode: "Udhari" }]
+                            }, ...udhariList]);
+                        }
+                    }
+                }
+
+                let paymentText = mode === "Cash" ? "Cash Paid" : mode === "UPI" ? "Online UPI Paid" : "Udhari Khata";
+
+                setOrdersList(ordersList.map(ord => {
+                    if (ord.id === orderId) {
+                        return { ...ord, paymentMode: paymentText, status: "Completed" };
+                    }
+                    return ord;
+                }));
+
+                alert(`✅ Payment Mode Saved as '${paymentText}'! Ab aap PDF Bill download kar sakte hain.`);
+                checkMyOrders();
             };
 
             const categories = [
@@ -458,7 +522,7 @@
                                     className="w-full bg-yellow-400 text-gray-900 py-2.5 px-3 rounded-xl font-black text-xs shadow-md flex items-center justify-center space-x-2 hover:bg-yellow-300 transition border border-yellow-500"
                                 >
                                     <span>📸</span>
-                                    <span>Bahut Saman Hai? Parcha Photo / List Upload Karein</span>
+                                    <span>Bahut Saman Hai? Parcha & Price Likhar Upload Karein</span>
                                 </button>
                             </div>
                         )}
@@ -555,6 +619,13 @@
                                             </div>
                                         </div>
 
+                                        {lastBill.ownerBillImage && (
+                                            <div className="my-2 p-2 border rounded-xl bg-gray-50 text-center">
+                                                <p className="text-[11px] font-bold text-gray-700 mb-1">Owner Uploaded Bill / Paper Photo:</p>
+                                                <img src={lastBill.ownerBillImage} alt="Owner Bill" className="max-h-48 mx-auto object-contain rounded-lg border bg-white" />
+                                            </div>
+                                        )}
+
                                         <table className="w-full text-left border-collapse text-xs border border-gray-200 rounded-lg overflow-hidden">
                                             <thead>
                                                 <tr className="bg-green-800 text-white">
@@ -631,14 +702,42 @@
                                             </span>
                                         </div>
                                         
-                                        <div className="space-y-1">
-                                            <p className="text-gray-600">Total Bill Rashi: <strong className="text-gray-900 text-sm">₹{ord.total}</strong> | Payment: <strong className="text-green-700">{ord.paymentMode}</strong></p>
-                                        </div>
+                                        {ord.status === 'Price Pending' ? (
+                                            <div className="bg-orange-50 p-3 rounded-xl border border-orange-200 text-orange-900 font-semibold space-y-1">
+                                                <p>⏳ Aapka Parcha order owner ke paas hai. Owner bill aur price tayyar kar rahe hain.</p>
+                                                {ord.parchaExpectedPrice > 0 && (
+                                                    <p className="text-green-800 font-bold">Aapka Likha Expected Price: ₹{ord.parchaExpectedPrice}</p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                <p className="text-gray-600">Total Bill Rashi: <strong className="text-gray-900 text-sm">₹{ord.total}</strong> | Payment: <strong className="text-green-700">{ord.paymentMode}</strong></p>
+                                                
+                                                {ord.status === 'Ready' && ord.isParcha && (
+                                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-300 space-y-2">
+                                                        <p className="font-bold text-blue-900 text-center">💳 Payment Mode Chunein aur Bill Download Karein:</p>
+                                                        <p className="text-center font-bold text-gray-800">Owner UPI ID: <span className="text-green-800 font-mono">{upiId}</span></p>
+                                                        <div className="grid grid-cols-3 gap-2">
+                                                            <button onClick={() => settleCustomerPayment(ord.id, 'Cash', ord.total)} className="bg-green-700 text-white py-2 rounded-xl font-bold shadow text-center">Cash Pay</button>
+                                                            <button onClick={() => settleCustomerPayment(ord.id, 'UPI', ord.total)} className="bg-blue-700 text-white py-2 rounded-xl font-bold shadow text-center">Online UPI</button>
+                                                            <button onClick={() => settleCustomerPayment(ord.id, 'Udhari', ord.total)} className="bg-yellow-500 text-black py-2 rounded-xl font-bold shadow text-center">Udhari</button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {ord.parchaImage && (
                                             <div className="pt-1">
                                                 <p className="text-[10px] text-gray-500 font-bold mb-1">Uploaded Parcha Photo:</p>
                                                 <img src={ord.parchaImage} alt="Parcha" className="w-full h-32 object-cover rounded-xl border" />
+                                            </div>
+                                        )}
+
+                                        {ord.ownerBillImage && (
+                                            <div className="pt-1">
+                                                <p className="text-[10px] text-green-700 font-bold mb-1">Owner Uploaded Bill Photo:</p>
+                                                <img src={ord.ownerBillImage} alt="Owner Bill" className="w-full h-32 object-contain rounded-xl border bg-gray-50" />
                                             </div>
                                         )}
 
@@ -697,12 +796,12 @@
 
                                             <div>
                                                 <p className="font-extrabold text-gray-900 text-sm">👤 {ord.customerName} <span className="text-green-700 font-mono">({ord.customerPhone})</span></p>
-                                                <p className="text-gray-600 mt-0.5">Mode: <strong className="text-green-800">{ord.paymentMode}</strong> | Total: <strong className="text-green-800">₹{ord.total}</strong></p>
+                                                <p className="text-gray-600 mt-0.5">Mode: <strong className="text-green-800">{ord.paymentMode}</strong> | Total: <strong className="text-green-800">{ord.status === 'Price Pending' ? "Price Likhein ✍️" : `₹${ord.total}`}</strong></p>
                                             </div>
 
                                             <div className="flex space-x-2 pt-1">
                                                 <button onClick={() => setSelectedOwnerOrder(ord)} className="flex-grow bg-blue-50 text-blue-700 border border-blue-200 py-2 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition">
-                                                    👁️ Khol Kar Dekhein
+                                                    {ord.status === 'Price Pending' ? "✍️ Bill Photo & Price Upload Karein" : "👁️ Khol Kar Dekhein"}
                                                 </button>
                                                 
                                                 {ord.status === 'Pending' && (
@@ -727,6 +826,7 @@
 
                         {activeTab === 'udhari' && isAdminAuthenticated && (
                             <div className="space-y-4">
+                                {/* Add New Udhari Entry Box */}
                                 <div className="bg-white p-4 border border-gray-200 rounded-2xl space-y-2.5 text-xs shadow-sm">
                                     <h3 className="font-extrabold text-gray-900 text-sm">Add New Udhari Entry</h3>
                                     <input type="text" placeholder="Customer Name" value={newUdhariName} onChange={(e) => setNewUdhariName(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
@@ -737,18 +837,97 @@
                                         if(newUdhariName && newUdhariAmount) {
                                             const amt = parseFloat(newUdhariAmount);
                                             const curDate = new Date().toLocaleDateString('en-IN');
-                                            setUdhariList([{
-                                                id: Date.now(),
-                                                name: newUdhariName,
-                                                phone: newUdhariPhone,
-                                                amount: amt,
-                                                note: newUdhariNote || "Manual Entry",
-                                                history: [{ date: curDate, type: "Udhari Liya", amount: amt, mode: "Manual" }]
-                                            }, ...udhariList]);
+                                            const existingIndex = udhariList.findIndex(u => u.phone === newUdhariPhone && newUdhariPhone);
+                                            if(existingIndex !== -1) {
+                                                const updated = [...udhariList];
+                                                updated[existingIndex].amount += amt;
+                                                updated[existingIndex].history.unshift({
+                                                    date: curDate,
+                                                    type: "Udhari Added",
+                                                    amount: amt,
+                                                    mode: "Manual"
+                                                });
+                                                setUdhariList(updated);
+                                            } else {
+                                                setUdhariList([{
+                                                    id: Date.now(),
+                                                    name: newUdhariName,
+                                                    phone: newUdhariPhone || "9876543210",
+                                                    amount: amt,
+                                                    note: newUdhariNote || "Manual Entry",
+                                                    history: [{ date: curDate, type: "Udhari Added", amount: amt, mode: "Manual" }]
+                                                }, ...udhariList]);
+                                            }
                                             setNewUdhariName(""); setNewUdhariPhone(""); setNewUdhariAmount(""); setNewUdhariNote("");
-                                            alert("Udhari saved successfully!");
-                                        } else { alert("Please enter Name and Amount."); }
+                                            alert("✅ Udhari Entry Saved Successfully!");
+                                        } else { alert("Kripya Name aur Amount dalein."); }
                                     }} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-bold">Save Udhari Entry</button>
+                                </div>
+
+                                {/* Udhari Customer List */}
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="font-extrabold text-gray-900 text-sm">Udhari Customers Khata</h3>
+                                        <span className="bg-red-100 text-red-800 font-bold px-2.5 py-0.5 rounded-full text-xs">
+                                            Total: ₹{udhariList.reduce((sum, u) => sum + u.amount, 0)}
+                                        </span>
+                                    </div>
+
+                                    {udhariList.length === 0 ? (
+                                        <div className="bg-white p-6 rounded-2xl text-center text-xs text-gray-500 border">
+                                            Koi udhari record nahi hai.
+                                        </div>
+                                    ) : (
+                                        udhariList.map(cust => (
+                                            <div key={cust.id} className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm text-xs space-y-2">
+                                                <div className="flex justify-between items-center font-bold">
+                                                    <div>
+                                                        <span className="text-gray-900 text-sm font-black">{cust.name}</span>
+                                                        <p className="text-[10px] text-gray-500 font-mono">{cust.phone}</p>
+                                                    </div>
+                                                    <span className="text-red-600 font-black text-sm">₹{cust.amount}</span>
+                                                </div>
+                                                <p className="text-gray-600 bg-gray-50 p-2 rounded-lg">Note: {cust.note}</p>
+
+                                                <div className="flex space-x-2 pt-1">
+                                                    <button onClick={() => setSelectedUdhariCustomer(cust)} className="flex-grow bg-blue-50 text-blue-700 border border-blue-200 py-2 rounded-xl font-bold text-center">
+                                                        📜 Ledger History
+                                                    </button>
+                                                    <button onClick={() => {
+                                                        let cleanPhone = cust.phone.startsWith("91") ? cust.phone : "91" + cust.phone;
+                                                        let msg = `📢 *Divya Kirana Store - Udhari Reminder*\n\nHello ${cust.name},\nAapka total udhari baki amount ₹${cust.amount} hai.\n\nKripya samay par dukan par aakar bhugtan karein. Dhanyawad! 🙏`;
+                                                        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                                                    }} className="bg-green-600 text-white px-3 py-2 rounded-xl font-bold">
+                                                        💬 WhatsApp Reminder
+                                                    </button>
+                                                    <button onClick={() => {
+                                                        let paidAmt = prompt(`Kitna payment mil gaya? (Total Baki: ₹${cust.amount})`);
+                                                        if(paidAmt) {
+                                                            let amt = parseFloat(paidAmt);
+                                                            if(!isNaN(amt) && amt > 0) {
+                                                                const updated = udhariList.map(u => {
+                                                                    if(u.id === cust.id) {
+                                                                        let newAmt = Math.max(0, u.amount - amt);
+                                                                        let curDate = new Date().toLocaleDateString('en-IN');
+                                                                        return {
+                                                                            ...u,
+                                                                            amount: newAmt,
+                                                                            history: [{ date: curDate, type: "Payment Received", amount: amt, mode: "Cash/UPI" }, ...u.history]
+                                                                        };
+                                                                    }
+                                                                    return u;
+                                                                });
+                                                                setUdhariList(updated);
+                                                                alert("✅ Payment received & Udhari updated!");
+                                                            }
+                                                        }
+                                                    }} className="bg-purple-700 text-white px-3 py-2 rounded-xl font-bold">
+                                                        💰 Payment Vasool
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -775,7 +954,7 @@
                                             setNewItemName(""); setNewItemWeight(""); setNewItemPrice(""); setNewItemImg("");
                                             alert("Item added successfully!");
                                         } else { alert("Please enter Name and Price."); }
-                                    }} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-bold">Add Item</button>
+                                    }} className="w-full bg-green-700 text-white py-2.5 rounded-bold">Add Item</button>
                                 </div>
                             </div>
                         )}
@@ -804,14 +983,55 @@
                         )}
                     </main>
 
+                    {/* UDHARI LEDGER HISTORY MODAL */}
+                    {selectedUdhariCustomer && (
+                        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 no-print">
+                            <div id="printable-statement" className="bg-white w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                                <div className="flex justify-between items-center border-b pb-3">
+                                    <div>
+                                        <h3 className="font-black text-base text-gray-900">Udhari Ledger History</h3>
+                                        <p className="text-xs text-green-700 font-bold">{selectedUdhariCustomer.name} ({selectedUdhariCustomer.phone})</p>
+                                    </div>
+                                    <button onClick={() => setSelectedUdhariCustomer(null)} className="text-gray-400 font-bold text-lg px-2 no-print">✕</button>
+                                </div>
+
+                                <div className="bg-red-50 p-3 rounded-xl border border-red-200 flex justify-between items-center text-xs">
+                                    <span className="font-bold text-red-900">Current Pending Baki:</span>
+                                    <span className="font-black text-red-700 text-sm">₹{selectedUdhariCustomer.amount}</span>
+                                </div>
+
+                                <div className="space-y-2 text-xs">
+                                    <h4 className="font-extrabold text-gray-800">Transaction History:</h4>
+                                    <div className="space-y-1.5">
+                                        {selectedUdhariCustomer.history.map((hist, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-2.5 bg-gray-50 rounded-xl border">
+                                                <div>
+                                                    <p className="font-bold text-gray-900">{hist.type}</p>
+                                                    <p className="text-[10px] text-gray-500">{hist.date} • {hist.mode}</p>
+                                                </div>
+                                                <span className={`font-black ${hist.type.includes('Received') ? 'text-green-700' : 'text-red-600'}`}>
+                                                    {hist.type.includes('Received') ? `-₹${hist.amount}` : `+₹${hist.amount}`}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <button onClick={() => window.print()} className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-bold text-xs shadow no-print">
+                                    🖨️ Print Udhari Statement PDF
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* CUSTOMER PARCHA / PHOTO UPLOAD BULK ORDER MODAL */}
                     {showParchaModal && (
                         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 no-print">
                             <div className="bg-white w-full max-w-sm rounded-3xl p-5 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
                                 <div className="flex justify-between items-center border-b pb-2.5">
                                     <div>
-                                        <h3 className="font-black text-base text-green-800">📸 Parcha Photo / Bulk List Order</h3>
-                                        <p className="text-[11px] text-gray-500">Apne saman ki list likhein ya photo upload karein</p>
+                                        <h3 className="font-black text-base text-green-800">📸 Parcha & Expected Price</h3>
+                                        <p className="text-[11px] text-gray-500">Saman likhein, price dalein ya photo upload karein</p>
                                     </div>
                                     <button onClick={() => setShowParchaModal(false)} className="text-gray-400 font-bold text-lg px-2">✕</button>
                                 </div>
@@ -829,14 +1049,25 @@
                                     </div>
 
                                     <div>
-                                        <label className="font-bold text-gray-700 block mb-1">✍️ Saman ki List Likhein (Optional):</label>
+                                        <label className="font-bold text-gray-700 block mb-1">✍️ Saman ki List Likhein:</label>
                                         <textarea 
                                             rows="2" 
-                                            placeholder="Jaise: 5kg Chawal, 2kg Dal, 1L Sarso Tel..." 
+                                            placeholder="Jaise: 5kg Chawal, 2kg Dal..." 
                                             value={parchaText} 
                                             onChange={(e) => setParchaText(e.target.value)}
                                             className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"
                                         ></textarea>
+                                    </div>
+
+                                    <div>
+                                        <label className="font-bold text-gray-700 block mb-1">💰 Approximate Total Price (₹) [Optional]:</label>
+                                        <input 
+                                            type="number" 
+                                            placeholder="Jaise: 500 ( अंदाज़ा )" 
+                                            value={parchaExpectedPrice} 
+                                            onChange={(e) => setParchaExpectedPrice(e.target.value)}
+                                            className="w-full p-2.5 border rounded-xl bg-gray-50 font-medium"
+                                        />
                                     </div>
 
                                     <div className="bg-green-50 p-2.5 rounded-xl border border-dashed border-green-600 text-center space-y-1">
@@ -884,15 +1115,42 @@
                                         <h4 className="font-black text-yellow-900">📋 Customer Parcha / Saman List:</h4>
                                         <p className="bg-white p-2 rounded border text-gray-800 whitespace-pre-line">{selectedOwnerOrder.parchaText}</p>
                                         
+                                        {selectedOwnerOrder.parchaExpectedPrice > 0 && (
+                                            <p className="font-bold text-green-800">Customer Expected Price: ₹{selectedOwnerOrder.parchaExpectedPrice}</p>
+                                        )}
+
                                         {selectedOwnerOrder.parchaImage && (
                                             <div>
-                                                <p className="font-bold text-gray-700 mb-1">Uploaded Photo:</p>
-                                                <img src={selectedOwnerOrder.parchaImage} alt="Customer Parcha" className="w-full max-h-56 object-contain rounded-lg border bg-white" />
+                                                <p className="font-bold text-gray-700 mb-1">Customer Uploaded Photo:</p>
+                                                <img src={selectedOwnerOrder.parchaImage} alt="Customer Parcha" className="w-full max-h-40 object-contain rounded-lg border bg-white" />
                                             </div>
                                         )}
 
-                                        <div className="pt-2 border-t border-yellow-300 space-y-2">
-                                            <label className="font-black text-green-900 block">✍️ Saman ka Kul Price Likhein (₹):</label>
+                                        <div className="pt-2 border-t border-yellow-300 space-y-3">
+                                            <label className="font-black text-green-900 block">✍️ Owner Bill Details / Saman Likhein:</label>
+                                            <textarea 
+                                                rows="2"
+                                                placeholder="Jaise: 5kg Chawal @ 50, 2L Tel @ 140..." 
+                                                value={ownerDetailedBillText} 
+                                                onChange={(e) => setOwnerDetailedBillText(e.target.value)}
+                                                className="w-full p-2.5 border border-green-600 rounded-xl bg-white font-medium text-xs"
+                                            ></textarea>
+
+                                            {/* OWNER BILL PHOTO UPLOAD OPTION */}
+                                            <div className="bg-green-50 p-2.5 rounded-xl border border-dashed border-green-600 text-center space-y-1">
+                                                <label className="font-bold text-green-900 block cursor-pointer">
+                                                    📷 Owner Bill / Paper Photo Upload Karein:
+                                                    <input type="file" accept="image/*" onChange={handleOwnerBillImageUpload} className="hidden" />
+                                                    <div className="mt-1.5 bg-white text-green-800 border border-green-600 py-2 px-3 rounded-lg font-extrabold text-xs shadow-sm">
+                                                        {ownerBillImage ? "✅ Bill Photo Selected (Change Karein)" : "📂 Choose Bill Photo / Camera"}
+                                                    </div>
+                                                </label>
+                                                {ownerBillImage && (
+                                                    <img src={ownerBillImage} alt="Owner Bill Preview" className="w-full h-28 object-contain rounded-lg border mt-1 bg-white" />
+                                                )}
+                                            </div>
+
+                                            <label className="font-black text-green-900 block">💰 Final Total Bill Price (₹):</label>
                                             <input 
                                                 type="number" 
                                                 placeholder="Total Bill Amount (e.g. 850)" 
@@ -900,15 +1158,9 @@
                                                 onChange={(e) => setOwnerUpdatedPrice(e.target.value)}
                                                 className="w-full p-2.5 border border-green-600 rounded-xl bg-white font-black text-sm"
                                             />
-                                            <input 
-                                                type="text" 
-                                                placeholder="Bill Note / Saman Details (Optional)" 
-                                                value={ownerUpdatedNote} 
-                                                onChange={(e) => setOwnerUpdatedNote(e.target.value)}
-                                                className="w-full p-2 border rounded-xl bg-white text-xs"
-                                            />
+
                                             <button onClick={() => updateParchaOrderPrice(selectedOwnerOrder.id)} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-extrabold shadow hover:bg-green-800">
-                                                ✅ Save Price & Send Bill Alert to Customer WhatsApp
+                                                ✅ Save Bill, Photo & Price & Send to WhatsApp
                                             </button>
                                         </div>
                                     </div>
@@ -949,7 +1201,7 @@
                                             📦 Mark Ready & Send WhatsApp Message
                                         </button>
                                     )}
-                                    <button onClick={() => { setLastBill(selectedOwnerOrder); setSelectedOwnerOrder(null); setActiveTab('store'); }} className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-bold text-xs">
+                                    <button onClick={() => { setLastBill(selectedOwnerOrder); setSelectedOwnerOrder(null); setActiveTab('store'); }} className="w-full bg-gray-900 text-white py-2.5 rounded-bold text-xs">
                                         🖨️ Print / Download Official Bill PDF
                                     </button>
                                 </div>
