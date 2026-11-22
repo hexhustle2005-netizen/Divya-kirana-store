@@ -476,33 +476,34 @@
                 alert(`✅ Payment Mode Saved as '${paymentText}'! Order status updated to Completed.`);
             };
 
-            // Customer pays pending Udhari online directly from My Orders
-            const payUdhariOnline = (phone, custName) => {
+            // Customer pays pending Udhari online directly from My Orders via PhonePe/GPay/Paytm
+            const payUdhariOnline = (phone, appType) => {
                 const custUdhari = udhariList.find(u => u.phone === phone);
                 if (!custUdhari || custUdhari.amount <= 0) {
                     alert("Aapka koi udhar baki nahi hai!");
                     return;
                 }
                 let amt = custUdhari.amount;
-                // Open UPI payment app
-                openUpiApp('gpay', amt);
+                
+                // Trigger selected UPI app payment intent
+                openUpiApp(appType, amt);
 
-                // After payment intent, prompt to clear udhar in ledger
+                // After user returns from payment app, prompt to confirm clearance
                 setTimeout(() => {
-                    if (confirm(`Kya aapka ₹${amt} ka online payment ho gaya? Ok dabane par aapka udhar clear ho jayega.`)) {
+                    if (confirm(`Kya aapne ${appType.toUpperCase()} se ₹${amt} ka payment successfully kar diya hai? Ok dabane par aapka udhar khata clear ho jayega.`)) {
                         const currentDate = new Date().toLocaleDateString('en-IN');
                         const updatedUdh = udhariList.map(u => {
                             if (u.phone === phone) {
                                 return {
                                     ...u,
                                     amount: 0,
-                                    history: [{ date: currentDate, type: "Online UPI Payment Cleared", amount: amt, mode: "Online UPI" }, ...u.history]
+                                    history: [{ date: currentDate, type: `Online ${appType.toUpperCase()} Payment Cleared`, amount: amt, mode: appType.toUpperCase() }, ...u.history]
                                 };
                             }
                             return u;
                         });
                         setUdhariList(updatedUdh);
-                        alert("✅ Aapka Udhari Khata clear ho gaya hai! Dhanyawad.");
+                        alert("✅ Aapka Udhari Khata successfully clear ho gaya hai!");
                         checkMyOrders();
                     }
                 }, 2000);
@@ -721,23 +722,31 @@
                                     </div>
                                 </div>
 
-                                {/* UDHARI AMOUNT SUMMARY WIDGET IN MY ORDERS */}
+                                {/* UDHARI AMOUNT SUMMARY & PHONEPE / GPAY PAYMENT BUTTONS IN MY ORDERS */}
                                 {customerSearchPhone && customerSearchPhone.length >= 10 && (
                                     (() => {
                                         const custUdh = udhariList.find(u => u.phone === customerSearchPhone);
                                         const bakiAmt = custUdh ? custUdh.amount : 0;
                                         return (
-                                            <div className="bg-red-50 p-4 rounded-2xl border-2 border-red-300 shadow-sm space-y-2 text-xs">
+                                            <div className="bg-red-50 p-4 rounded-2xl border-2 border-red-300 shadow-sm space-y-2.5 text-xs">
                                                 <div className="flex justify-between items-center">
                                                     <span className="font-extrabold text-red-900 text-sm">💳 Aapka Total Pending Udhari:</span>
                                                     <span className="font-black text-red-700 text-base">₹{bakiAmt}</span>
                                                 </div>
                                                 {bakiAmt > 0 ? (
-                                                    <div>
-                                                        <p className="text-gray-700 mb-2">Aap apna yeh baki udhar yahan se seedha Online UPI payment karke chuka sakte hain:</p>
-                                                        <button onClick={() => payUdhariOnline(customerSearchPhone)} className="w-full bg-blue-700 text-white py-2.5 rounded-xl font-black shadow-md hover:bg-blue-800">
-                                                            💳 Pay Udhari Online via UPI (₹{bakiAmt})
-                                                        </button>
+                                                    <div className="space-y-2">
+                                                        <p className="text-gray-700">Aap apne baki udhar ka payment seedha apne account se UPI app (PhonePe, GPay, Paytm) ke zariye cut kar sakte hain:</p>
+                                                        <div className="grid grid-cols-3 gap-2">
+                                                            <button onClick={() => payUdhariOnline(customerSearchPhone, 'phonepe')} className="bg-purple-700 text-white py-2.5 rounded-xl font-bold shadow text-center">
+                                                                💜 PhonePe (₹{bakiAmt})
+                                                            </button>
+                                                            <button onClick={() => payUdhariOnline(customerSearchPhone, 'gpay')} className="bg-blue-600 text-white py-2.5 rounded-xl font-bold shadow text-center">
+                                                                💙 Google Pay (₹{bakiAmt})
+                                                            </button>
+                                                            <button onClick={() => payUdhariOnline(customerSearchPhone, 'paytm')} className="bg-blue-800 text-white py-2.5 rounded-xl font-bold shadow text-center">
+                                                                💙 Paytm (₹{bakiAmt})
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 ) : (
                                                     <p className="text-green-700 font-bold">🎉 Aapka koi bhi udhar baki nahi hai! Sab clear hai.</p>
