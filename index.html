@@ -50,7 +50,7 @@
             const [items, setItems] = React.useState([
                 { id: 1, name: "Aashirvaad Atta (10kg)", price: 420, category: "Groceries", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80" },
                 { id: 2, name: "Fortune Sunflower Oil (1L)", price: 135, category: "Groceries", image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=300&q=80" },
-                { id: 3, name: "Tata Salt (1kg)", price: 28, category: "Groceries", image: "https://images.unsplash.com/photo-1518110991417-010777ea462f?auto=format&fit=crop&w=300&q=80" },
+                { id: 3, name: "Tata Salt (1kg)", price: 28, category: "Groceries", image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=300&q=80" },
                 { id: 4, name: "DAP Khaad (50kg Bag)", price: 1350, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&w=300&q=80" },
                 { id: 5, name: "Urea Khaad (45kg Bag)", price: 266, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=300&q=80" },
                 { id: 6, name: "Gehu ka Beej (40kg)", price: 1400, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=300&q=80" },
@@ -400,7 +400,7 @@
                             </div>
                         )}
 
-                        {/* OWNER ORDERS (WITH DELETE BUTTON) */}
+                        {/* OWNER ORDERS */}
                         {activeTab === 'orders' && isAdminAuthenticated && (
                             <div>
                                 <h2 className="text-lg font-bold mb-2 text-gray-800">Owner Data: Saare Orders</h2>
@@ -448,11 +448,12 @@
                             </div>
                         )}
 
-                        {/* RATE MANAGEMENT (WITH DELETE ITEM OPTION) */}
+                        {/* RATE MANAGEMENT (WITH CLEAR ITEM DELETE LIST) */}
                         {activeTab === 'rate' && isAdminAuthenticated && (
                             <div>
                                 <h2 className="text-lg font-bold mb-2 text-gray-800">Rate & Items Management</h2>
-                                <div className="space-y-3 bg-white p-4 rounded-xl border text-xs shadow-sm mb-4">
+                                <div className="space-y-3 bg-white p-4 rounded-xl border text-xs shadow-sm mb-6">
+                                    <h3 className="font-bold text-gray-700">Naya Item Jodein</h3>
                                     <input type="text" placeholder="Item ka Naam" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
                                     <input type="number" placeholder="Rate (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
                                     <select value={newItemCat} onChange={(e) => setNewItemCat(e.target.value)} className="w-full p-2 border rounded bg-gray-50">
@@ -462,23 +463,29 @@
                                         <option value="Pattal & Glass">Pattal & Glass</option>
                                         <option value="Pashupalan">Pashupalan</option>
                                     </select>
-                                    <input type="text" placeholder="Image URL" value={newItemImg} onChange={(e) => setNewItemImg(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
+                                    <input type="text" placeholder="Image URL (Sahi photo link dalein)" value={newItemImg} onChange={(e) => setNewItemImg(e.target.value)} className="w-full p-2 border rounded bg-gray-50"/>
                                     <button onClick={() => {
                                         if(newItemName && newItemPrice) {
                                             const imgUrl = newItemImg || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=80";
-                                            setItems([...items, { id: items.length + 1, name: newItemName, price: parseFloat(newItemPrice), category: newItemCat, image: imgUrl }]);
+                                            setItems([...items, { id: Date.now(), name: newItemName, price: parseFloat(newItemPrice), category: newItemCat, image: imgUrl }]);
                                             setNewItemName(""); setNewItemPrice(""); setNewItemImg("");
                                             alert("Naya item jud gaya!");
                                         } else { alert("Naam aur price bharein."); }
                                     }} className="w-full bg-green-700 text-white py-2 rounded font-bold">Naya Item Jodein</button>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <h3 className="font-bold text-gray-700 text-xs">Maujuda Items (Delete karne ke liye):</h3>
+                                <div className="space-y-3">
+                                    <h3 className="font-extrabold text-gray-800 text-sm border-b pb-1">Maujuda Items (Delete karne ke liye):</h3>
                                     {items.map(item => (
-                                        <div key={item.id} className="flex justify-between items-center bg-white p-2 border rounded-lg text-xs">
-                                            <span>{item.name} - ₹{item.price}</span>
-                                            <button onClick={() => deleteItem(item.id)} className="bg-red-600 text-white px-2.5 py-1 rounded font-bold text-[10px]">
+                                        <div key={item.id} className="flex justify-between items-center bg-white p-3 border rounded-xl shadow-sm text-xs">
+                                            <div className="flex items-center space-x-2">
+                                                <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded border" />
+                                                <div>
+                                                    <p className="font-bold text-gray-800">{item.name}</p>
+                                                    <p className="text-green-600 font-bold">₹{item.price} ({item.category})</p>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => deleteItem(item.id)} className="bg-red-600 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow hover:bg-red-700">
                                                 🗑️ Delete
                                             </button>
                                         </div>
