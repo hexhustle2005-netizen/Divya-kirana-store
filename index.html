@@ -203,7 +203,6 @@
                 setOrdersList([billDetails, ...ordersList]);
                 
                 if (paymentMode === "Udhari") {
-                    // Check if customer already exists in Udhari list
                     const existingIndex = udhariList.findIndex(u => u.phone === customerPhone);
                     if (existingIndex !== -1) {
                         const updated = [...udhariList];
@@ -212,7 +211,7 @@
                             date: currentDate,
                             type: "Udhari Liya",
                             amount: totalAmt,
-                            mode: "Order Udhari"
+                            mode: "Udhari"
                         });
                         setUdhariList(updated);
                     } else {
@@ -226,7 +225,7 @@
                                 date: currentDate,
                                 type: "Udhari Liya",
                                 amount: totalAmt,
-                                mode: "Order Udhari"
+                                mode: "Udhari"
                             }]
                         }, ...udhariList]);
                     }
