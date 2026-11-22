@@ -64,21 +64,52 @@
             const [shopOpenTime, setShopOpenTime] = React.useState("08:00");
             const [shopCloseTime, setShopCloseTime] = React.useState("20:00");
 
-            // Store Inventory
-            const [items, setItems] = React.useState([
-                { id: 1, name: "Aashirvaad Atta (10kg)", weight: "10 kg Pack", price: 420, category: "Groceries", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80" },
-                { id: 2, name: "Fortune Sunflower Oil", weight: "1 Litre Pouch", price: 135, category: "Groceries", image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=400&q=80" },
-                { id: 3, name: "Tata Iodized Salt", weight: "1 kg Pack", price: 28, category: "Groceries", image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=400&q=80" },
-                { id: 4, name: "DAP Khaad Fertilizer", weight: "50 kg Bag", price: 1350, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&w=400&q=80" },
-                { id: 5, name: "Urea Khaad Bag", weight: "45 kg Bag", price: 266, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=400&q=80" },
-                { id: 6, name: "Certified Wheat Seed", weight: "40 kg Bag", price: 1400, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=400&q=80" },
-                { id: 7, name: "Iron Nails (Lohe ki Kil)", weight: "1 kg Pack", price: 80, category: "Hardware", image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=400&q=80" },
-                { id: 8, name: "Heavy Claw Hammer", weight: "1 Piece", price: 180, category: "Hardware", image: "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=400&q=80" },
-                { id: 9, name: "Disposable Pattal Thali", weight: "Pack of 50", price: 110, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80" },
-                { id: 10, name: "Paper Tea/Water Glass", weight: "Pack of 100", price: 70, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1516594798947-e65505dbb29d?auto=format&fit=crop&w=400&q=80" },
-                { id: 11, name: "Pashu Aahar (Cattle Feed)", weight: "50 kg Bag", price: 1250, category: "Pashupalan", image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=400&q=80" },
-                { id: 12, name: "Cattle Mineral Mixture", weight: "1 kg Pack", price: 150, category: "Pashupalan", image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=400&q=80" }
-            ]);
+            // Store Inventory (Persistent with localStorage)
+            const [items, setItems] = React.useState(() => {
+                const saved = localStorage.getItem("divya_items");
+                if (saved) return JSON.parse(saved);
+                return [
+                    { id: 1, name: "Aashirvaad Atta (10kg)", weight: "10 kg Pack", price: 420, category: "Groceries", image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=400&q=80" },
+                    { id: 2, name: "Fortune Sunflower Oil", weight: "1 Litre Pouch", price: 135, category: "Groceries", image: "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=400&q=80" },
+                    { id: 3, name: "Tata Iodized Salt", weight: "1 kg Pack", price: 28, category: "Groceries", image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=400&q=80" },
+                    { id: 4, name: "DAP Khaad Fertilizer", weight: "50 kg Bag", price: 1350, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&w=400&q=80" },
+                    { id: 5, name: "Urea Khaad Bag", weight: "45 kg Bag", price: 266, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=400&q=80" },
+                    { id: 6, name: "Certified Wheat Seed", weight: "40 kg Bag", price: 1400, category: "Khad & Beej", image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=400&q=80" },
+                    { id: 7, name: "Iron Nails (Lohe ki Kil)", weight: "1 kg Pack", price: 80, category: "Hardware", image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=400&q=80" },
+                    { id: 8, name: "Heavy Claw Hammer", weight: "1 Piece", price: 180, category: "Hardware", image: "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=400&q=80" },
+                    { id: 9, name: "Disposable Pattal Thali", weight: "Pack of 50", price: 110, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80" },
+                    { id: 10, name: "Paper Tea/Water Glass", weight: "Pack of 100", price: 70, category: "Pattal & Glass", image: "https://images.unsplash.com/photo-1516594798947-e65505dbb29d?auto=format&fit=crop&w=400&q=80" },
+                    { id: 11, name: "Pashu Aahar (Cattle Feed)", weight: "50 kg Bag", price: 1250, category: "Pashupalan", image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=400&q=80" },
+                    { id: 12, name: "Cattle Mineral Mixture", weight: "1 kg Pack", price: 150, category: "Pashupalan", image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=400&q=80" }
+                ];
+            });
+
+            // Orders List (Persistent)
+            const [ordersList, setOrdersList] = React.useState(() => {
+                const saved = localStorage.getItem("divya_orders");
+                return saved ? JSON.parse(saved) : [];
+            });
+
+            // Udhari Khata (Persistent)
+            const [udhariList, setUdhariList] = React.useState(() => {
+                const saved = localStorage.getItem("divya_udhari");
+                if (saved) return JSON.parse(saved);
+                return [
+                    { 
+                        id: 1, 
+                        name: "Ramesh Kumar", 
+                        phone: "9876543210", 
+                        amount: 450, 
+                        note: "Chawal aur Dal baki",
+                        history: [{ date: "24/11/2026", type: "Udhari Liya", amount: 450, mode: "Udhari" }]
+                    }
+                ];
+            });
+
+            // Save to localStorage automatically on state change
+            React.useEffect(() => { localStorage.setItem("divya_items", JSON.stringify(items)); }, [items]);
+            React.useEffect(() => { localStorage.setItem("divya_orders", JSON.stringify(ordersList)); }, [ordersList]);
+            React.useEffect(() => { localStorage.setItem("divya_udhari", JSON.stringify(udhariList)); }, [udhariList]);
 
             const [searchTerm, setSearchTerm] = React.useState("");
             const [selectedCategory, setSelectedCategory] = React.useState("All");
@@ -90,45 +121,19 @@
             const [customerPhone, setCustomerPhone] = React.useState("");
             const [paymentMode, setPaymentMode] = React.useState("Cash");
             
-            // Orders & History
-            const [ordersList, setOrdersList] = React.useState([]);
+            // Search / History / Statement
             const [customerSearchPhone, setCustomerSearchPhone] = React.useState("");
             const [myOldOrders, setMyOldOrders] = React.useState(null);
             const [lastBill, setLastBill] = React.useState(null);
             const [selectedOwnerOrder, setSelectedOwnerOrder] = React.useState(null);
+            const [selectedStatementUdhari, setSelectedStatementUdhari] = React.useState(null);
 
-            // Udhari Khata with Date-wise History Logs
-            const [udhariList, setUdhariList] = React.useState([
-                { 
-                    id: 1, 
-                    name: "Ramesh Kumar", 
-                    phone: "9876543210", 
-                    amount: 450, 
-                    note: "Chawal aur Dal baki",
-                    history: [
-                        { date: "24/11/2026", type: "Udhari Liya", amount: 450, mode: "Udhari" }
-                    ]
-                },
-                { 
-                    id: 2, 
-                    name: "Suresh Sharma", 
-                    phone: "9123456789", 
-                    amount: 1200, 
-                    note: "Mahine ka rashan",
-                    history: [
-                        { date: "22/11/2026", type: "Udhari Liya", amount: 1200, mode: "Udhari" }
-                    ]
-                }
-            ]);
+            // New Udhari / Item input states
             const [newUdhariName, setNewUdhariName] = React.useState("");
             const [newUdhariPhone, setNewUdhariPhone] = React.useState("");
             const [newUdhariAmount, setNewUdhariAmount] = React.useState("");
             const [newUdhariNote, setNewUdhariNote] = React.useState("");
-            
-            // Selected Udhari for Statement PDF View
-            const [selectedStatementUdhari, setSelectedStatementUdhari] = React.useState(null);
 
-            // Rate Management inputs
             const [newItemName, setNewItemName] = React.useState("");
             const [newItemWeight, setNewItemWeight] = React.useState("");
             const [newItemPrice, setNewItemPrice] = React.useState("");
@@ -235,7 +240,7 @@
                 setCart({});
                 setShowCheckoutModal(false);
                 setActiveTab('store');
-                alert("🎉 Order Successfully Placed!");
+                alert("🎉 Order Successfully Placed & Saved!");
             };
 
             const markOrderReady = (orderId) => {
@@ -271,7 +276,8 @@
                     alert("Kripya 10-digit valid mobile number dalein.");
                     return;
                 }
-                setMyOldOrders(ordersList.filter(o => o.customerPhone === customerSearchPhone));
+                const foundOrders = ordersList.filter(o => o.customerPhone === customerSearchPhone);
+                setMyOldOrders(foundOrders);
             };
 
             const categories = [
@@ -288,6 +294,32 @@
                 const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
                 return matchesSearch && matchesCat;
             });
+
+            // Customer self online payment for Udhari from My Orders tab
+            const handleCustomerUdhariPay = (phone) => {
+                const udhRecord = udhariList.find(u => u.phone === phone);
+                if (!udhRecord) {
+                    alert("Aapka koi baki Udhari Khata nahi hai!");
+                    return;
+                }
+                let payAmt = prompt(`Aapka kul baki udhari ₹${udhRecord.amount} hai. Aap kitna Online (UPI) payment karna chahte hain?`, udhRecord.amount);
+                if (payAmt !== null) {
+                    let paid = parseFloat(payAmt);
+                    if (!isNaN(paid) && paid > 0) {
+                        const curDate = new Date().toLocaleDateString('en-IN');
+                        const updatedHistory = [{ date: curDate, type: "Online UPI Diya (Customer)", amount: paid, mode: "UPI" }, ...udhRecord.history];
+
+                        if (paid >= udhRecord.amount) {
+                            setUdhariList(udhariList.filter(u => u.phone !== phone));
+                            alert(`✅ ₹${paid} Online Payment received! Aapka Udhari poori tarah CLEAR ho gaya hai.`);
+                        } else {
+                            let remaining = udhRecord.amount - paid;
+                            setUdhariList(udhariList.map(u => u.phone === phone ? {...u, amount: remaining, history: updatedHistory} : u));
+                            alert(`✅ ₹${paid} Online Payment received! Baki ₹${remaining} udhari mein bacha hai.`);
+                        }
+                    }
+                }
+            };
 
             return (
                 <div className="max-w-md mx-auto bg-gray-50 min-h-screen shadow-2xl flex flex-col relative pb-24">
@@ -454,7 +486,7 @@
                         {activeTab === 'myorders' && (
                             <div className="space-y-4">
                                 <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
-                                    <h2 className="text-sm font-extrabold text-gray-900">Track Your Orders & Status</h2>
+                                    <h2 className="text-sm font-extrabold text-gray-900">Track Your Orders & Udhari Status</h2>
                                     <div className="flex space-x-2">
                                         <input 
                                             type="tel" 
@@ -468,6 +500,22 @@
                                         </button>
                                     </div>
                                 </div>
+
+                                {myOldOrders && (
+                                    <div className="bg-blue-50 p-4 rounded-2xl border border-blue-200 text-xs space-y-2">
+                                        <h3 className="font-black text-blue-900 text-sm">💳 Aapka Udhari Khata Status:</h3>
+                                        {udhariList.find(u => u.phone === customerSearchPhone) ? (
+                                            <div className="space-y-2">
+                                                <p className="text-gray-800">Kul Baki Udhari: <strong className="text-red-600 text-base">₹{udhariList.find(u => u.phone === customerSearchPhone).amount}</strong></p>
+                                                <button onClick={() => handleCustomerUdhariPay(customerSearchPhone)} className="w-full bg-blue-700 text-white py-2.5 rounded-xl font-bold shadow hover:bg-blue-800">
+                                                    📱 Pay Udhari Online (UPI) & Auto-Update
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <p className="text-green-800 font-bold">✨ Aapka koi bhi udhari baki nahi hai!</p>
+                                        )}
+                                    </div>
+                                )}
 
                                 {myOldOrders && myOldOrders.length === 0 && (
                                     <div className="bg-white p-6 rounded-2xl border text-center text-xs text-gray-500">
@@ -490,7 +538,7 @@
                                         
                                         {ord.status === 'Ready' && (
                                             <div className="bg-green-50 p-2.5 rounded-xl border border-green-300 text-green-900 font-bold text-center">
-                                                📦 Aapka order pack ho chuka hai! Dukan se aakar le jayein.
+                                                📦 Aapka order pack ho chuka hai! Dukan से aakar le jayein.
                                             </div>
                                         )}
 
@@ -603,7 +651,7 @@
                                 </div>
 
                                 <div className="space-y-3">
-                                    <h3 className="font-extrabold text-gray-900 text-xs">Active Udhari Khata (Partial Cash / UPI & PDF Statements):</h3>
+                                    <h3 className="font-extrabold text-gray-900 text-xs">Active Udhari Khata (Synced Automatically):</h3>
                                     {udhariList.length === 0 ? (
                                         <p className="text-xs text-gray-500 bg-white p-4 rounded-2xl text-center border">Koi udhari baki nahi hai.</p>
                                     ) : (
@@ -618,7 +666,6 @@
                                                 </div>
 
                                                 <div className="grid grid-cols-2 gap-2">
-                                                    {/* Cash Partial / Full Payment */}
                                                     <button onClick={() => {
                                                         let payAmt = prompt(`Kitna Cash mila hai? (Total Baki: ₹${udh.amount})`, udh.amount);
                                                         if (payAmt !== null) {
@@ -641,7 +688,6 @@
                                                         💵 Cash Payment
                                                     </button>
 
-                                                    {/* Online UPI Partial / Full Payment */}
                                                     <button onClick={() => {
                                                         let payAmt = prompt(`Kitna payment Online (UPI) mila hai? (Total Baki: ₹${udh.amount})`, udh.amount);
                                                         if (payAmt !== null) {
