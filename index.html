@@ -129,7 +129,7 @@
             const [parchaText, setParchaText] = React.useState("");
             const [parchaImage, setParchaImage] = React.useState(null);
             
-            // Owner Price Update State for Parcha Order
+            // Owner Price & Items Update State for Parcha Order
             const [ownerUpdatedPrice, setOwnerUpdatedPrice] = React.useState("");
             const [ownerUpdatedNote, setOwnerUpdatedNote] = React.useState("");
             
@@ -181,7 +181,7 @@
                 }, 0);
             };
 
-            // Handle Image Upload to Base64 for LocalStorage
+            // Handle Image Upload with High Quality Base64 Encoding
             const handleImageUpload = (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -287,7 +287,7 @@
                 alert("🎉 Order Successfully Placed!");
             };
 
-            // Submit Parcha / Photo Bulk Order (Starts as Price Pending)
+            // Submit Parcha / Photo Bulk Order (Starts as Price Pending so Owner sees it)
             const placeParchaOrder = () => {
                 if (!parchaName || !parchaPhone) {
                     alert("Kripya apna Naam aur Mobile Number zaroor dalein!");
@@ -309,13 +309,13 @@
                     customerPhone: parchaPhone,
                     pickupTime: "As Soon As Ready",
                     paymentMode: "Cash",
-                    status: "Price Pending", // Owner needs to update price
+                    status: "Price Pending", // Crucial so owner sees it in Live Orders Queue
                     date: currentDate,
                     time: currentTime,
                     parchaText: parchaText || "Photo Parcha Uploaded",
                     parchaImage: parchaImage,
                     items: [
-                        { name: parchaText ? `Parcha List: ${parchaText.substring(0, 40)}...` : "Uploaded Parcha Photo Items", qty: 1, price: 0, subtotal: 0 }
+                        { name: parchaText ? `Parcha List: ${parchaText}` : "Uploaded Parcha Photo Items", qty: 1, price: 0, subtotal: 0 }
                     ],
                     total: 0
                 };
@@ -329,7 +329,7 @@
                 alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price update karne ke baad aapko 'My Orders' mein bill dikhega.");
             };
 
-            // Owner Updates Price of Parcha Order -> Sends WhatsApp Alert to Customer
+            // Owner Updates Price & Items for Parcha Order -> Sends WhatsApp Alert to Customer
             const updateParchaOrderPrice = (orderId) => {
                 const amt = parseFloat(ownerUpdatedPrice);
                 if (isNaN(amt) || amt <= 0) {
@@ -353,7 +353,7 @@
                             ]
                         };
 
-                        let msg = `📦 *Divya Kirana Store - Bill Ready*\n\nHello ${ord.customerName},\nAapke Parcha Order (${ord.invoiceNo}) ka bill tayyar hai!\n\n💰 *Kul Bill Rashi:* ₹${amt}\n\nApna bill dekhne aur PDF download karne ke liye website ke 'My Orders' tab mein apna mobile number dalein. 🙏`;
+                        let msg = `📦 *Divya Kirana Store - Bill Ready*\n\nHello ${ord.customerName},\nAapke Parcha Order (${ord.invoiceNo}) ka bill tayyar hai!\n\n💰 *Kul Bill Rashi:* ₹${amt}\n\nApna bill dekhne, payment karne aur PDF download karne ke liye website ke 'My Orders' tab mein apna mobile number dalein. 🙏`;
                         let cleanPhone = ord.customerPhone.startsWith("91") ? ord.customerPhone : "91" + ord.customerPhone;
                         window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
 
@@ -404,6 +404,50 @@
                 }
                 const foundOrders = ordersList.filter(o => o.customerPhone === customerSearchPhone);
                 setMyOldOrders(foundOrders);
+            };
+
+            // Customer settles payment for Parcha / Ready orders from My Orders tab
+            const settleCustomerPayment = (orderId, mode, amount) => {
+                const currentDate = new Date().toLocaleDateString('en-IN');
+                
+                if (mode === "Udhari") {
+                    const ord = ordersList.find(o => o.id === orderId);
+                    if (ord) {
+                        const existingIndex = udhariList.findIndex(u => u.phone === ord.customerPhone);
+                        if (existingIndex !== -1) {
+                            const updatedUdh = [...udhariList];
+                            updatedUdh[existingIndex].amount += amount;
+                            updatedUdh[existingIndex].history.unshift({
+                                date: currentDate,
+                                type: `Order Udhari (${ord.invoiceNo})`,
+                                amount: amount,
+                                mode: "Udhari"
+                            });
+                            setUdhariList(updatedUdh);
+                        } else {
+                            setUdhariList([{
+                                id: Date.now(),
+                                name: ord.customerName,
+                                phone: ord.customerPhone,
+                                amount: amount,
+                                note: `Order Udhari ${ord.invoiceNo}`,
+                                history: [{ date: currentDate, type: `Order Udhari (${ord.invoiceNo})`, amount: amount, mode: "Udhari" }]
+                            }, ...udhariList]);
+                        }
+                    }
+                }
+
+                let paymentText = mode === "Cash" ? "Cash Paid" : mode === "UPI" ? "Online UPI Paid" : "Udhari Khata";
+
+                setOrdersList(ordersList.map(ord => {
+                    if (ord.id === orderId) {
+                        return { ...ord, paymentMode: paymentText, status: "Completed" };
+                    }
+                    return ord;
+                }));
+
+                alert(`✅ Payment Mode Saved as '${paymentText}'! Ab aap PDF Bill download kar sakte hain.`);
+                checkMyOrders();
             };
 
             const categories = [
@@ -630,9 +674,27 @@
                                             </span>
                                         </div>
                                         
-                                        <div className="space-y-1">
-                                            <p className="text-gray-600">Total Bill Rashi: <strong className="text-gray-900 text-sm">₹{ord.total}</strong> | Payment: <strong className="text-green-700">{ord.paymentMode}</strong></p>
-                                        </div>
+                                        {ord.status === 'Price Pending' ? (
+                                            <div className="bg-orange-50 p-3 rounded-xl border border-orange-200 text-orange-900 font-semibold">
+                                                ⏳ Aapka Parcha order owner ke paas hai. Owner price update kar rahe hain.
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                <p className="text-gray-600">Total Bill Rashi: <strong className="text-gray-900 text-sm">₹{ord.total}</strong> | Payment: <strong className="text-green-700">{ord.paymentMode}</strong></p>
+                                                
+                                                {ord.status === 'Ready' && ord.isParcha && (
+                                                    <div className="bg-blue-50 p-3 rounded-xl border border-blue-300 space-y-2">
+                                                        <p className="font-bold text-blue-900 text-center">💳 Payment Mode Chunein aur Bill Download Karein:</p>
+                                                        <p className="text-center font-bold text-gray-800">Owner UPI ID: <span className="text-green-800 font-mono">{upiId}</span></p>
+                                                        <div className="grid grid-cols-3 gap-2">
+                                                            <button onClick={() => settleCustomerPayment(ord.id, 'Cash', ord.total)} className="bg-green-700 text-white py-2 rounded-xl font-bold shadow text-center">Cash Pay</button>
+                                                            <button onClick={() => settleCustomerPayment(ord.id, 'UPI', ord.total)} className="bg-blue-700 text-white py-2 rounded-xl font-bold shadow text-center">Online UPI</button>
+                                                            <button onClick={() => settleCustomerPayment(ord.id, 'Udhari', ord.total)} className="bg-yellow-500 text-black py-2 rounded-xl font-bold shadow text-center">Udhari</button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {ord.parchaImage && (
                                             <div className="pt-1">
@@ -701,7 +763,7 @@
 
                                             <div className="flex space-x-2 pt-1">
                                                 <button onClick={() => setSelectedOwnerOrder(ord)} className="flex-grow bg-blue-50 text-blue-700 border border-blue-200 py-2 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition">
-                                                    👁️ Khol Kar Dekhein
+                                                    {ord.status === 'Price Pending' ? "✍️ Parcha Dekhein & Price Likhein" : "👁️ Khol Kar Dekhein"}
                                                 </button>
                                                 
                                                 {ord.status === 'Pending' && (
@@ -774,7 +836,7 @@
                                             setNewItemName(""); setNewItemWeight(""); setNewItemPrice(""); setNewItemImg("");
                                             alert("Item added successfully!");
                                         } else { alert("Please enter Name and Price."); }
-                                    }} className="w-full bg-green-700 text-white py-2.5 rounded-bold">Add Item</button>
+                                    }} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-bold">Add Item</button>
                                 </div>
                             </div>
                         )}
