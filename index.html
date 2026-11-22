@@ -38,7 +38,6 @@
             const [isAdminAuthenticated, setIsAdminAuthenticated] = React.useState(false);
             const ADMIN_PIN = "728084";
 
-            // Secret Triple Tap Counter for Admin Access
             const [titleClicks, setTitleClicks] = React.useState(0);
             const handleTitleClick = () => {
                 const newClicks = titleClicks + 1;
@@ -59,13 +58,11 @@
                 }
             };
 
-            // Shop Settings & UPI ID
             const [whatsappNo, setWhatsappNo] = React.useState("919876543210");
             const [upiId, setUpiId] = React.useState("6200150688@ybl");
             const [shopOpenTime, setShopOpenTime] = React.useState("08:00");
             const [shopCloseTime, setShopCloseTime] = React.useState("20:00");
 
-            // Store Inventory (Persistent with localStorage)
             const [items, setItems] = React.useState(() => {
                 const saved = localStorage.getItem("divya_items");
                 if (saved) return JSON.parse(saved);
@@ -85,13 +82,11 @@
                 ];
             });
 
-            // Orders List (Persistent)
             const [ordersList, setOrdersList] = React.useState(() => {
                 const saved = localStorage.getItem("divya_orders");
                 return saved ? JSON.parse(saved) : [];
             });
 
-            // Udhari Khata (Persistent) with full ledger history
             const [udhariList, setUdhariList] = React.useState(() => {
                 const saved = localStorage.getItem("divya_udhari");
                 if (saved) return JSON.parse(saved);
@@ -107,7 +102,6 @@
                 ];
             });
 
-            // Save to localStorage automatically
             React.useEffect(() => { localStorage.setItem("divya_items", JSON.stringify(items)); }, [items]);
             React.useEffect(() => { localStorage.setItem("divya_orders", JSON.stringify(ordersList)); }, [ordersList]);
             React.useEffect(() => { localStorage.setItem("divya_udhari", JSON.stringify(udhariList)); }, [udhariList]);
@@ -115,7 +109,6 @@
             const [searchTerm, setSearchTerm] = React.useState("");
             const [selectedCategory, setSelectedCategory] = React.useState("All");
 
-            // Cart & Customer States
             const [cart, setCart] = React.useState({});
             const [customerTime, setCustomerTime] = React.useState("10:00");
             const [customerName, setCustomerName] = React.useState("");
@@ -123,26 +116,22 @@
             const [paymentMode, setPaymentMode] = React.useState("Cash");
             const [checkoutUtrPin, setCheckoutUtrPin] = React.useState("");
 
-            // Parcha / Bulk Image & Text Order States
             const [parchaName, setParchaName] = React.useState("");
             const [parchaPhone, setParchaPhone] = React.useState("");
             const [parchaText, setParchaText] = React.useState("");
             const [parchaExpectedPrice, setParchaExpectedPrice] = React.useState("");
             const [parchaImage, setParchaImage] = React.useState(null);
             
-            // Owner Price & Detailed Saman Photo/Note State for Parcha Order
             const [ownerUpdatedPrice, setOwnerUpdatedPrice] = React.useState("");
             const [ownerDetailedBillText, setOwnerDetailedBillText] = React.useState("");
             const [ownerBillImage, setOwnerBillImage] = React.useState(null);
             
-            // Search / History
             const [customerSearchPhone, setCustomerSearchPhone] = React.useState("");
             const [myOldOrders, setMyOldOrders] = React.useState(null);
             const [lastBill, setLastBill] = React.useState(null);
             const [selectedOwnerOrder, setSelectedOwnerOrder] = React.useState(null);
             const [selectedUdhariCustomer, setSelectedUdhariCustomer] = React.useState(null);
 
-            // New Udhari / Item input states
             const [newUdhariName, setNewUdhariName] = React.useState("");
             const [newUdhariPhone, setNewUdhariPhone] = React.useState("");
             const [newUdhariAmount, setNewUdhariAmount] = React.useState("");
@@ -299,7 +288,6 @@
                 alert("🎉 Order Successfully Placed!");
             };
 
-            // Parcha Order with correct customerPhone mapping
             const placeParchaOrder = () => {
                 if (!parchaName || !parchaPhone) {
                     alert("Kripya apna Naam aur Mobile Number zaroor dalein!");
@@ -322,7 +310,7 @@
                     invoiceNo: "PRC-" + Math.floor(1000 + Math.random() * 9000),
                     isParcha: true,
                     customerName: parchaName,
-                    customerPhone: parchaPhone, // Ensures My Orders search finds it instantly
+                    customerPhone: parchaPhone,
                     pickupTime: "As Soon As Ready",
                     paymentMode: "Payment Pending",
                     status: "Price Pending",
@@ -521,7 +509,6 @@
                 }, 2000);
             };
 
-            // Fixed Search for My Orders (Matches customerPhone for both Cart & Parcha orders)
             const checkMyOrders = () => {
                 if (!customerSearchPhone || customerSearchPhone.length < 10) {
                     alert("Kripya 10-digit valid mobile number dalein.");
@@ -1289,7 +1276,7 @@
                                                     📷 Owner Bill / Paper Photo Upload Karein:
                                                     <input type="file" accept="image/*" onChange={handleOwnerBillImageUpload} className="hidden" />
                                                     <div className="mt-1.5 bg-white text-green-800 border border-green-600 py-2 px-3 rounded-lg font-extrabold text-xs shadow-sm">
-                                                        {ownerBillImage ? "✅ Bill Photo Selected (Change Karein)" : "📂 Choose Bill Photo / Camera"}
+                                                        {ownerBillImage ? "✅ Bill Photo Selected (Change Karein)" : "📂 Choose Photo / Camera"}
                                                     </div>
                                                 </label>
                                                 {ownerBillImage && (
@@ -1414,4 +1401,26 @@
                                                 type="text" 
                                                 placeholder="Payment ke baad UTR number yahan dalein" 
                                                 value={checkoutUtrPin} 
-                                                onChange={(e) =>
+                                                onChange={(e) => setCheckoutUtrPin(e.target.value)}
+                                                className="w-full p-2.5 border rounded-xl bg-white font-bold"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="pt-2">
+                                    <button onClick={placeOrder} className="w-full bg-green-700 text-white py-3.5 rounded-xl font-extrabold shadow-lg text-sm hover:bg-green-800 transition">
+                                        Place Order Now 🎉
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
