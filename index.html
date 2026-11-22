@@ -93,7 +93,7 @@
             // Orders & History
             const [ordersList, setOrdersList] = React.useState([]);
             const [customerSearchPhone, setCustomerSearchPhone] = React.useState("");
-            const [myOldOrders, setMyOldOrders] = React.useState([]);
+            const [myOldOrders, setMyOldOrders] = React.useState(null); // null means not searched yet
             const [lastBill, setLastBill] = React.useState(null);
 
             // Udhari Khata
@@ -199,30 +199,27 @@
                 setCart({});
 
                 let message = `🛒 *Naya Order - Divya Kirana Store*\n`;
-                message += `📄 *Invoice:* ${billDetails.invoiceNo}\n\n`;
-                message += `👤 *Grahak:* ${customerName} (${customerPhone})\n`;
-                message += `⏰ *Lena hai Samay:* ${customerTime}\n`;
-                message += `💳 *Payment Type:* ${paymentMode}\n\n`;
+                message += `📄 *Invoice No:* ${billDetails.invoiceNo}\n\n`;
+                message += `👤 *Customer Name:* ${customerName} (${customerPhone})\n`;
+                message += `⏰ *Pickup Time:* ${customerTime}\n`;
+                message += `💳 *Payment Mode:* ${paymentMode}\n\n`;
                 billDetails.items.forEach(bi => {
-                    message += `- ${bi.name} x ${bi.qty} = ₹${bi.subtotal}\n`;
+                    message += `- ${bi.name} (Qty: ${bi.qty}) = ₹${bi.subtotal}\n`;
                 });
-                message += `\n*Kul Rashi: ₹${totalAmt}*`;
+                message += `\n*Grand Total: ₹${totalAmt}*`;
 
                 const url = `https://wa.me/${whatsappNo}?text=${encodeURIComponent(message)}`;
                 window.open(url, '_blank');
-                alert("✅ Order submit ho gaya! Niche Professional Tax Invoice aur PDF Download ka button aa gaya hai.");
+                alert("✅ Order successfully placed! Professional Tax Invoice niche taiyar hai.");
             };
 
             const checkMyOrders = () => {
-                if (!customerSearchPhone) {
-                    alert("Kripya apna mobile number dalein.");
+                if (!customerSearchPhone || customerSearchPhone.length < 10) {
+                    alert("Kripya 10-digit valid mobile number dalein.");
                     return;
                 }
                 const found = ordersList.filter(o => o.customerPhone === customerSearchPhone);
                 setMyOldOrders(found);
-                if (found.length === 0) {
-                    alert("Is number se koi purana order nahi mila.");
-                }
             };
 
             const filteredItems = items.filter(item => {
@@ -238,7 +235,7 @@
                         <div className="flex justify-between items-center">
                             <div>
                                 <h1 className="text-xl font-extrabold text-white tracking-wide">🛒 Divya Kirana Store</h1>
-                                <p className="text-xs text-green-100 mt-0.5">Samay: {shopOpenTime} se {shopCloseTime} | General & Agri Store</p>
+                                <p className="text-xs text-green-100 mt-0.5">Timing: {shopOpenTime} to {shopCloseTime} | General & Agri Store</p>
                             </div>
                             <span className="text-xs bg-green-900 px-2.5 py-1 rounded-full text-green-100 font-bold border border-green-500">Quick Store</span>
                         </div>
@@ -267,14 +264,14 @@
                                 <div className="mb-4 no-print">
                                     <input 
                                         type="text" 
-                                        placeholder="🔍 Saman khojein (Atta, Khad, Hardware...)" 
+                                        placeholder="🔍 Search items (Atta, Khad, Hardware...)" 
                                         value={searchTerm} 
                                         onChange={(e) => setSearchTerm(e.target.value)} 
                                         className="w-full p-3 border border-gray-300 rounded-xl text-sm bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-600"
                                     />
                                 </div>
 
-                                {/* Category Filter Pills */}
+                                {/* Category Filters */}
                                 <div className="flex space-x-2 overflow-x-auto pb-2 mb-4 text-xs no-print">
                                     {['All', 'Groceries', 'Khad & Beej', 'Hardware', 'Pattal & Glass', 'Pashupalan'].map(cat => (
                                         <button 
@@ -287,10 +284,10 @@
                                     ))}
                                 </div>
 
-                                {/* Product Cards */}
+                                {/* Product List */}
                                 <div className="space-y-3 no-print">
                                     {filteredItems.length === 0 ? (
-                                        <p className="text-center text-gray-500 py-8 text-sm">Koi saman nahi mila.</p>
+                                        <p className="text-center text-gray-500 py-8 text-sm">No items found.</p>
                                     ) : (
                                         filteredItems.map(item => (
                                             <div key={item.id} className="flex justify-between items-center p-3.5 border border-gray-200 rounded-2xl shadow-sm bg-white hover:shadow-md transition">
@@ -322,29 +319,29 @@
                                 {Object.keys(cart).length > 0 && (
                                     <div className="mt-6 p-5 bg-white border-2 border-green-500 rounded-2xl shadow-xl space-y-3 no-print">
                                         <div className="flex justify-between items-center border-b pb-2">
-                                            <h3 className="font-extrabold text-green-900 text-base">🛒 Aapka Cart</h3>
+                                            <h3 className="font-extrabold text-green-900 text-base">🛒 Your Cart</h3>
                                             <span className="font-extrabold text-green-700 text-base">Total: ₹{getTotalAmount()}</span>
                                         </div>
                                         
                                         <div className="space-y-3 text-xs">
                                             <div>
-                                                <label className="font-bold text-gray-700 block mb-1">Grahak ka Naam *</label>
-                                                <input type="text" placeholder="Apna pura naam likhein" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50 font-medium"/>
+                                                <label className="font-bold text-gray-700 block mb-1">Customer Name *</label>
+                                                <input type="text" placeholder="Enter full name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50 font-medium"/>
                                             </div>
                                             <div>
                                                 <label className="font-bold text-gray-700 block mb-1">Mobile Number *</label>
-                                                <input type="tel" placeholder="10 digit mobile number" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50 font-medium"/>
+                                                <input type="tel" placeholder="Enter 10-digit mobile number" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50 font-medium"/>
                                             </div>
                                             <div>
-                                                <label className="font-bold text-gray-700 block mb-1">Kis Samay Saman Lena Hai?</label>
+                                                <label className="font-bold text-gray-700 block mb-1">Pickup Time</label>
                                                 <input type="time" value={customerTime} onChange={(e) => setCustomerTime(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50 font-medium"/>
                                             </div>
                                             <div>
-                                                <label className="font-bold text-gray-700 block mb-1">Payment Ka Tarika</label>
+                                                <label className="font-bold text-gray-700 block mb-1">Payment Mode (भुगतान का तरीका)</label>
                                                 <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50 font-bold text-green-800">
-                                                    <option value="Cash">Cash (Nagad dukan par)</option>
-                                                    <option value="UPI">Online UPI Payment</option>
-                                                    <option value="Udhari">Udhari Khata (Baad mein denge)</option>
+                                                    <option value="Cash">Cash (नकद भुगतान)</option>
+                                                    <option value="UPI">UPI Online Payment</option>
+                                                    <option value="Udhari">Udhari Khata (उधार खाता)</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -357,12 +354,12 @@
                                         )}
 
                                         <button onClick={placeOrder} className="w-full bg-green-600 text-white py-3.5 rounded-xl font-extrabold shadow-lg text-sm hover:bg-green-700 transition">
-                                            WhatsApp par Order Bhejein & Bill Banayein 📲
+                                            Send Order via WhatsApp & Generate Bill 📲
                                         </button>
                                     </div>
                                 )}
 
-                                {/* Professional Tax Invoice / Letterhead Format */}
+                                {/* Professional Tax Invoice / Cash Memo Format */}
                                 {lastBill && (
                                     <div id="printable-invoice" className="mt-6 bg-white p-6 border-2 border-gray-300 rounded-2xl shadow-2xl space-y-4">
                                         <div className="text-center border-b-2 border-green-700 pb-3">
@@ -376,12 +373,12 @@
                                         <div className="flex justify-between text-xs text-gray-800 bg-gray-50 p-3.5 rounded-xl border border-gray-200">
                                             <div className="space-y-1">
                                                 <p><strong className="text-gray-900">Invoice No:</strong> {lastBill.invoiceNo}</p>
-                                                <p><strong className="text-gray-900">Grahak:</strong> {lastBill.customerName}</p>
+                                                <p><strong className="text-gray-900">Customer:</strong> {lastBill.customerName}</p>
                                                 <p><strong className="text-gray-900">Mobile:</strong> {lastBill.customerPhone}</p>
                                             </div>
                                             <div className="text-right space-y-1">
-                                                <p><strong className="text-gray-900">Tarikh:</strong> {lastBill.date}</p>
-                                                <p><strong className="text-gray-900">Order Samay:</strong> {lastBill.time}</p>
+                                                <p><strong className="text-gray-900">Date:</strong> {lastBill.date}</p>
+                                                <p><strong className="text-gray-900">Order Time:</strong> {lastBill.time}</p>
                                                 <p><strong className="text-gray-900">Pickup Time:</strong> {lastBill.pickupTime}</p>
                                             </div>
                                         </div>
@@ -390,10 +387,10 @@
                                             <table className="w-full text-left border-collapse">
                                                 <thead>
                                                     <tr className="bg-green-800 text-white">
-                                                        <th className="p-2.5 font-bold">Saman ka Vivaran</th>
-                                                        <th className="p-2.5 font-bold text-center">Matra</th>
-                                                        <th className="p-2.5 font-bold text-right">Rate</th>
-                                                        <th className="p-2.5 font-bold text-right">Kul</th>
+                                                        <th className="p-2.5 font-bold">Item Description (विवरण)</th>
+                                                        <th className="p-2.5 font-bold text-center">Qty (मात्रा)</th>
+                                                        <th className="p-2.5 font-bold text-right">Price (मूल्य)</th>
+                                                        <th className="p-2.5 font-bold text-right">Total (कुल)</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-200">
@@ -411,22 +408,22 @@
 
                                         <div className="bg-green-50 p-3.5 rounded-xl border border-green-300 flex justify-between items-center text-xs">
                                             <div>
-                                                <span className="text-gray-600 block">Payment Mode:</span>
+                                                <span className="text-gray-600 block">Payment Mode (भुगतान):</span>
                                                 <span className="text-green-900 font-extrabold text-sm">{lastBill.paymentMode}</span>
                                             </div>
                                             <div className="text-right">
-                                                <span className="text-gray-600 block">Grand Total (Kul Rashi):</span>
+                                                <span className="text-gray-600 block">Grand Total (कुल योग):</span>
                                                 <span className="font-black text-green-800 text-lg">₹{lastBill.total}</span>
                                             </div>
                                         </div>
 
                                         <div className="text-center text-xs text-gray-500 pt-2 border-t border-dashed border-gray-300">
-                                            <p className="font-semibold text-gray-700">Dhanyawad! Phir Padharein 🙏</p>
-                                            <p className="text-xs text-gray-400">Computer Generated Bill - Signature Not Required</p>
+                                            <p className="font-semibold text-gray-700">Thank You! Visit Again 🙏 (धन्यवाद! फिर पधारें)</p>
+                                            <p className="text-xs text-gray-400">Computer Generated Invoice - Signature Not Required</p>
                                         </div>
 
                                         <button onClick={() => window.print()} className="w-full bg-gray-900 text-white py-3.5 rounded-xl font-extrabold text-xs shadow-lg hover:bg-black transition no-print">
-                                            🖨️ Download Bill PDF / Print Karein
+                                            🖨️ Download Bill PDF / Print Invoice
                                         </button>
                                     </div>
                                 )}
@@ -436,24 +433,33 @@
                         {/* CUSTOMER ORDER HISTORY */}
                         {activeTab === 'myorders' && (
                             <div className="space-y-4">
-                                <h2 className="text-base font-extrabold text-gray-900">Mere Purane Orders</h2>
-                                <p className="text-xs text-gray-600">Apna mobile number daal kar purane orders aur bills dekhein:</p>
-                                <div className="flex space-x-2">
-                                    <input 
-                                        type="tel" 
-                                        placeholder="Mobile Number Dalein" 
-                                        value={customerSearchPhone} 
-                                        onChange={(e) => setCustomerSearchPhone(e.target.value)} 
-                                        className="flex-grow p-3 border border-gray-300 rounded-xl text-xs bg-white font-medium"
-                                    />
-                                    <button onClick={checkMyOrders} className="bg-green-700 text-white px-5 py-3 rounded-xl text-xs font-bold shadow hover:bg-green-800">
-                                        Khojein
-                                    </button>
+                                <div className="bg-white p-5 border border-gray-200 rounded-2xl shadow-sm space-y-3">
+                                    <h2 className="text-base font-extrabold text-gray-900">📦 My Orders (मेरे पुराने ऑर्डर्स)</h2>
+                                    <p className="text-xs text-gray-600">Apna 10-digit mobile number enter karein apne purane bills aur order history dekhne ke liye:</p>
+                                    
+                                    <div className="flex space-x-2">
+                                        <input 
+                                            type="tel" 
+                                            placeholder="Enter 10-digit mobile number" 
+                                            value={customerSearchPhone} 
+                                            onChange={(e) => setCustomerSearchPhone(e.target.value)} 
+                                            className="flex-grow p-3 border border-gray-300 rounded-xl text-xs bg-gray-50 font-medium focus:outline-none focus:ring-2 focus:ring-green-600"
+                                        />
+                                        <button onClick={checkMyOrders} className="bg-green-700 text-white px-5 py-3 rounded-xl text-xs font-bold shadow hover:bg-green-800 transition">
+                                            Search
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-3 mt-4">
-                                    {myOldOrders.length === 0 ? (
-                                        <p className="text-xs text-gray-500 text-center py-6">Koi order history nahi mili.</p>
+                                    {myOldOrders === null ? (
+                                        <div className="text-center py-10 text-gray-400 text-xs bg-white p-6 rounded-2xl border border-dashed border-gray-300">
+                                            👆 Upar apna mobile number daal kar "Search" button par click karein.
+                                        </div>
+                                    ) : myOldOrders.length === 0 ? (
+                                        <div className="text-center py-10 text-gray-500 text-xs bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                                            ❌ Is mobile number se koi order history nahi mili.
+                                        </div>
                                     ) : (
                                         myOldOrders.map(ord => (
                                             <div key={ord.id} className="bg-white p-4 border border-gray-200 rounded-2xl shadow-sm text-xs space-y-2">
@@ -470,8 +476,8 @@
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <button onClick={() => { setLastBill(ord); setActiveTab('store'); }} className="w-full bg-gray-800 text-white py-2 rounded-lg font-bold text-xs mt-1">
-                                                    📄 Is Order ka Bill PDF Dekhein
+                                                <button onClick={() => { setLastBill(ord); setActiveTab('store'); }} className="w-full bg-gray-800 text-white py-2.5 rounded-xl font-bold text-xs mt-1 hover:bg-black transition">
+                                                    📄 View Official Bill PDF
                                                 </button>
                                             </div>
                                         ))
@@ -483,9 +489,9 @@
                         {/* OWNER ORDERS */}
                         {activeTab === 'orders' && isAdminAuthenticated && (
                             <div>
-                                <h2 className="text-lg font-bold mb-3 text-gray-900">Owner Data: Saare Orders</h2>
+                                <h2 className="text-lg font-bold mb-3 text-gray-900">Owner Orders Record</h2>
                                 {ordersList.length === 0 ? (
-                                    <p className="text-sm text-gray-500 py-6 text-center">Abhi tak koi order nahi aaya hai.</p>
+                                    <p className="text-sm text-gray-500 py-6 text-center">No orders received yet.</p>
                                 ) : (
                                     <div className="space-y-3">
                                         {ordersList.map(ord => (
@@ -493,7 +499,7 @@
                                                 <div>
                                                     <span className="text-xs font-bold text-green-700">{ord.invoiceNo}</span>
                                                     <p className="font-bold text-gray-900 text-sm">{ord.customerName} ({ord.customerPhone})</p>
-                                                    <p className="text-gray-600 mt-0.5">Samay: {ord.pickupTime} | Mode: {ord.paymentMode}</p>
+                                                    <p className="text-gray-600 mt-0.5">Time: {ord.pickupTime} | Mode: {ord.paymentMode}</p>
                                                     <p className="text-green-700 font-black text-sm mt-1">₹{ord.total}</p>
                                                 </div>
                                                 <button onClick={() => deleteOrder(ord.id)} className="bg-red-600 text-white px-3 py-2 rounded-xl font-bold text-xs shadow hover:bg-red-700">
@@ -509,20 +515,20 @@
                         {/* UDHARI */}
                         {activeTab === 'udhari' && isAdminAuthenticated && (
                             <div>
-                                <h2 className="text-lg font-bold mb-3 text-gray-900">Udhari Khata</h2>
+                                <h2 className="text-lg font-bold mb-3 text-gray-900">Udhari Khata (Credit Ledger)</h2>
                                 <div className="bg-white p-4 border border-gray-200 rounded-2xl space-y-2.5 mb-5 text-xs shadow-sm">
-                                    <h3 className="font-bold text-gray-800 text-sm">Naya Udhari Jodein</h3>
-                                    <input type="text" placeholder="Grahak ka Naam" value={newUdhariName} onChange={(e) => setNewUdhariName(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                    <h3 className="font-bold text-gray-800 text-sm">Add New Udhari</h3>
+                                    <input type="text" placeholder="Customer Name" value={newUdhariName} onChange={(e) => setNewUdhariName(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
                                     <input type="tel" placeholder="Mobile Number" value={newUdhariPhone} onChange={(e) => setNewUdhariPhone(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
-                                    <input type="number" placeholder="Kitna Amount Baaki hai? (₹)" value={newUdhariAmount} onChange={(e) => setNewUdhariAmount(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
-                                    <input type="text" placeholder="Vivarann (Note)" value={newUdhariNote} onChange={(e) => setNewUdhariNote(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                    <input type="number" placeholder="Pending Amount (₹)" value={newUdhariAmount} onChange={(e) => setNewUdhariAmount(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                    <input type="text" placeholder="Note / Description" value={newUdhariNote} onChange={(e) => setNewUdhariNote(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
                                     <button onClick={() => {
                                         if(newUdhariName && newUdhariAmount) {
                                             setUdhariList([{ id: Date.now(), name: newUdhariName, phone: newUdhariPhone, amount: parseFloat(newUdhariAmount), note: newUdhariNote }, ...udhariList]);
                                             setNewUdhariName(""); setNewUdhariPhone(""); setNewUdhariAmount(""); setNewUdhariNote("");
-                                            alert("Udhari jud gayi!");
-                                        } else { alert("Naam aur Amount bharein."); }
-                                    }} className="w-full bg-red-600 text-white py-2.5 rounded-xl font-bold shadow">Udhari Darj Karein</button>
+                                            alert("Udhari added successfully!");
+                                        } else { alert("Please enter Name and Amount."); }
+                                    }} className="w-full bg-red-600 text-white py-2.5 rounded-xl font-bold shadow">Save Udhari</button>
                                 </div>
 
                                 <div className="space-y-3">
@@ -535,7 +541,7 @@
                                             <div className="text-right">
                                                 <p className="text-red-600 font-black text-base">₹{udh.amount}</p>
                                                 <button onClick={() => {
-                                                    if(confirm("Kya is udhari ko chukta (clear) karna hai?")) {
+                                                    if(confirm("Clear this udhari?")) {
                                                         setUdhariList(udhariList.filter(u => u.id !== udh.id));
                                                     }
                                                 }} className="bg-green-700 text-white px-3 py-1.5 rounded-xl text-xs mt-1.5 font-bold shadow">Chukta (Clear)</button>
@@ -551,9 +557,9 @@
                             <div>
                                 <h2 className="text-lg font-bold mb-3 text-gray-900">Rate & Items Management</h2>
                                 <div className="space-y-3 bg-white p-5 border border-gray-200 rounded-2xl text-xs shadow-sm mb-6">
-                                    <h3 className="font-extrabold text-gray-800 text-sm">Naya Item Jodein</h3>
-                                    <input type="text" placeholder="Item ka Naam" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
-                                    <input type="number" placeholder="Rate (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                    <h3 className="font-extrabold text-gray-800 text-sm">Add New Item</h3>
+                                    <input type="text" placeholder="Item Name" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                    <input type="number" placeholder="Rate / Price (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
                                     <select value={newItemCat} onChange={(e) => setNewItemCat(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50 font-bold text-gray-800">
                                         <option value="Groceries">Groceries</option>
                                         <option value="Khad & Beej">Khad & Beej</option>
@@ -561,68 +567,7 @@
                                         <option value="Pattal & Glass">Pattal & Glass</option>
                                         <option value="Pashupalan">Pashupalan</option>
                                     </select>
-                                    <input type="text" placeholder="Image URL (Photo link dalein)" value={newItemImg} onChange={(e) => setNewItemImg(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
+                                    <input type="text" placeholder="Image URL" value={newItemImg} onChange={(e) => setNewItemImg(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
                                     <button onClick={() => {
                                         if(newItemName && newItemPrice) {
                                             const imgUrl = newItemImg || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=80";
-                                            setItems([...items, { id: Date.now(), name: newItemName, price: parseFloat(newItemPrice), category: newItemCat, image: imgUrl }]);
-                                            setNewItemName(""); setNewItemPrice(""); setNewItemImg("");
-                                            alert("Naya item jud gaya!");
-                                        } else { alert("Naam aur price bharein."); }
-                                    }} className="w-full bg-green-700 text-white py-3 rounded-xl font-bold text-xs shadow hover:bg-green-800">Naya Item Jodein</button>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <h3 className="font-extrabold text-gray-900 text-sm border-b pb-1.5">Maujuda Items (Delete karne ke liye):</h3>
-                                    {items.map(item => (
-                                        <div key={item.id} className="flex justify-between items-center bg-white p-3.5 border border-gray-200 rounded-2xl shadow-sm text-xs">
-                                            <div className="flex items-center space-x-3">
-                                                <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-xl border" />
-                                                <div>
-                                                    <p className="font-bold text-gray-900 text-sm">{item.name}</p>
-                                                    <p className="text-green-700 font-extrabold text-xs mt-0.5">₹{item.price} <span className="text-gray-500 font-normal">({item.category})</span></p>
-                                                </div>
-                                            </div>
-                                            <button onClick={() => deleteItem(item.id)} className="bg-red-600 text-white px-3 py-2 rounded-xl font-bold text-xs shadow hover:bg-red-700">
-                                                🗑️ Delete
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* SETTINGS */}
-                        {activeTab === 'settings' && isAdminAuthenticated && (
-                            <div>
-                                <h2 className="text-lg font-bold mb-3 text-gray-900">Dukaan ki Settings</h2>
-                                <div className="space-y-3 bg-white p-5 border border-gray-200 rounded-2xl text-xs shadow-sm">
-                                    <div>
-                                        <label className="font-bold text-gray-700 block mb-1">Dukaan Khulne ka Samay</label>
-                                        <input type="time" value={shopOpenTime} onChange={(e) => setShopOpenTime(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
-                                    </div>
-                                    <div>
-                                        <label className="font-bold text-gray-700 block mb-1">Dukaan Band Hone ka Samay</label>
-                                        <input type="time" value={shopCloseTime} onChange={(e) => setShopCloseTime(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
-                                    </div>
-                                    <div>
-                                        <label className="font-bold text-gray-700 block mb-1">Owner WhatsApp Number</label>
-                                        <input type="text" value={whatsappNo} onChange={(e) => setWhatsappNo(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
-                                    </div>
-                                    <div>
-                                        <label className="font-bold text-gray-700 block mb-1">UPI ID</label>
-                                        <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} className="w-full p-2.5 border border-gray-300 rounded-xl bg-gray-50"/>
-                                    </div>
-                                    <button onClick={() => alert("Settings Save Ho Gayi!")} className="w-full bg-green-700 text-white py-3 rounded-xl font-bold shadow hover:bg-green-800">Save Settings</button>
-                                </div>
-                            </div>
-                        )}
-                    </main>
-                </div>
-            );
-        }
-
-        ReactDOM.render(<App />, document.getElementById('root'));
-    </script>
-</body>
-</html>
