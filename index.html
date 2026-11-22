@@ -12,8 +12,26 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #printable-invoice, #printable-invoice *, #printable-statement, #printable-statement * { visibility: visible; }
+            #printable-invoice, #printable-statement {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: none !important;
+                box-shadow: none !important;
+                background: white !important;
+            }
+            .no-print { display: none !important; }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans text-gray-900">
+<body class="bg-gray-200 font-sans text-gray-900">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -36,7 +54,7 @@
             const [isAdminAuthenticated, setIsAdminAuthenticated] = React.useState(false);
             const ADMIN_PIN = "728084";
 
-            // Title click counter for secret Admin Access
+            // Title click counter for Secret Admin Access
             const [titleClicks, setTitleClicks] = React.useState(0);
             const handleTitleClick = () => {
                 const newClicks = titleClicks + 1;
@@ -75,6 +93,7 @@
 
             const [items, setItems] = React.useState(defaultItems);
             const [ordersList, setOrdersList] = React.useState([]);
+            const [udhariList, setUdhariList] = React.useState([]);
 
             // Cloud Sync
             React.useEffect(() => {
@@ -88,6 +107,14 @@
                         const val = snapshot.val();
                         if (val) setOrdersList(val);
                     });
+                    db.ref('divya_store/udhari').on('value', (snapshot) => {
+                        const val = snapshot.val();
+                        if (val) setUdhariList(val);
+                        else {
+                            const initialUdhari = [{ id: 1, name: "Ramesh Kumar", phone: "9876543210", amount: 450, note: "Chawal baki", history: [] }];
+                            db.ref('divya_store/udhari').set(initialUdhari);
+                        }
+                    });
                 }
             }, []);
 
@@ -100,11 +127,13 @@
             const [cart, setCart] = React.useState({});
             const [showCheckoutModal, setShowCheckoutModal] = React.useState(false);
             const [showParchaModal, setShowParchaModal] = React.useState(false);
+            const [selectedCategory, setSelectedCategory] = React.useState("All");
 
             const [customerName, setCustomerName] = React.useState("");
             const [customerPhone, setCustomerPhone] = React.useState("");
             const [customerTime, setCustomerTime] = React.useState("10:00");
             const [paymentMode, setPaymentMode] = React.useState("Cash");
+            const [checkoutUtrPin, setCheckoutUtrPin] = React.useState("");
 
             const [parchaName, setParchaName] = React.useState("");
             const [parchaPhone, setParchaPhone] = React.useState("");
@@ -144,6 +173,7 @@
                     customerPhone,
                     pickupTime: customerTime,
                     paymentMode: paymentMode,
+                    paymentDetails: checkoutUtrPin,
                     status: "Completed",
                     date: currentDate,
                     time: currentTime,
@@ -170,9 +200,10 @@
                 setCart({});
                 setCustomerName("");
                 setCustomerPhone("");
+                setCheckoutUtrPin("");
                 setShowCheckoutModal(false);
                 setActiveTab('orders');
-                alert("🎉 Order Successfully Placed!");
+                alert("🎉 Order Successfully Placed & Saved to Cloud!");
             };
 
             const placeParchaOrder = () => {
@@ -210,12 +241,14 @@
                 alert("🎉 Parcha Order bhej diya gaya hai!");
             };
 
+            const filteredItems = selectedCategory === "All" ? items : items.filter(i => i.category === selectedCategory);
+
             return (
                 <div className="min-h-screen pb-12">
                     <header className="bg-green-700 text-white p-4 shadow-md sticky top-0 z-50">
                         <div className="max-w-4xl mx-auto flex justify-between items-center">
                             <h1 onClick={handleTitleClick} className="text-xl font-bold cursor-pointer select-none">
-                                🛒 Divya Kirana Store
+                                🛒 Divya Kirana Store <span className="text-xs bg-green-800 px-2 py-0.5 rounded ml-2">Cloud Synced</span>
                             </h1>
                             <div className="flex gap-2">
                                 <button onClick={() => setActiveTab('store')} className={`px-3 py-1 rounded text-sm ${activeTab === 'store' ? 'bg-white text-green-700 font-bold' : 'bg-green-600'}`}>Store</button>
@@ -240,8 +273,16 @@
                                     </button>
                                 </div>
 
+                                <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
+                                    {["All", "Groceries", "Khad & Beej", "Hardware", "Pattal & Glass", "Pashupalan"].map(cat => (
+                                        <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap font-semibold ${selectedCategory === cat ? 'bg-green-700 text-white' : 'bg-white text-gray-700 shadow'}`}>
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </div>
+
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                    {items.map(item => (
+                                    {filteredItems.map(item => (
                                         <div key={item.id} className="bg-white p-3 rounded-lg shadow flex flex-col justify-between">
                                             <div>
                                                 <img src={item.image} alt={item.name} className="w-full h-32 object-cover rounded mb-2" />
@@ -304,6 +345,7 @@
                                 <div className="space-y-4">
                                     <div className="bg-gray-50 p-3 rounded border">
                                         <h3 className="font-bold text-gray-700">Total Store Orders: {ordersList.length}</h3>
+                                        <h3 className="font-bold text-gray-700 mt-2">Total Udhari Accounts: {udhariList.length}</h3>
                                     </div>
                                 </div>
                             </div>
@@ -317,6 +359,21 @@
                                 <h3 className="text-lg font-bold mb-3 text-green-800">Complete Your Order</h3>
                                 <input type="text" placeholder="Aapka Naam" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full border p-2 rounded mb-3" />
                                 <input type="text" placeholder="Mobile Number (10 Digit)" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full border p-2 rounded mb-3" />
+                                <div className="mb-3">
+                                    <label className="text-sm font-semibold text-gray-700 block mb-1">Payment Mode:</label>
+                                    <select value={paymentMode} onChange={e => setPaymentMode(e.target.value)} className="w-full border p-2 rounded">
+                                        <option value="Cash">Cash on Delivery</option>
+                                        <option value="UPI">UPI / QR Code</option>
+                                        <option value="Udhari">Udhari (Khata)</option>
+                                    </select>
+                                </div>
+                                {paymentMode === 'UPI' && (
+                                    <div className="mb-3 p-3 bg-green-50 rounded border border-green-200">
+                                        <p className="text-xs font-bold text-green-800 mb-1">Scan & Pay via UPI:</p>
+                                        <p className="text-xs text-gray-600 mb-2">UPI ID: <b>6200150688@ybl</b></p>
+                                        <input type="text" placeholder="Enter UPI UTR / Transaction ID" value={checkoutUtrPin} onChange={e => setCheckoutUtrPin(e.target.value)} className="w-full border p-2 rounded text-sm bg-white" />
+                                    </div>
+                                )}
                                 <div className="flex justify-end gap-2 mt-4">
                                     <button onClick={() => setShowCheckoutModal(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
                                     <button onClick={placeOrder} className="bg-green-600 text-white px-4 py-2 rounded font-bold">Place Order</button>
