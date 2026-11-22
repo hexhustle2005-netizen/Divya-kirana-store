@@ -130,9 +130,10 @@
             const [parchaExpectedPrice, setParchaExpectedPrice] = React.useState("");
             const [parchaImage, setParchaImage] = React.useState(null);
             
-            // Owner Price & Detailed Saman Note State for Parcha Order
+            // Owner Price & Detailed Saman Photo/Note State for Parcha Order
             const [ownerUpdatedPrice, setOwnerUpdatedPrice] = React.useState("");
             const [ownerDetailedBillText, setOwnerDetailedBillText] = React.useState("");
+            const [ownerBillImage, setOwnerBillImage] = React.useState(null);
             
             // Search / History
             const [customerSearchPhone, setCustomerSearchPhone] = React.useState("");
@@ -182,13 +183,25 @@
                 }, 0);
             };
 
-            // Handle Image Upload to Base64
+            // Handle Customer Image Upload to Base64
             const handleImageUpload = (e) => {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onloadend = () => {
                         setParchaImage(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // Handle Owner Bill Image Upload to Base64
+            const handleOwnerBillImageUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setOwnerBillImage(reader.result);
                     };
                     reader.readAsDataURL(file);
                 }
@@ -333,7 +346,7 @@
                 alert("🎉 Aapka Parcha / List Order dukan par bhej diya gaya hai! Owner price confirm karke bill ready karega.");
             };
 
-            // Owner Updates Detailed Saman Bill & Price -> Sends WhatsApp Alert to Customer
+            // Owner Updates Detailed Saman, Bill Photo & Price -> Sends WhatsApp Alert to Customer
             const updateParchaOrderPrice = (orderId) => {
                 const amt = parseFloat(ownerUpdatedPrice);
                 if (isNaN(amt) || amt <= 0) {
@@ -348,6 +361,7 @@
                             ...ord,
                             total: amt,
                             status: "Ready",
+                            ownerBillImage: ownerBillImage, // Owner uploaded bill photo saved here!
                             items: [
                                 {
                                     name: detailedDescription,
@@ -369,7 +383,8 @@
                 }));
                 setOwnerUpdatedPrice("");
                 setOwnerDetailedBillText("");
-                alert("✅ Saman aur Price Update karke Customer ko WhatsApp par bill bhej diya gaya!");
+                setOwnerBillImage(null);
+                alert("✅ Saman, Bill Photo & Price Update karke Customer ko WhatsApp par bill bhej diya gaya!");
             };
 
             // Mark Order Ready -> Sends WhatsApp message to Customer
@@ -603,6 +618,13 @@
                                             </div>
                                         </div>
 
+                                        {lastBill.ownerBillImage && (
+                                            <div className="my-2 p-2 border rounded-xl bg-gray-50 text-center">
+                                                <p className="text-[11px] font-bold text-gray-700 mb-1">Owner Uploaded Bill / Paper Photo:</p>
+                                                <img src={lastBill.ownerBillImage} alt="Owner Bill" className="max-h-48 mx-auto object-contain rounded-lg border bg-white" />
+                                            </div>
+                                        )}
+
                                         <table className="w-full text-left border-collapse text-xs border border-gray-200 rounded-lg overflow-hidden">
                                             <thead>
                                                 <tr className="bg-green-800 text-white">
@@ -711,6 +733,13 @@
                                             </div>
                                         )}
 
+                                        {ord.ownerBillImage && (
+                                            <div className="pt-1">
+                                                <p className="text-[10px] text-green-700 font-bold mb-1">Owner Uploaded Bill Photo:</p>
+                                                <img src={ord.ownerBillImage} alt="Owner Bill" className="w-full h-32 object-contain rounded-xl border bg-gray-50" />
+                                            </div>
+                                        )}
+
                                         <div className="bg-gray-50 p-2.5 rounded-xl space-y-1">
                                             {ord.items.map((it, idx) => (
                                                 <div key={idx} className="flex justify-between">
@@ -771,7 +800,7 @@
 
                                             <div className="flex space-x-2 pt-1">
                                                 <button onClick={() => setSelectedOwnerOrder(ord)} className="flex-grow bg-blue-50 text-blue-700 border border-blue-200 py-2 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition">
-                                                    {ord.status === 'Price Pending' ? "✍️ Saman aur Price Likhein" : "👁️ Khol Kar Dekhein"}
+                                                    {ord.status === 'Price Pending' ? "✍️ Bill Photo & Price Upload Karein" : "👁️ Khol Kar Dekhein"}
                                                 </button>
                                                 
                                                 {ord.status === 'Pending' && (
@@ -970,13 +999,13 @@
 
                                         {selectedOwnerOrder.parchaImage && (
                                             <div>
-                                                <p className="font-bold text-gray-700 mb-1">Uploaded Photo:</p>
-                                                <img src={selectedOwnerOrder.parchaImage} alt="Customer Parcha" className="w-full max-h-56 object-contain rounded-lg border bg-white" />
+                                                <p className="font-bold text-gray-700 mb-1">Customer Uploaded Photo:</p>
+                                                <img src={selectedOwnerOrder.parchaImage} alt="Customer Parcha" className="w-full max-h-40 object-contain rounded-lg border bg-white" />
                                             </div>
                                         )}
 
                                         <div className="pt-2 border-t border-yellow-300 space-y-3">
-                                            <label className="font-black text-green-900 block">✍️ Owner Bill & Saman Details Likhein:</label>
+                                            <label className="font-black text-green-900 block">✍️ Owner Bill Details / Saman Likhein:</label>
                                             <textarea 
                                                 rows="2"
                                                 placeholder="Jaise: 5kg Chawal @ 50, 2L Tel @ 140..." 
@@ -984,6 +1013,20 @@
                                                 onChange={(e) => setOwnerDetailedBillText(e.target.value)}
                                                 className="w-full p-2.5 border border-green-600 rounded-xl bg-white font-medium text-xs"
                                             ></textarea>
+
+                                            {/* OWNER BILL PHOTO UPLOAD OPTION */}
+                                            <div className="bg-green-50 p-2.5 rounded-xl border border-dashed border-green-600 text-center space-y-1">
+                                                <label className="font-bold text-green-900 block cursor-pointer">
+                                                    📷 Owner Bill / Paper Photo Upload Karein:
+                                                    <input type="file" accept="image/*" onChange={handleOwnerBillImageUpload} className="hidden" />
+                                                    <div className="mt-1.5 bg-white text-green-800 border border-green-600 py-2 px-3 rounded-lg font-extrabold text-xs shadow-sm">
+                                                        {ownerBillImage ? "✅ Bill Photo Selected (Change Karein)" : "📂 Choose Bill Photo / Camera"}
+                                                    </div>
+                                                </label>
+                                                {ownerBillImage && (
+                                                    <img src={ownerBillImage} alt="Owner Bill Preview" className="w-full h-28 object-contain rounded-lg border mt-1 bg-white" />
+                                                )}
+                                            </div>
 
                                             <label className="font-black text-green-900 block">💰 Final Total Bill Price (₹):</label>
                                             <input 
@@ -995,7 +1038,7 @@
                                             />
 
                                             <button onClick={() => updateParchaOrderPrice(selectedOwnerOrder.id)} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-extrabold shadow hover:bg-green-800">
-                                                ✅ Save Saman & Price & Send Bill Alert to WhatsApp
+                                                ✅ Save Bill, Photo & Price & Send to WhatsApp
                                             </button>
                                         </div>
                                     </div>
