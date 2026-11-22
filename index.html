@@ -89,13 +89,11 @@
             const [customerPhone, setCustomerPhone] = React.useState("");
             const [paymentMode, setPaymentMode] = React.useState("Cash");
             
-            // Orders & History (Status: 'Pending', 'Ready', 'Completed')
+            // Orders & History
             const [ordersList, setOrdersList] = React.useState([]);
             const [customerSearchPhone, setCustomerSearchPhone] = React.useState("");
             const [myOldOrders, setMyOldOrders] = React.useState(null);
             const [lastBill, setLastBill] = React.useState(null);
-            
-            // Selected order for Owner to open & inspect detail modal
             const [selectedOwnerOrder, setSelectedOwnerOrder] = React.useState(null);
 
             // Udhari Khata
@@ -145,7 +143,6 @@
                 }, 0);
             };
 
-            // Flipkart Style Order Placement (No WhatsApp dependency on placement)
             const placeOrder = () => {
                 if (!customerName || !customerPhone) {
                     alert("Kripya apna Naam aur Mobile Number likhein!");
@@ -159,7 +156,7 @@
                     customerPhone,
                     pickupTime: customerTime,
                     paymentMode,
-                    status: "Pending", // Pending -> Ready -> Completed
+                    status: "Pending",
                     date: new Date().toLocaleDateString('en-IN'),
                     time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
                     items: [],
@@ -187,15 +184,13 @@
                 setCart({});
                 setShowCheckoutModal(false);
                 setActiveTab('store');
-                alert("🎉 Order Successfully Placed! Aapka order store par bhej diya gaya hai.");
+                alert("🎉 Order Successfully Placed!");
             };
 
-            // Owner marks order as Ready and sends WhatsApp alert to customer
             const markOrderReady = (orderId) => {
                 setOrdersList(ordersList.map(ord => {
                     if (ord.id === orderId) {
                         const updatedOrd = { ...ord, status: "Ready" };
-                        // Send WhatsApp message to customer automatically
                         let msg = `📦 *Divya Kirana Store Update*\n\nHello ${ord.customerName},\nAapka order (${ord.invoiceNo}) pack ho kar **READY** ho chuka hai!\n\nKripya dukan se aakar apna saman le jayein. 🙏\nKul Rashi: ₹${ord.total}`;
                         let cleanPhone = ord.customerPhone.startsWith("91") ? ord.customerPhone : "91" + ord.customerPhone;
                         window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -208,7 +203,6 @@
                 }
             };
 
-            // Owner marks order as Completed
             const markOrderCompleted = (orderId) => {
                 setOrdersList(ordersList.map(ord => {
                     if (ord.id === orderId) {
@@ -261,7 +255,6 @@
                             </span>
                         </div>
 
-                        {/* Integrated Search Bar inside Header */}
                         {activeTab === 'store' && (
                             <div className="relative mt-2">
                                 <input 
@@ -276,7 +269,7 @@
                         )}
                     </header>
 
-                    {/* Clean Navigation Pills */}
+                    {/* Navigation Pills */}
                     <nav className="flex px-3 pt-3 pb-1 space-x-2 overflow-x-auto no-scrollbar no-print">
                         <button onClick={() => setActiveTab('store')} className={`px-4 py-1.5 rounded-full text-xs font-extrabold transition ${activeTab === 'store' ? 'bg-green-700 text-white shadow' : 'bg-white text-gray-700 border border-gray-200'}`}>
                             🛍️ Store
@@ -296,10 +289,8 @@
 
                     {/* Main Content Area */}
                     <main className="p-3 flex-grow">
-                        {/* STORE TAB - 2-COLUMN MODERN GRID */}
                         {activeTab === 'store' && (
                             <div>
-                                {/* Horizontal Category Selector */}
                                 <div className="flex space-x-2 overflow-x-auto py-2 mb-2 no-scrollbar no-print">
                                     {categories.map(cat => (
                                         <button 
@@ -313,7 +304,6 @@
                                     ))}
                                 </div>
 
-                                {/* 2-Column Product Grid */}
                                 <div className="grid grid-cols-2 gap-3 no-print">
                                     {filteredItems.map(item => (
                                         <div key={item.id} className="bg-white rounded-2xl p-2.5 border border-gray-200 shadow-sm flex flex-col justify-between hover:shadow-md transition">
@@ -347,7 +337,6 @@
                                     ))}
                                 </div>
 
-                                {/* Professional Tax Invoice Display (After Order) */}
                                 {lastBill && (
                                     <div id="printable-invoice" className="mt-6 bg-white p-5 border-2 border-green-700 rounded-2xl shadow-xl space-y-4">
                                         <div className="text-center border-b-2 border-green-700 pb-3">
@@ -411,7 +400,6 @@
                             </div>
                         )}
 
-                        {/* MY ORDERS TAB */}
                         {activeTab === 'myorders' && (
                             <div className="space-y-4">
                                 <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3">
@@ -471,7 +459,6 @@
                             </div>
                         )}
 
-                        {/* OWNER ORDERS (LINE-TO-LINE QUEUE SYSTEM) */}
                         {activeTab === 'orders' && isAdminAuthenticated && (
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center mb-1">
@@ -511,7 +498,6 @@
                                                 <p className="text-gray-600 mt-0.5">Pickup: <strong className="text-gray-900">{ord.pickupTime}</strong> | Mode: <strong className="text-green-800">{ord.paymentMode}</strong> | Total: <strong className="text-green-800">₹{ord.total}</strong></p>
                                             </div>
 
-                                            {/* Action Buttons */}
                                             <div className="flex space-x-2 pt-1">
                                                 <button onClick={() => setSelectedOwnerOrder(ord)} className="flex-grow bg-blue-50 text-blue-700 border border-blue-200 py-2 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition">
                                                     👁️ Khol Kar Dekhein (Inspect)
@@ -539,11 +525,10 @@
                             </div>
                         )}
 
-                        {/* UDHARI KHATA */}
                         {activeTab === 'udhari' && isAdminAuthenticated && (
                             <div className="space-y-4">
                                 <div className="bg-white p-4 border border-gray-200 rounded-2xl space-y-2.5 text-xs shadow-sm">
-                                    <h3 className="font-extrabold text-gray-900 text-sm">Add New Udhari Entry</h3>
+                                    <h3 className="font-extrabold text-gray-900 text-sm">Add New Udhari Entry / Edit</h3>
                                     <input type="text" placeholder="Customer Name" value={newUdhariName} onChange={(e) => setNewUdhariName(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
                                     <input type="tel" placeholder="Mobile Number" value={newUdhariPhone} onChange={(e) => setNewUdhariPhone(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
                                     <input type="number" placeholder="Pending Amount (₹)" value={newUdhariAmount} onChange={(e) => setNewUdhariAmount(e.target.value)} className="w-full p-2.5 border rounded-xl bg-gray-50"/>
@@ -552,33 +537,40 @@
                                         if(newUdhariName && newUdhariAmount) {
                                             setUdhariList([{ id: Date.now(), name: newUdhariName, phone: newUdhariPhone, amount: parseFloat(newUdhariAmount), note: newUdhariNote }, ...udhariList]);
                                             setNewUdhariName(""); setNewUdhariPhone(""); setNewUdhariAmount(""); setNewUdhariNote("");
-                                            alert("Udhari added successfully!");
+                                            alert("Udhari saved successfully!");
                                         } else { alert("Please enter Name and Amount."); }
-                                    }} className="w-full bg-red-600 text-white py-2.5 rounded-xl font-bold">Save Udhari</button>
+                                    }} className="w-full bg-green-700 text-white py-2.5 rounded-xl font-bold">Save Udhari Entry</button>
                                 </div>
 
                                 <div className="space-y-3">
-                                    {udhariList.map(udh => (
-                                        <div key={udh.id} className="bg-white p-4 border border-gray-200 rounded-2xl shadow-sm flex justify-between items-center text-xs">
-                                            <div>
-                                                <h3 className="font-bold text-gray-900 text-sm">{udh.name} ({udh.phone})</h3>
-                                                <p className="text-gray-500">{udh.note}</p>
+                                    <h3 className="font-extrabold text-gray-900 text-xs">Active Udhari Khata (Click 'Chukta' when paid):</h3>
+                                    {udhariList.length === 0 ? (
+                                        <p className="text-xs text-gray-500 bg-white p-4 rounded-2xl text-center border">Koi udhari baki nahi hai.</p>
+                                    ) : (
+                                        udhariList.map(udh => (
+                                            <div key={udh.id} className="bg-white p-4 border border-gray-200 rounded-2xl shadow-sm flex justify-between items-center text-xs">
+                                                <div>
+                                                    <h3 className="font-bold text-gray-900 text-sm">{udh.name} ({udh.phone})</h3>
+                                                    <p className="text-gray-500">{udh.note}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-red-600 font-black text-sm">₹{udh.amount}</p>
+                                                    <button onClick={() => {
+                                                        if(confirm(`Kya ${udh.name} ne ₹${udh.amount} nagad (cash) dekar udhari chukta kar di hai?`)) {
+                                                            setUdhariList(udhariList.filter(u => u.id !== udh.id));
+                                                            alert("✅ Udhari Chukta & Saved Automatically!");
+                                                        }
+                                                    }} className="bg-green-700 text-white px-3 py-1.5 rounded-lg text-[11px] mt-1 font-bold shadow">
+                                                        💵 Chukta (Paid)
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-red-600 font-black text-sm">₹{udh.amount}</p>
-                                                <button onClick={() => {
-                                                    if(confirm("Clear this udhari?")) {
-                                                        setUdhariList(udhariList.filter(u => u.id !== udh.id));
-                                                    }
-                                                }} className="bg-green-700 text-white px-2.5 py-1 rounded-lg text-[10px] mt-1 font-bold">Chukta</button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         )}
 
-                        {/* RATE MANAGEMENT */}
                         {activeTab === 'rate' && isAdminAuthenticated && (
                             <div className="space-y-4">
                                 <div className="bg-white p-4 border border-gray-200 rounded-2xl space-y-2.5 text-xs shadow-sm">
@@ -622,7 +614,6 @@
                             </div>
                         )}
 
-                        {/* SETTINGS */}
                         {activeTab === 'settings' && isAdminAuthenticated && (
                             <div className="bg-white p-4 border border-gray-200 rounded-2xl space-y-3 text-xs shadow-sm">
                                 <h2 className="text-sm font-extrabold text-gray-900">Shop Settings</h2>
@@ -647,7 +638,7 @@
                         )}
                     </main>
 
-                    {/* OWNER INSPECT ORDER MODAL (KHOL KAR DEKHEIN) */}
+                    {/* OWNER INSPECT ORDER MODAL */}
                     {selectedOwnerOrder && (
                         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 no-print">
                             <div className="bg-white w-full max-w-sm rounded-3xl p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -715,7 +706,7 @@
                         </div>
                     )}
 
-                    {/* FLOATING BOTTOM CART BAR (Blinkit Style) */}
+                    {/* FLOATING BOTTOM CART BAR */}
                     {getTotalItems() > 0 && activeTab === 'store' && (
                         <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-green-800 text-white p-3.5 px-4 flex justify-between items-center shadow-2xl rounded-t-2xl z-50 no-print border-t border-green-600">
                             <div>
@@ -728,7 +719,7 @@
                         </div>
                     )}
 
-                    {/* CHECKOUT MODAL POPUP */}
+                    {/* CHECKOUT MODAL */}
                     {showCheckoutModal && (
                         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-end justify-center max-w-md mx-auto no-print">
                             <div className="bg-white w-full rounded-t-3xl p-5 space-y-4 shadow-2xl max-h-[85vh] overflow-y-auto">
